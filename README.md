@@ -17,17 +17,16 @@ Inputs are streamed, so kernel-sized diffs and gigabyte logs are fine — a
 
 ## Installation
 
-Via [Homebrew](https://github.com/marosoaie/homebrew-tap) — the tap and this
-repo are private, so `brew` piggybacks on your git credentials; any machine
-that can clone the repo can install:
+Via [Homebrew](https://github.com/marosoaie/homebrew-tap):
 
 ```sh
 brew tap marosoaie/tap
+brew trust marosoaie/tap   # one-time; Homebrew 6 gates third-party taps
 brew install marosoaie/tap/git-diff-parser
 ```
 
 Prebuilt arm64 binaries ship with each
-[release](https://github.com/marosoaie/git-diff-parser/releases), with SHA-256
+[release](https://github.com/marosoaie/swift-steward/releases), with SHA-256
 checksums attached. They are not yet notarized, so fetch them with `curl`/`gh
 release download` (browser downloads get quarantined by Gatekeeper).
 
@@ -163,11 +162,11 @@ Danger-Swift plugin — can depend on exactly the layer it needs:
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/marosoaie/git-diff-parser.git", branch: "main"),
+.package(url: "https://github.com/marosoaie/swift-steward.git", branch: "main"),
 // target dependencies (pick what you need):
-.product(name: "GitDiffKit", package: "git-diff-parser"),
-.product(name: "BuildLogKit", package: "git-diff-parser"),
-.product(name: "DiffDiagnostics", package: "git-diff-parser"),
+.product(name: "GitDiffKit", package: "swift-steward"),
+.product(name: "BuildLogKit", package: "swift-steward"),
+.product(name: "DiffDiagnostics", package: "swift-steward"),
 ```
 
 All model types are `Sendable` and the package builds with Swift 6.2 strict
