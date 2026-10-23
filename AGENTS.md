@@ -35,7 +35,7 @@ of the dependency and fails to resolve.
 
 ```sh
 swift build                        # must complete with zero warnings
-swift test                        # full suite (~20 s warm)
+swift test                        # full suite (~20 s warm); also on Linux
 GIT_DIFF_PARSER_SKIP_NETWORK_TESTS=1 swift test   # offline subset
 xcodebuild test -scheme swift-steward-Package -destination platform=macOS
 swift build -c release            # for benchmarks — never benchmark debug builds
@@ -51,7 +51,11 @@ design decision, disable it in config or inline — always with a comment
 saying why.
 
 Real-world test fixtures resolve from
-`~/Library/Caches/git-diff-parser-tests/`, then the network.
+`~/Library/Caches/git-diff-parser-tests/` (on Linux,
+`$XDG_CACHE_HOME/git-diff-parser-tests/` or `~/.cache/…`), then the network.
+PR CI runs the build and the full suite on macOS and, in a `swift:6.2`
+container, on Linux; locally, `docker run -v "$PWD":/src swift:6.2` does the
+same (copy the tree out of `/src` first so the two `.build` folders don't mix).
 
 ## Coding style
 
@@ -97,7 +101,8 @@ test support throws `FixtureError` (with a remediation hint).
 **Streaming invariants.** Hot paths parse bytes (`ArraySlice<UInt8>`);
 `String` and `Regex` are only reached after a cheap byte-level gate. Results
 must be byte-for-byte identical for any input chunking (tested down to
-1-byte chunks). Wrap `FileHandle.read` loops in `autoreleasepool` — without
+1-byte chunks). Wrap `FileHandle.read` loops in an autoreleasepool on Darwin
+(`withAutoreleasePool`, or `#if canImport(Darwin)`; Linux has none) — without
 it the autoreleased chunks accumulate and streaming silently degrades to
 whole-file memory. Store line sets as merged ranges (`LineRangeSet`), never
 per-line collections.
@@ -123,6 +128,10 @@ narration of the next line. Keep them few and short.
   swift-argument-parser). The diff parser's own edge-case tests live in
   the library.
 - Every bug fix lands with a regression test (see `MalformedInputTests`).
+- The CLI's output on real inputs is pinned by fingerprint
+  (`CommandLineOutputTests`), so macOS and Linux must print the same bytes.
+  When a change alters output on purpose, pin the new fingerprints the test
+  reports, and say so in the PR.
 - Performance-relevant changes are benchmarked on the kernel-diff fixtures
   in release mode before merging; parsing throughput (~0.2 s / 70 MB) and
   flat peak memory are the budget.

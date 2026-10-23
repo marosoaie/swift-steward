@@ -26,10 +26,12 @@ than per-line sets, so memory scales with the number of *edits*, not lines:
 a full-file rewrite is a single range. Membership tests are binary searches,
 with tolerance comparisons ordered so extreme values cannot overflow.
 
-One Foundation trap worth knowing: `FileHandle.read` returns autoreleased
-`Data`, so the CLI wraps each read iteration in `autoreleasepool` — without
-it the chunks accumulate until process exit and streaming silently degrades
-to whole-file memory.
+One Foundation trap worth knowing: on Darwin, `FileHandle.read` returns
+autoreleased `Data`, so the CLI wraps each read iteration in an
+autoreleasepool — without it the chunks accumulate until process exit and
+streaming silently degrades to whole-file memory. Linux's Foundation has no
+autorelease pools and frees each chunk on release, so `withAutoreleasePool`
+compiles the pool in on Darwin only.
 
 Two bounds qualify the "constant memory" claim. Individual lines are
 processed truncated to 1 MiB (uniformly, so results stay
@@ -73,12 +75,18 @@ re-benchmarked on these fixtures before merging (see AGENTS.md).
   cross-check every per-file changed-line count against git's own patch
   parser (`git apply --numstat`) as an independent oracle. Fixtures are downloaded
   from their canonical URLs and cached in
-  `~/Library/Caches/git-diff-parser-tests/`; cache entries are re-validated
+  `~/Library/Caches/git-diff-parser-tests/` (on Linux, under
+  `$XDG_CACHE_HOME` or `~/.cache`); cache entries are re-validated
   before use. Nothing large is committed to the repo — keeping the clone
   free of Git LFS matters because Homebrew and SwiftPM consumers clone it
   on machines that may have broken or absent `git-lfs` setups.
+- **Pinned output** — `changes` and `filter` run over those diffs, real
+  xcodebuild, SwiftLint, and SwiftFormat logs of swift-argument-parser 1.5.0,
+  and a SonarQube report, in every output format; each output's length and
+  FNV-1a hash is pinned. The values come from the macOS build, and CI checks
+  them on Linux too, so both platforms print the same bytes.
 
-Set `GIT_DIFF_PARSER_SKIP_NETWORK_TESTS=1` to skip the real-world suite
+Set `GIT_DIFF_PARSER_SKIP_NETWORK_TESTS=1` to skip the real-world suites
 (e.g. in offline environments). Tests pass under both `swift test` and
 Xcode/`xcodebuild test`, whose build-product layouts differ.
 
