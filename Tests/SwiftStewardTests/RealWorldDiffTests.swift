@@ -1,8 +1,8 @@
 import Foundation
+import GitDiffKit
 import Testing
-@testable import GitDiffKit
 
-/// Validates the parser against large, real diffs from notorious projects.
+/// Runs the command line tool on large, real diffs from notorious projects.
 ///
 /// Fixtures resolve from a local cache, downloading from kernel.org /
 /// github.com on a miss. Set `GIT_DIFF_PARSER_SKIP_NETWORK_TESTS` to skip
@@ -15,14 +15,16 @@ import Testing
 )
 struct RealWorldDiffTests {
     @Test(
-        "per-file changed-line counts match git apply --numstat",
+        "the command line tool's per-file counts match git apply --numstat",
         arguments: RealWorldFixture.allCases
     )
     func matchesGitNumstat(fixture: RealWorldFixture) async throws {
         let diffURL = try await RealWorldFixtureStore.localDiffURL(for: fixture)
-        let changes = try Self.parseStreaming(contentsOf: diffURL)
+        let json = try CommandLineTool.run(arguments: ["changes", diffURL.path])
+        let entries = try JSONDecoder().decode([ChangesEntry].self, from: json)
 
-        let ours = changes.files.mapValues(\.lineCount)
+        let ours = Dictionary(entries.map { ($0.path, $0.lineCount) }, uniquingKeysWith: +)
+        #expect(ours.count == entries.count, "the tool listed a path twice")
         let oracle = try GitNumstat.addedLineCounts(forDiffAt: diffURL)
 
         // Compare via an explicit mismatch list so a failure reports the
@@ -35,14 +37,6 @@ struct RealWorldDiffTests {
             mismatched.isEmpty,
             "\(mismatched.count) files disagree with numstat; first: \(mismatched.prefix(5))"
         )
-    }
-
-    @Test("the kernel 6.6→6.7 release diff parses to its known totals")
-    func kernelTotals() async throws {
-        let diffURL = try await RealWorldFixtureStore.localDiffURL(for: .linuxKernel)
-        let changes = try Self.parseStreaming(contentsOf: diffURL)
-        #expect(changes.files.count == 12_057)
-        #expect(changes.files.values.reduce(0) { $0 + $1.lineCount } == 906_147)
     }
 
     @Test("the command line tool handles the kernel diff end to end")

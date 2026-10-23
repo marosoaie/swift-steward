@@ -58,7 +58,7 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         .testTarget(
-            name: "GitDiffKitTests",
+            name: "SwiftStewardTests",
             dependencies: [
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",

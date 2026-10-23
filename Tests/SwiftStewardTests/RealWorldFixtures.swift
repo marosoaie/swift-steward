@@ -1,8 +1,7 @@
 import Foundation
-@testable import GitDiffKit
 
-/// Large diffs from notorious open-source projects, used to validate the
-/// parser against real-world input at scale.
+/// Large diffs from notorious open-source projects, used to run the tool
+/// against real-world input at scale.
 enum RealWorldFixture: String, CaseIterable, Sendable {
     /// The Linux kernel v6.6 → v6.7 release patch from kernel.org —
     /// ~70 MB uncompressed, 12k files, ~900k added lines.
@@ -104,11 +103,16 @@ enum RealWorldFixtureStore {
 
 /// Independent oracle: per-file added-line counts as computed by git's own
 /// patch parser, `git apply --numstat`.
+///
+/// `-z` prints every path raw and NUL-terminated, so the oracle needs no
+/// unquoting and shares no code with the parser it checks. Unlike
+/// `git diff --numstat -M`, `git apply --numstat` prints the plain new-side
+/// path for renames (verified empirically).
 enum GitNumstat {
     static func addedLineCounts(forDiffAt url: URL) throws -> [String: Int] {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git", "apply", "--numstat", url.path]
+        process.arguments = ["git", "apply", "--numstat", "-z", url.path]
         let stdout = Pipe()
         process.standardOutput = stdout
         process.standardError = Pipe()
@@ -121,19 +125,13 @@ enum GitNumstat {
         }
 
         var counts: [String: Int] = [:]
-        for line in String(decoding: output, as: UTF8.self).split(separator: "\n") {
-            let fields = line.split(separator: "\t", maxSplits: 2, omittingEmptySubsequences: false)
+        for record in output.split(separator: 0) {
+            let fields = String(decoding: record, as: UTF8.self)
+                .split(separator: "\t", maxSplits: 2, omittingEmptySubsequences: false)
             // Binary files report "-" for the added count and fail Int().
             guard fields.count == 3, let added = Int(fields[0]), added > 0 else { continue }
-            counts[normalize(String(fields[2])), default: 0] += added
+            counts[String(fields[2]), default: 0] += added
         }
         return counts
-    }
-
-    /// Unlike `git diff --numstat -M`, `git apply --numstat` always prints
-    /// the plain new-side path for renames (verified empirically), so the
-    /// only normalization needed is undoing git's C-style path quoting.
-    private static func normalize(_ rawPath: String) -> String {
-        rawPath.hasPrefix("\"") ? DiffParser.unquote(rawPath) : rawPath
     }
 }
