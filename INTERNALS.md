@@ -2,6 +2,9 @@
 
 How git-diff-parser works under the hood and how it is validated. For usage,
 see the [README](README.md); for contribution conventions, [AGENTS.md](AGENTS.md).
+The diff parser (`DiffParser`, `ChangedLines`, `LineRangeSet`) lives in the
+[git-diff-parser](https://github.com/marosoaie/git-diff-parser) library,
+whose own INTERNALS.md covers it in depth; this file describes the tool.
 
 ## Streaming design
 
@@ -58,15 +61,17 @@ re-benchmarked on these fixtures before merging (see AGENTS.md).
 
 `swift test` runs two kinds of suites:
 
-- **Unit and fixture tests** — parser edge cases (renames, quoted paths,
-  CRLF, chunk boundaries, diff-syntax-lookalike content, malformed and
-  hostile input) plus a committed real PR diff (swiftlang/swift #70000) with
-  independently verified expectations.
-- **Real-world large-diff tests** — parse the Linux kernel v6.6→v6.7 release
-  patch (~70 MB), GitHub's redis 7.0→7.2 compare diff (renames), and
-  swift-argument-parser's 1.0→1.5 compare diff, then cross-check every
-  per-file changed-line count against git's own patch parser
-  (`git apply --numstat`) as an independent oracle. Fixtures are downloaded
+- **Unit and fixture tests** — log parser edge cases (tool formats, Sonar
+  reports, chunk boundaries, malformed input), the diff × diagnostics
+  matcher, and the CLI end to end on a committed real PR diff
+  (swiftlang/swift #70000) with independently verified expectations. The
+  diff parser's edge cases (renames, quoted paths, CRLF, diff-syntax-lookalike
+  content, hostile input) are tested in the library.
+- **Real-world large-diff tests** — run `changes` on the Linux kernel
+  v6.6→v6.7 release patch (~70 MB), GitHub's redis 7.0→7.2 compare diff
+  (renames), and swift-argument-parser's 1.0→1.5 compare diff, then
+  cross-check every per-file changed-line count against git's own patch
+  parser (`git apply --numstat`) as an independent oracle. Fixtures are downloaded
   from their canonical URLs and cached in
   `~/Library/Caches/git-diff-parser-tests/`; cache entries are re-validated
   before use. Nothing large is committed to the repo — keeping the clone
