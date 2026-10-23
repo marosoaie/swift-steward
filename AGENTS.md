@@ -27,7 +27,7 @@ swift-argument-parser is allowed in the CLI target only.
 swift build                        # must complete with zero warnings
 swift test                        # full suite (~20 s warm)
 GIT_DIFF_PARSER_SKIP_NETWORK_TESTS=1 swift test   # offline subset
-xcodebuild test -scheme git-diff-parser-Package -destination platform=macOS
+xcodebuild test -scheme swift-steward-Package -destination platform=macOS
 swift build -c release            # for benchmarks — never benchmark debug builds
 swiftlint lint --quiet            # must print nothing
 ```
