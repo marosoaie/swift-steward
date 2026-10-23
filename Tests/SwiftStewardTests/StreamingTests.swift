@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import BuildLogKit
 
@@ -48,5 +49,23 @@ struct StreamingTests {
         let streamed = parser.finalize()
         #expect(streamed == ClangStyleLogParser.diagnostics(in: log))
         #expect(streamed.count == 2)
+    }
+
+    @Test("CRLF log lines parse identically to LF, even split between CR and LF")
+    func crlf() {
+        let lf = """
+            /repo/A.swift:1:2: warning: first
+            /repo/B.swift:3:4: error: second
+
+            """
+        let crlf = lf.replacingOccurrences(of: "\n", with: "\r\n")
+        let expected = ClangStyleLogParser.diagnostics(in: lf)
+        #expect(expected.map(\.message) == ["first", "second"])
+        #expect(ClangStyleLogParser.diagnostics(in: crlf) == expected)
+
+        // One-byte chunks put every CR and its LF in different chunks.
+        var parser = ClangStyleLogParser()
+        Array(crlf.utf8).forEach { parser.consume([$0]) }
+        #expect(parser.finalize() == expected)
     }
 }
