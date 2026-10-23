@@ -6,11 +6,12 @@ agents alike; nothing here is specific to any particular tool or model.
 ## What this is
 
 A Swift package that surfaces build/lint diagnostics only on lines a pull
-request touches. Four products, strict dependency direction:
+request touches. Three products on top of the `GitDiffKit` library, strict
+dependency direction:
 
 | Product | Depends on | Purpose |
 |---|---|---|
-| `GitDiffKit` | – | Unified git diffs → changed files + line ranges |
+| `GitDiffKit` (dependency) | – | Unified git diffs → changed files + line ranges, from [git-diff-parser](https://github.com/marosoaie/git-diff-parser) |
 | `BuildLogKit` | – | Build/lint logs → `[Diagnostic]` (xcodebuild, SwiftLint, SwiftFormat, SonarQube parsers) |
 | `DiffDiagnostics` | both above | The join: which diagnostics land on changed lines |
 | `git-diff-parser` (CLI) | all three | `changes` and `filter` subcommands |
@@ -21,13 +22,22 @@ request touches. Four products, strict dependency direction:
 expose it as a product. Libraries take no third-party dependencies;
 swift-argument-parser is allowed in the CLI target only.
 
+`GitDiffKit` comes from the first-party git-diff-parser package, pinned to
+tagged versions (`from:`) only, never a branch or revision: SwiftPM rejects
+those underneath a versioned package. For lockstep changes, use
+`swift package edit git-diff-parser` locally, then tag the library and bump
+the requirement. The root package must not be *named* `git-diff-parser`,
+nor checked out into a directory of that name (a root package's identity
+is its directory name): either way SwiftPM takes the root as an override
+of the dependency and fails to resolve.
+
 ## Commands
 
 ```sh
 swift build                        # must complete with zero warnings
 swift test                        # full suite (~20 s warm)
 GIT_DIFF_PARSER_SKIP_NETWORK_TESTS=1 swift test   # offline subset
-xcodebuild test -scheme git-diff-parser-Package -destination platform=macOS
+xcodebuild test -scheme swift-steward-Package -destination platform=macOS
 swift build -c release            # for benchmarks — never benchmark debug builds
 swiftlint lint --quiet            # must print nothing
 ```
@@ -108,9 +118,10 @@ narration of the next line. Keep them few and short.
   file"); parameterized tests via `arguments:`; traits for `.serialized`,
   `.timeLimit`, `.enabled(if:)`.
 - Validate against **oracles**, not hand-computed expectations, where one
-  exists: per-file changed-line counts are cross-checked against
+  exists: the CLI's per-file changed-line counts are cross-checked against
   `git apply --numstat` on real diffs (Linux kernel, redis,
-  swift-argument-parser).
+  swift-argument-parser). The diff parser's own edge-case tests live in
+  the library.
 - Every bug fix lands with a regression test (see `MalformedInputTests`).
 - Performance-relevant changes are benchmarked on the kernel-diff fixtures
   in release mode before merging; parsing throughput (~0.2 s / 70 MB) and

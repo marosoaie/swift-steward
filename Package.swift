@@ -10,28 +10,25 @@ let swiftSettings: [SwiftSetting] = [
 ]
 
 let package = Package(
-    name: "git-diff-parser",
+    name: "swift-steward",
     platforms: [.macOS(.v14)],
     products: [
-        .library(name: "GitDiffKit", targets: ["GitDiffKit"]),
         .library(name: "BuildLogKit", targets: ["BuildLogKit"]),
         .library(name: "DiffDiagnostics", targets: ["DiffDiagnostics"]),
         .executable(name: "git-diff-parser", targets: ["git-diff-parser"]),
     ],
     dependencies: [
+        // GitDiffKit. Tagged versions only: SwiftPM rejects branch and
+        // revision dependencies underneath a versioned package.
+        .package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.1.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
     ],
     targets: [
-        // Chunk-to-line plumbing shared by the streaming parsers; internal
-        // to the package (not a product).
+        // Chunk-to-line plumbing for the streaming log parsers; internal to
+        // the package (not a product). The library keeps its own copy inside
+        // GitDiffKit, so its public API stays diff-only.
         .target(
             name: "StreamParsing",
-            swiftSettings: swiftSettings
-        ),
-        // Unified git diffs → changed files and line ranges.
-        .target(
-            name: "GitDiffKit",
-            dependencies: ["StreamParsing"],
             swiftSettings: swiftSettings
         ),
         // Build/lint logs → diagnostics, with tool-specific parsers for
@@ -44,13 +41,16 @@ let package = Package(
         // The join: which diagnostics land on lines a diff touches.
         .target(
             name: "DiffDiagnostics",
-            dependencies: ["GitDiffKit", "BuildLogKit"],
+            dependencies: [
+                .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "BuildLogKit",
+            ],
             swiftSettings: swiftSettings
         ),
         .executableTarget(
             name: "git-diff-parser",
             dependencies: [
-                "GitDiffKit",
+                .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",
                 "DiffDiagnostics",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
@@ -58,8 +58,12 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         .testTarget(
-            name: "GitDiffKitTests",
-            dependencies: ["GitDiffKit", "BuildLogKit", "DiffDiagnostics"],
+            name: "SwiftStewardTests",
+            dependencies: [
+                .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "BuildLogKit",
+                "DiffDiagnostics",
+            ],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings
         ),

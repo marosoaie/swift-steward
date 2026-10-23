@@ -1,12 +1,4 @@
 import Foundation
-@testable import GitDiffKit
-
-extension ChangedLines {
-    /// Expanded per-file line sets — convenient for asserting on small fixtures.
-    var lineSets: [String: Set<Int>] {
-        files.mapValues { Set($0.ranges.flatMap { Array($0) }) }
-    }
-}
 
 /// Runs the git-diff-parser executable that the test build produces into the
 /// build products directory.
@@ -18,7 +10,7 @@ enum CommandLineTool {
         //   directory (the .xctest is never registered as a bundle there —
         //   the Swift Testing host is a runner binary in the toolchain).
         // - Xcode / xcodebuild: Bundle.module resolves to a copy embedded in
-        //   GitDiffKitTests.xctest/Contents/Resources with no executables
+        //   SwiftStewardTests.xctest/Contents/Resources with no executables
         //   nearby, but the loaded .xctest bundle itself sits in the
         //   products directory.
         var candidates = [Bundle.module.bundleURL.deletingLastPathComponent()]

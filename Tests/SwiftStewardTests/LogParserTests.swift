@@ -1,7 +1,7 @@
 import Testing
 @testable import BuildLogKit
 @testable import DiffDiagnostics
-@testable import GitDiffKit
+import GitDiffKit
 
 @Suite("LogParser")
 struct LogParserTests {

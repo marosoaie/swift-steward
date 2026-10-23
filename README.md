@@ -151,20 +151,22 @@ new-side line number, which is exactly what the GitHub review-comment API
 
 ## Using the libraries
 
-The package exports three library products, so other tooling — e.g. a
-Danger-Swift plugin — can depend on exactly the layer it needs:
+The package exports two library products and builds on a third, so other
+tooling — e.g. a Danger-Swift plugin — can depend on exactly the layer it
+needs:
 
 | Product | What it does |
 |---|---|
-| `GitDiffKit` | Unified git diffs → changed files and line ranges (`DiffParser`, `ChangedLines`) |
+| `GitDiffKit` | Unified git diffs → changed files and line ranges (`DiffParser`, `ChangedLines`). From the [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library |
 | `BuildLogKit` | Build/lint logs → diagnostics. `ClangStyleLogParser` handles any clang-style log; `XcodeLogParser`, `SwiftLintLogParser`, and `SwiftFormatLogParser` additionally extract the violated rule. All conform to `LogParsing` |
 | `DiffDiagnostics` | The join: `DiagnosticMatcher` filters diagnostics to the lines a diff touches (depends on both of the above) |
 
 ```swift
 // Package.swift
+.package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.1.0"),
 .package(url: "https://github.com/marosoaie/swift-steward.git", branch: "main"),
 // target dependencies (pick what you need):
-.product(name: "GitDiffKit", package: "swift-steward"),
+.product(name: "GitDiffKit", package: "git-diff-parser"),
 .product(name: "BuildLogKit", package: "swift-steward"),
 .product(name: "DiffDiagnostics", package: "swift-steward"),
 ```
