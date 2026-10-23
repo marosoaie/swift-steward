@@ -11,7 +11,7 @@ struct Changes: ParsableCommand {
             because git represents a modification as a removal plus an addition.
 
             Example:
-              git diff origin/main...HEAD | git-diff-parser changes -
+              git diff origin/main...HEAD | steward changes -
             """
     )
 

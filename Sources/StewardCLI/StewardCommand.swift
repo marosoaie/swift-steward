@@ -1,9 +1,9 @@
 import ArgumentParser
 
 @main
-struct GitDiffParser: ParsableCommand {
+struct StewardCommand: ParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "git-diff-parser",
+        commandName: "steward",
         abstract: """
             Map a git diff to its changed lines, and filter build/lint logs \
             down to the diagnostics that touch those lines.

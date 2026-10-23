@@ -1,6 +1,6 @@
 import Foundation
 
-/// Runs the git-diff-parser executable that the test build produces into the
+/// Runs the steward executable that the test build produces into the
 /// build products directory.
 enum CommandLineTool {
     static var url: URL? {
@@ -18,7 +18,7 @@ enum CommandLineTool {
             .filter { $0.bundleURL.pathExtension == "xctest" }
             .map { $0.bundleURL.deletingLastPathComponent() }
         for directory in candidates {
-            let url = directory.appendingPathComponent("git-diff-parser")
+            let url = directory.appendingPathComponent("steward")
             if FileManager.default.isExecutableFile(atPath: url.path) {
                 return url
             }
@@ -30,7 +30,7 @@ enum CommandLineTool {
     /// `exitCode`. Standard input comes from `standardInput` when given.
     static func run(arguments: [String], standardInput: URL? = nil, exitCode: Int32 = 0) throws -> Data {
         guard let tool = url else {
-            throw FixtureError("git-diff-parser executable not built alongside tests")
+            throw FixtureError("steward executable not built alongside tests")
         }
         let process = Process()
         process.executableURL = tool
@@ -48,7 +48,7 @@ enum CommandLineTool {
         process.waitUntilExit()
         guard process.terminationStatus == exitCode else {
             throw FixtureError(
-                "git-diff-parser \(arguments.joined(separator: " ")) exited with \(process.terminationStatus)"
+                "steward \(arguments.joined(separator: " ")) exited with \(process.terminationStatus)"
             )
         }
         return output

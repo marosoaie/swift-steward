@@ -1,6 +1,7 @@
-# git-diff-parser
+# swift-steward
 
-Show only the build/lint diagnostics that a pull request actually touches.
+`steward` shows only the build/lint diagnostics that a pull request actually
+touches.
 
 Two subcommands, matching the two halves of the problem:
 
@@ -22,8 +23,12 @@ Via [Homebrew](https://github.com/marosoaie/homebrew-tap):
 ```sh
 brew tap marosoaie/tap
 brew trust marosoaie/tap   # one-time; Homebrew 6 gates third-party taps
-brew install marosoaie/tap/git-diff-parser
+brew install marosoaie/tap/steward
 ```
+
+Up to v1.0.2 the tool was called `git-diff-parser`. `brew upgrade` moves an
+existing `git-diff-parser` install over to `steward`; scripts and workflows
+that call the old name need updating.
 
 Prebuilt arm64 binaries ship with each
 [release](https://github.com/marosoaie/swift-steward/releases), with SHA-256
@@ -34,14 +39,14 @@ Or build from source (Swift 6.2+, on macOS 14+ or Linux):
 
 ```sh
 swift build -c release
-# binary at .build/release/git-diff-parser
+# binary at .build/release/steward
 ```
 
 ## `changes` — what lines does the PR touch?
 
 ```sh
-git diff origin/main...HEAD | git-diff-parser changes -
-git-diff-parser changes pr.diff --format text
+git diff origin/main...HEAD | steward changes -
+steward changes pr.diff --format text
 ```
 
 Output (`json` default, or `text` as greppable `path:line` lines). Changed
@@ -66,7 +71,7 @@ appear under their new path, and only if they contain edits.
 ## `filter` — which diagnostics should the PR show?
 
 ```sh
-git-diff-parser filter build.log --diff pr.diff --format github
+steward filter build.log --diff pr.diff --format github
 ```
 
 The log is scanned for the de-facto standard clang format that `swiftc`,
@@ -88,7 +93,7 @@ log is ignored, so pipe the raw build output straight in:
 | `--fail-on <severity>` | Exit 1 if anything at/above `note`/`warning`/`error` matched — lets CI blocking be scoped to *new* problems only |
 
 Duplicate diagnostics (same file/line/message, common in multi-target
-`xcodebuild` runs) are collapsed. See `git-diff-parser help <subcommand>` for
+`xcodebuild` runs) are collapsed. See `steward help <subcommand>` for
 the full reference.
 
 ## Getting the right diff
@@ -117,7 +122,7 @@ GitHub attaches them to the PR's changed lines in the Files tab:
     xcodebuild build ... 2>&1 | tee build.log
 - run: |
     git diff origin/${{ github.base_ref }}...HEAD \
-      | .build/release/git-diff-parser filter build.log --diff - \
+      | .build/release/steward filter build.log --diff - \
           --format github --fail-on error
 ```
 
@@ -135,7 +140,7 @@ server and filter them like any other input:
 curl -sf -u "$SONAR_TOKEN:" \
   "$SONAR_HOST/api/issues/search?componentKeys=$PROJECT_KEY&pullRequest=$PR_NUMBER&resolved=false&ps=500" \
   > sonar.json
-git-diff-parser filter sonar.json --diff pr.diff --tool sonar --format github
+steward filter sonar.json --diff pr.diff --tool sonar --format github
 ```
 
 (Drop `pullRequest=` when you only analyze branches.) Issue paths are

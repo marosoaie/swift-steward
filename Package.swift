@@ -15,7 +15,7 @@ let package = Package(
     products: [
         .library(name: "BuildLogKit", targets: ["BuildLogKit"]),
         .library(name: "DiffDiagnostics", targets: ["DiffDiagnostics"]),
-        .executable(name: "git-diff-parser", targets: ["git-diff-parser"]),
+        .executable(name: "steward", targets: ["StewardCLI"]),
     ],
     dependencies: [
         // GitDiffKit. Tagged versions only: SwiftPM rejects branch and
@@ -47,8 +47,11 @@ let package = Package(
             ],
             swiftSettings: swiftSettings
         ),
+        // The `steward` command. Not named after its product: a module
+        // `steward` would collide with the planned `Steward` library module
+        // on case-insensitive file systems.
         .executableTarget(
-            name: "git-diff-parser",
+            name: "StewardCLI",
             dependencies: [
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",

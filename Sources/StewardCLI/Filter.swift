@@ -18,7 +18,7 @@ struct Filter: ParsableCommand {
             a --repo-root is rarely needed.
 
             Example:
-              git-diff-parser filter lint.log --diff pr.diff --tool swiftlint --format github
+              steward filter lint.log --diff pr.diff --tool swiftlint --format github
             """
     )
 
