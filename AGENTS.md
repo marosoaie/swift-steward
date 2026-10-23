@@ -26,8 +26,10 @@ swift-argument-parser is allowed in the CLI target only.
 tagged versions (`from:`) only, never a branch or revision: SwiftPM rejects
 those underneath a versioned package. For lockstep changes, use
 `swift package edit git-diff-parser` locally, then tag the library and bump
-the requirement. The root package must not be *named* `git-diff-parser`:
-SwiftPM would take it as an override of the dependency and fail to resolve.
+the requirement. The root package must not be *named* `git-diff-parser`,
+nor checked out into a directory of that name (a root package's identity
+is its directory name): either way SwiftPM takes the root as an override
+of the dependency and fails to resolve.
 
 ## Commands
 
