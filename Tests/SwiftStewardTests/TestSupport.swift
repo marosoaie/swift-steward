@@ -26,20 +26,27 @@ enum CommandLineTool {
         return nil
     }
 
-    static func run(arguments: [String]) throws -> Data {
+    /// Returns the tool's standard output, throwing unless it exits with
+    /// `exitCode`. Standard input comes from `standardInput` when given.
+    static func run(arguments: [String], standardInput: URL? = nil, exitCode: Int32 = 0) throws -> Data {
         guard let tool = url else {
             throw FixtureError("git-diff-parser executable not built alongside tests")
         }
         let process = Process()
         process.executableURL = tool
         process.arguments = arguments
+        let input = try standardInput.map { try FileHandle(forReadingFrom: $0) }
+        defer { try? input?.close() }
+        if let input {
+            process.standardInput = input
+        }
         let stdout = Pipe()
         process.standardOutput = stdout
         try process.run()
         // Drain before waiting, or a full pipe buffer deadlocks the child.
         let output = try stdout.fileHandleForReading.readToEnd() ?? Data()
         process.waitUntilExit()
-        guard process.terminationStatus == 0 else {
+        guard process.terminationStatus == exitCode else {
             throw FixtureError(
                 "git-diff-parser \(arguments.joined(separator: " ")) exited with \(process.terminationStatus)"
             )

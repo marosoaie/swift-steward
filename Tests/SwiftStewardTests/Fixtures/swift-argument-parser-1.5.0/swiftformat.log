@@ -1,0 +1,823 @@
+Running SwiftFormat...
+(lint mode - no files will be changed.)
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:21:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:37:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:38:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:41:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:42:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:44:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:49:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:50:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:51:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:51:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:54:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:59:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:60:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:61:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:61:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:65:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:66:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:77:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:78:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:89:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift:90:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/EnumerableFlag.swift:53:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/EnumerableFlag.swift:65:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/EnumerableFlag.swift:75:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/EnumerableFlag.swift:76:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/EnumerableFlag.swift:76:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/EnumerableFlag.swift:79:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/EnumerableFlag.swift:80:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/EnumerableFlag.swift:80:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/AsyncParsableCommand.swift:27:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/AsyncParsableCommand.swift:37:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/AsyncParsableCommand.swift:60:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/AsyncParsableCommand.swift:61:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/AsyncParsableCommand.swift:61:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/AsyncParsableCommand.swift:71:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/AsyncParsableCommand.swift:71:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:12:1: error: (redundantFileprivate) Prefer private over fileprivate where equivalent.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:32:1: error: (spaceInsideBraces) Add space inside curly braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:32:1: error: (trailingClosures) Use trailing closure syntax where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:33:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:34:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:56:1: error: (redundantFileprivate) Prefer private over fileprivate where equivalent.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:60:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:82:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:90:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:91:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:94:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:95:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:97:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:102:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:107:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:112:1: error: (blankLinesAtStartOfScope) Remove leading blank line at the start of a scope.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:113:1: error: (blankLinesAtStartOfScope) Remove leading blank line at the start of a scope.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:116:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:121:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:123:1: error: (spaceAroundOperators) Add or remove space around operators or delimiters.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:124:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:128:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:132:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:133:1: error: (spaceAroundOperators) Add or remove space around operators or delimiters.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:133:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:142:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:147:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:150:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:151:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:152:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:156:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:156:1: error: (trailingClosures) Use trailing closure syntax where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:157:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:158:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:159:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:160:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:163:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:164:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:165:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:166:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:167:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:170:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:175:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:178:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:187:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:192:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:200:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:201:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:204:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:213:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:234:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:245:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:249:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:267:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:273:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:282:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:293:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:297:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:312:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:26:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:29:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:41:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:48:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:73:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:171:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:173:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:194:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:198:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:218:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:218:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:17:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:24:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:37:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:38:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:42:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:43:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:47:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:54:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:62:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:69:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:69:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:84:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:105:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:112:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:112:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:113:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:113:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:122:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:128:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:128:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:129:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:129:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:142:1: error: (blankLinesAtStartOfScope) Remove leading blank line at the start of a scope.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:142:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:143:1: error: (blankLinesAtStartOfScope) Remove leading blank line at the start of a scope.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:143:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:144:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:144:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:145:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:145:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:146:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:146:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:147:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:147:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:148:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:148:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:149:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:149:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:150:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:150:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:151:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:151:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:152:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:152:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:153:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:153:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:154:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:154:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:155:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:155:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:174:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:175:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:175:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:184:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:189:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:189:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:190:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:195:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:195:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:199:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:202:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:202:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:203:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:203:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:204:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:204:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:205:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:205:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:206:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:206:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:207:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:207:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:209:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:209:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:210:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:210:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:212:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:212:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:214:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:214:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:215:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:215:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:217:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:217:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:219:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:219:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:220:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:220:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:222:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:222:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:223:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:223:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:224:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:224:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:226:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:226:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:227:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:227:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:228:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:228:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:229:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:229:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:230:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:230:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:231:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:231:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:232:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:232:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:233:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:233:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:234:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:234:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:235:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:235:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:236:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:236:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:237:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:237:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:238:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:238:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:239:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:239:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:240:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:240:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:241:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:241:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:242:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:242:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:266:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:266:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:267:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:267:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:269:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:269:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:270:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:270:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:271:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:271:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:272:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:272:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:273:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:273:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:274:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:274:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:275:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:275:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:276:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:276:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:277:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableCommand.swift:277:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:20:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:26:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:35:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:39:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:46:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:50:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:51:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:52:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:58:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:59:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:66:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:72:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:76:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:76:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:93:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:93:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:98:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:103:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:103:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:106:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:122:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:139:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:155:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:164:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:175:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:180:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:180:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:185:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:186:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:186:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:200:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:206:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:206:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:219:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:219:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:225:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:241:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:269:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:269:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:280:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:280:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:281:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:281:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:282:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:282:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:283:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:283:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:284:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:284:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:286:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:286:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:291:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:291:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:294:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:294:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:301:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:301:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:314:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:314:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:316:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:316:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:317:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:317:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:319:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:319:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:320:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:320:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:321:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:321:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:323:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:323:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:324:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:324:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:325:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:325:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:326:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:326:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:328:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArguments.swift:328:1: error: (indent) Indent code in accordance with the scope level.
+warning: No Swift version was specified, so some formatting features were disabled. Specify the version of Swift you are using with the --swiftversion option, or by adding a .swift-version file to your project.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:14:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:33:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:34:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:35:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:40:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:45:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:55:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:60:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:68:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/CompletionKind.swift:69:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentVisibility.swift:16:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentVisibility.swift:22:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentVisibility.swift:34:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentVisibility.swift:43:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentVisibility.swift:57:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentVisibility.swift:58:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentVisibility.swift:58:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:35:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:36:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:40:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:41:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:45:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:47:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:49:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:52:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:61:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:91:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:99:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:116:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:125:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:127:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:127:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:130:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:134:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:141:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/OptionGroup.swift:144:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:16:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:19:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:26:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:42:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:49:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:50:1: error: (braces) Wrap braces in accordance with selected style (K&R or Allman).
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:62:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:63:1: error: (braces) Wrap braces in accordance with selected style (K&R or Allman).
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:81:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/ArgumentHelp.swift:85:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:19:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:24:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:41:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:43:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:47:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:50:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:53:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:70:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:75:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:76:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:77:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:88:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:93:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:104:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:106:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:108:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:17:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:23:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:24:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:25:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:34:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:48:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:56:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:71:1: error: (blankLinesBetweenScopes) Insert blank line before class, struct, enum, extension, protocol or function declarations.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:73:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:74:1: error: (spaceAroundOperators) Add or remove space around operators or delimiters.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:75:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:77:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:83:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:85:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:91:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:92:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:103:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:106:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:106:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:111:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:112:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:112:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:124:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:127:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:127:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:133:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:136:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:136:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:138:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:139:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:139:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:145:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:145:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:149:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:149:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:157:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:164:1: error: (blankLinesAtStartOfScope) Remove leading blank line at the start of a scope.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:164:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:165:1: error: (blankLinesAtStartOfScope) Remove leading blank line at the start of a scope.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:165:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:174:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:174:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:181:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:181:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:182:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/NameSpecification.swift:182:1: error: (redundantSelf) Insert/remove explicit self where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:73:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:75:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:78:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:102:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:119:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:131:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:135:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:136:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:137:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:149:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:163:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:167:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:172:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:173:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:174:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:179:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:184:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:191:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:193:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:193:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:213:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:227:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:230:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:234:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:235:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:235:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:245:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:245:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:246:1: error: (blankLinesAtEndOfScope) Remove trailing blank line at the end of a scope.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:246:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:247:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:250:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:270:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:300:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:300:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:301:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:301:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:320:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:352:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:368:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:377:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:389:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:410:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:410:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:411:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:411:1: error: (redundantParens) Remove redundant parentheses.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:414:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:414:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:416:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:416:1: error: (redundantNilInit) Remove/insert redundant nil default value (Optional vars are nil by default).
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:424:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:424:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:431:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:431:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:432:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:432:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:440:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:440:1: error: (redundantParens) Remove redundant parentheses.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:440:1: error: (trailingClosures) Use trailing closure syntax where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:440:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:442:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:442:1: error: (trailingClosures) Use trailing closure syntax where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:446:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:446:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:468:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:498:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:510:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:513:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:521:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:521:1: error: (redundantParens) Remove redundant parentheses.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:532:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:532:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:534:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:534:1: error: (redundantParens) Remove redundant parentheses.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:534:1: error: (trailingClosures) Use trailing closure syntax where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:534:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:536:1: error: (blankLinesAtEndOfScope) Remove trailing blank line at the end of a scope.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:536:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:536:1: error: (trailingClosures) Use trailing closure syntax where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:537:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:540:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:540:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:549:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:549:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:554:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:554:1: error: (redundantParens) Remove redundant parentheses.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:564:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:564:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:566:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:566:1: error: (redundantParens) Remove redundant parentheses.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:566:1: error: (trailingClosures) Use trailing closure syntax where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:566:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:570:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:570:1: error: (trailingClosures) Use trailing closure syntax where applicable.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:585:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:588:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:588:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:605:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:607:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:607:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:624:1: error: (consecutiveBlankLines) Replace consecutive blank lines with a single blank line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Flag.swift:624:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:48:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:50:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:53:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:71:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:76:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:91:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:99:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:100:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:105:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:106:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:153:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:190:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:236:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:296:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:303:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:305:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:306:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:321:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:334:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:351:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:363:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:363:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:370:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:370:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:371:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:390:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:405:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:405:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:426:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:440:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:440:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:447:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:447:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:448:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:456:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:457:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:457:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:460:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:460:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:463:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:463:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:469:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:469:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:476:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:476:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:477:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:477:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:479:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:480:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:480:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:483:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:483:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:486:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:486:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:492:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:492:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:506:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:509:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:509:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:512:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:512:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:518:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:518:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:525:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:525:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:526:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:537:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:538:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:538:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:542:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:542:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:545:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:545:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:552:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:552:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:559:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:559:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:560:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:560:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:563:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:564:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:564:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:568:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:568:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:571:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:571:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:578:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:578:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:595:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:599:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:599:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:602:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:602:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:609:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:609:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:616:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:616:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:617:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:626:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:627:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:627:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:631:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:631:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:634:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:634:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:640:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:640:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:661:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:665:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:665:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:668:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:668:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:674:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:674:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:681:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:681:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:682:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:695:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:696:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:696:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:701:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:701:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:704:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:704:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:711:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:711:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:735:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:740:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:740:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:743:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:743:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:750:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Argument.swift:750:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:53:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:54:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:55:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:58:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:81:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:96:1: error: (hoistPatternLet) Reposition let or var bindings within pattern.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:111:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:112:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:127:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:143:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:158:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:163:1: error: (redundantInternal) Remove redundant internal access control.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:164:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:180:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:197:1: error: (trailingSpace) Remove trailing space at end of a line.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:240:1: error: (emptyBraces) Remove whitespace inside empty braces.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:242:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:243:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:263:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:278:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:285:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:286:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:287:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:299:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:299:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:318:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:332:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:332:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:339:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:339:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:340:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:364:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:381:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:381:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:409:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:425:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:425:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:432:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:432:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:433:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:451:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:452:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:452:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:457:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:457:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:460:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:460:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:466:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:466:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:473:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:473:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:474:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:474:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:476:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:477:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:477:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:482:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:482:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:485:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:485:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:491:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:491:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:513:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:518:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:518:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:521:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:521:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:527:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:527:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:534:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:534:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:535:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:559:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:560:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:560:1: error: (unusedArguments) Mark unused function arguments with _.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:566:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:566:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:569:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:569:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:576:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:576:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:583:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:583:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:584:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:584:1: error: (indent) Indent code in accordance with the scope level.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:587:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:588:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:588:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:594:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:594:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:597:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:597:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:604:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:604:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:631:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:637:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:637:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:640:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:640:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:647:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:647:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:654:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:654:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:655:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:680:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:681:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:681:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:686:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:686:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:689:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:689:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:695:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:695:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:719:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:724:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:724:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:727:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:727:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:733:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:733:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:740:1: error: (blankLinesAroundMark) Insert blank line before and after MARK: comments.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:740:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:741:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:767:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:768:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:768:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:774:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:774:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:777:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:777:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:784:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:784:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:811:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:817:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:817:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:820:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:820:1: error: (typeSugar) Prefer shorthand syntax for Arrays, Dictionaries and Optionals.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:827:1: error: (extensionAccessControl) Configure the placement of an extension's access control keyword.
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Option.swift:827:1: error: (wrapArguments) Align wrapped function arguments or collection elements.
+SwiftFormat completed in 0.16s.
+Source input did not pass lint check.
+16/17 files require formatting.

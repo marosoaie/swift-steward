@@ -1,0 +1,136 @@
+{
+  "total": 10,
+  "p": 1,
+  "ps": 100,
+  "paging": { "pageIndex": 1, "pageSize": 100, "total": 10 },
+  "effortTotal": 95,
+  "issues": [
+    {
+      "key": "AZK0x1-sap-0001",
+      "rule": "swift:S1481",
+      "severity": "CRITICAL",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Types/CommandGroup.swift",
+      "project": "apple:swift-argument-parser",
+      "line": 18,
+      "hash": "0f3c9d0b1e7a",
+      "textRange": { "startLine": 18, "endLine": 18, "startOffset": 13, "endOffset": 24 },
+      "flows": [],
+      "status": "OPEN",
+      "message": "Make \"subcommands\" Sendable or mark the property nonisolated(unsafe).",
+      "effort": "10min",
+      "debt": "10min",
+      "tags": ["concurrency"],
+      "creationDate": "2026-10-23T11:38:23+0000",
+      "updateDate": "2026-10-23T11:38:23+0000",
+      "type": "BUG",
+      "scope": "MAIN"
+    },
+    {
+      "key": "AZK0x1-sap-0002",
+      "rule": "swift:S107",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Properties/Option.swift",
+      "project": "apple:swift-argument-parser",
+      "line": 27,
+      "textRange": { "startLine": 27, "endLine": 27, "startOffset": 2, "endOffset": 40 },
+      "status": "OPEN",
+      "message": "Initializer has 8 parameters, which is greater than the 7 authorized.",
+      "cleanCodeAttribute": "FORMATTED",
+      "cleanCodeAttributeCategory": "ADAPTABLE",
+      "impacts": [{ "softwareQuality": "MAINTAINABILITY", "severity": "MEDIUM" }],
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZK0x1-sap-0003",
+      "rule": "swift:S1172",
+      "severity": "MINOR",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Properties/Flag.swift",
+      "line": 22,
+      "status": "OPEN",
+      "message": "Remove the unused “inversion” parameter — or use it. Café 🚧 日本語",
+      "impacts": [{ "softwareQuality": "MAINTAINABILITY", "severity": "HIGH" }],
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZK0x1-sap-0004",
+      "rule": "swift:S125",
+      "severity": "INFO",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Types/ParsableCommand.swift",
+      "line": 29,
+      "status": "OPEN",
+      "message": "Résumé: commented-out code — 2 lines, 100% of the block.",
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZK0x1-sap-0005",
+      "rule": "swift:S1186",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Properties/Argument.swift",
+      "textRange": { "startLine": 25, "endLine": 26, "startOffset": 4, "endOffset": 1 },
+      "status": "OPEN",
+      "message": "Add a nested comment explaining why this function is empty,\nor complete the implementation.\r\nSee 50%25 of cases.",
+      "impacts": [{ "softwareQuality": "RELIABILITY", "severity": "BLOCKER" }],
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZK0x1-sap-0006",
+      "rule": "swift:S1481",
+      "severity": "MAJOR",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift",
+      "line": 10,
+      "status": "OPEN",
+      "message": "On a line the diff doesn't touch.",
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZK0x1-sap-0007",
+      "rule": "swift:S1481",
+      "severity": "MAJOR",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Types/ExpressibleByArgument.swift",
+      "line": 22,
+      "status": "RESOLVED",
+      "resolution": "FIXED",
+      "message": "Resolved, so skipped.",
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZK0x1-sap-0008",
+      "rule": "swift:S1451",
+      "severity": "BLOCKER",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Properties/ArgumentVisibility.swift",
+      "status": "OPEN",
+      "message": "File-level, so skipped: add or update the header of this file.",
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZK0x1-sap-0009",
+      "rule": "swift:S1066",
+      "severity": "MAJOR",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Properties/Errors.swift",
+      "line": 32,
+      "textRange": { "startLine": 32, "endLine": 32, "startOffset": 0, "endOffset": 20 },
+      "status": "OPEN",
+      "message": "Merge this if statement with the enclosing one.",
+      "type": "CODE_SMELL"
+    },
+    {
+      "key": "AZK0x1-sap-0010",
+      "rule": "swift:S1066",
+      "severity": "MAJOR",
+      "component": "apple:swift-argument-parser:Sources/ArgumentParser/Parsable Properties/Errors.swift",
+      "line": 32,
+      "textRange": { "startLine": 32, "endLine": 32, "startOffset": 0, "endOffset": 20 },
+      "status": "OPEN",
+      "message": "Merge this if statement with the enclosing one.",
+      "type": "CODE_SMELL"
+    }
+  ],
+  "components": [
+    {
+      "key": "apple:swift-argument-parser",
+      "enabled": true,
+      "qualifier": "TRK",
+      "name": "swift-argument-parser",
+      "longName": "swift-argument-parser"
+    }
+  ],
+  "facets": []
+}
