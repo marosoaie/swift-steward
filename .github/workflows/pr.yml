@@ -3,6 +3,11 @@ name: PR checks
 on:
   pull_request:
 
+# Read-only token for both jobs: annotations are workflow commands in the
+# log, and actions/cache authenticates with its own runtime token.
+permissions:
+  contents: read
+
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
