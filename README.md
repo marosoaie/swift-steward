@@ -30,7 +30,7 @@ Prebuilt arm64 binaries ship with each
 checksums attached. They are not yet notarized, so fetch them with `curl`/`gh
 release download` (browser downloads get quarantined by Gatekeeper).
 
-Or build from source (Swift 6.2+, macOS 14+):
+Or build from source (Swift 6.2+, on macOS 14+ or Linux):
 
 ```sh
 swift build -c release

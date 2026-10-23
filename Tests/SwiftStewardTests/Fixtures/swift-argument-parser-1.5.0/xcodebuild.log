@@ -1,0 +1,729 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild build -scheme ArgumentParser -destination platform=macOS -derivedDataPath /ci/.derived-data SWIFT_STRICT_CONCURRENCY=complete
+
+Build settings from command line:
+    SWIFT_STRICT_CONCURRENCY = complete
+
+Resolve Package Graph
+2026-10-23 13:38:23.246 xcodebuild[39660:973602] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+
+
+Resolved source packages:
+  swift-argument-parser: /ci/swift-argument-parser
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:macOS, arch:arm64, id:00008132-000430483EC3001C, name:My Mac }
+{ platform:macOS, arch:x86_64, id:00008132-000430483EC3001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Mac Catalyst, id:00008132-000430483EC3001C, name:My Mac }
+{ platform:macOS, arch:x86_64, variant:Mac Catalyst, id:00008132-000430483EC3001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:DriverKit, id:00008132-000430483EC3001C, name:My Mac }
+{ platform:macOS, arch:arm64, variant:Designed for [iPad,iPhone], id:00008132-000430483EC3001C, name:My Mac }
+{ platform:macOS, arch:arm64e.x1, variant:Designed for [iPad,iPhone], id:00008132-000430483EC3001C, name:My Mac }
+{ platform:macOS, arch:arm64_32, variant:Designed for [iPad,iPhone], id:00008132-000430483EC3001C, name:My Mac }
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+Compile plug-in “GenerateManual” in package “swift-argument-parser”
+[debug]: Compiling plugin to executable at /ci/.derived-data/Build/Products/PluginExecutables/GenerateManual
+[debug]: Using compiler /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc
+[debug]: Plugin compilation output directory '/ci/.derived-data/Build/Products/PluginExecutables'
+[debug]: Computed hash of plugin compilation inputs: 8344b8a17b06de596c271dba248b4464255fd4ea7754d98c74ce41be4355de50
+
+
+Process build tool plug-in results
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (3 targets)
+    Target 'ArgumentParser-product' in project 'swift-argument-parser'
+        ➜ Explicit dependency on target 'ArgumentParser' in project 'swift-argument-parser'
+        ➜ Explicit dependency on target 'ArgumentParserToolInfo' in project 'swift-argument-parser'
+    Target 'ArgumentParser' in project 'swift-argument-parser'
+        ➜ Explicit dependency on target 'ArgumentParserToolInfo' in project 'swift-argument-parser'
+    Target 'ArgumentParserToolInfo' in project 'swift-argument-parser' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+ReadFileContents /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/share/docc/features.json
+
+Build description signature: da8867cf28f01fea3e4e53129b9b264d
+Build description path: /ci/.derived-data/Build/Intermediates.noindex/XCBuildData/da8867cf28f01fea3e4e53129b9b264d.xcbuilddata
+CreateBuildDirectory /ci/.derived-data/SDKExplicitPrecompiledModules
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/SDKExplicitPrecompiledModules
+
+CreateBuildDirectory /ci/.derived-data/ModuleCache.noindex
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/ModuleCache.noindex
+
+CreateBuildDirectory /ci/.derived-data/CompilationCache.noindex
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/CompilationCache.noindex
+
+CreateBuildDirectory /ci/.derived-data/Build/Products
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/Build/Products
+
+CreateBuildDirectory /ci/.derived-data/Build/Intermediates.noindex
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/Build/Intermediates.noindex
+
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk /ci/.derived-data/SDKStatCaches.noindex/macosx27.0-26A425-7231f6df4def33e022ae2eb8f782df1a.sdkstatcache
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -o /ci/.derived-data/SDKStatCaches.noindex/macosx27.0-26A425-7231f6df4def33e022ae2eb8f782df1a.sdkstatcache
+
+CreateBuildDirectory /ci/.derived-data/Build/Products/Debug
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/Build/Products/Debug
+
+CreateBuildDirectory /ci/.derived-data/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /ci/.derived-data/Build/Intermediates.noindex/PrecompiledHeaders
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/Build/Intermediates.noindex/PrecompiledHeaders
+
+CreateBuildDirectory /ci/.derived-data/Build/Intermediates.noindex/EagerLinkingTBDs/Debug
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/Build/Intermediates.noindex/EagerLinkingTBDs/Debug
+
+CreateBuildDirectory /ci/.derived-data/Build/Products/Debug/PackageFrameworks
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-create-build-directory /ci/.derived-data/Build/Products/Debug/PackageFrameworks
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.DependencyMetadataFileList (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.DependencyMetadataFileList
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.modulemap (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.modulemap
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.DependencyStaticMetadataFileList (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-OutputFileMap.json (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-OutputFileMap.json
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo_const_extract_protocols.json (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo_const_extract_protocols.json
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftFileList (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftFileList
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.LinkFileList (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.LinkFileList
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftConstValuesFileList (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser_const_extract_protocols.json (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser_const_extract_protocols.json
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftFileList (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftFileList
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftConstValuesFileList (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.LinkFileList (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.LinkFileList
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-OutputFileMap.json (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-OutputFileMap.json
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.modulemap (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.modulemap
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.DependencyStaticMetadataFileList (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.DependencyStaticMetadataFileList
+
+Copy /ci/.derived-data/Build/Intermediates.noindex/GeneratedModuleMaps/ArgumentParserToolInfo.modulemap /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.modulemap (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.modulemap /ci/.derived-data/Build/Intermediates.noindex/GeneratedModuleMaps
+
+WriteAuxiliaryFile /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.DependencyMetadataFileList (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    write-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.DependencyMetadataFileList
+
+Copy /ci/.derived-data/Build/Intermediates.noindex/GeneratedModuleMaps/ArgumentParser.modulemap /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.modulemap (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.modulemap /ci/.derived-data/Build/Intermediates.noindex/GeneratedModuleMaps
+
+SwiftDriver ArgumentParserToolInfo normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name ArgumentParserToolInfo -Onone @/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-upcoming-feature StrictConcurrency -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -g -module-cache-path /ci/.derived-data/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /ci/.derived-data/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /ci/.derived-data/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /ci/.derived-data/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /ci/.derived-data/SDKStatCaches.noindex/macosx27.0-26A425-7231f6df4def33e022ae2eb8f782df1a.sdkstatcache -output-file-map /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /ci/.derived-data/ModuleCache.noindex -sdk-module-cache-path /ci/.derived-data/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /ci/.derived-data/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo_const_extract_protocols.json -Xcc -I/ci/.derived-data/Build/Products/Debug/include -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources-normal/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-Swift.h -working-directory /ci/swift-argument-parser/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/SwiftShims-BTY4O1F0X2ISVWWJMGUF9YNMZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_SwiftConcurrencyShims-14DNC2GGIPQ111F8TNIXHT22B.pcm
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ ArgumentParserToolInfo (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    
+
+SwiftCompile normal arm64 Compiling\ ToolInfo.swift /ci/swift-argument-parser/Sources/ArgumentParserToolInfo/ToolInfo.swift (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParserToolInfo/ToolInfo.swift (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ToolInfo.swift
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for ArgumentParserToolInfo (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+
+SwiftDriver\ Compilation\ Requirements ArgumentParserToolInfo normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name ArgumentParserToolInfo -Onone @/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-upcoming-feature StrictConcurrency -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -g -module-cache-path /ci/.derived-data/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /ci/.derived-data/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /ci/.derived-data/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /ci/.derived-data/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /ci/.derived-data/SDKStatCaches.noindex/macosx27.0-26A425-7231f6df4def33e022ae2eb8f782df1a.sdkstatcache -output-file-map /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /ci/.derived-data/ModuleCache.noindex -sdk-module-cache-path /ci/.derived-data/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /ci/.derived-data/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo_const_extract_protocols.json -Xcc -I/ci/.derived-data/Build/Products/Debug/include -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources-normal/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-Swift.h -working-directory /ci/swift-argument-parser/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /ci/.derived-data/Build/Intermediates.noindex/GeneratedModuleMaps/ArgumentParserToolInfo-Swift.h /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-Swift.h (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-swiftHeaderTool -arch arm64 /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-Swift.h -o /ci/.derived-data/Build/Intermediates.noindex/GeneratedModuleMaps/ArgumentParserToolInfo-Swift.h
+
+Copy /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.swiftmodule/arm64-apple-macos.swiftmodule /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftmodule (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftmodule /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.swiftmodule/arm64-apple-macos.swiftmodule
+
+Copy /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.swiftmodule/arm64-apple-macos.abi.json /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.abi.json (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.abi.json /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.swiftmodule/arm64-apple-macos.abi.json
+
+Copy /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.swiftmodule/arm64-apple-macos.swiftdoc /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftdoc (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftdoc /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.swiftmodule/arm64-apple-macos.swiftdoc
+
+Copy /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftsourceinfo (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftsourceinfo /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo
+
+SwiftDriver ArgumentParser normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name ArgumentParser -Onone @/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -enable-experimental-feature StrictConcurrency -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-upcoming-feature StrictConcurrency -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -g -module-cache-path /ci/.derived-data/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /ci/.derived-data/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /ci/.derived-data/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /ci/.derived-data/Build/Products/Debug/PackageFrameworks -F /ci/.derived-data/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /ci/.derived-data/SDKStatCaches.noindex/macosx27.0-26A425-7231f6df4def33e022ae2eb8f782df1a.sdkstatcache -output-file-map /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /ci/.derived-data/ModuleCache.noindex -sdk-module-cache-path /ci/.derived-data/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /ci/.derived-data/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser_const_extract_protocols.json -Xcc -I/ci/.derived-data/Build/Products/Debug/include -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources-normal/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-Swift.h -working-directory /ci/swift-argument-parser/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling ToolInfo.swift (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+
+SwiftDriver\ Compilation ArgumentParserToolInfo normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name ArgumentParserToolInfo -Onone @/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-upcoming-feature StrictConcurrency -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -g -module-cache-path /ci/.derived-data/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /ci/.derived-data/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /ci/.derived-data/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /ci/.derived-data/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /ci/.derived-data/SDKStatCaches.noindex/macosx27.0-26A425-7231f6df4def33e022ae2eb8f782df1a.sdkstatcache -output-file-map /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /ci/.derived-data/ModuleCache.noindex -sdk-module-cache-path /ci/.derived-data/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /ci/.derived-data/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo_const_extract_protocols.json -Xcc -I/ci/.derived-data/Build/Products/Debug/include -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources-normal/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo-Swift.h -working-directory /ci/swift-argument-parser/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+Ld /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.o normal (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos12.0 -r -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -O0 -Xlinker -no_warn_duplicate_libraries -F/ci/.derived-data/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -F/ci/.derived-data/Build/Products/Debug -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -filelist /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.LinkFileList -nostdlib -Xlinker -object_path_lto -Xlinker /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo_lto.o -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.swiftmodule -o /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.o
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_Builtin_float-8LVYABXWP7E7PDZPFGBUNMJU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_Builtin_stdbool-3LRZ94LZBVUKSYCN5AVSD8KBD.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_AvailabilityInternal-ARYE7LV3Y1NV0XXX7MJJDI7HN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/ptrauth-927NTPOQLT1QQVWWUVYBX4SB3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/ptrcheck-4UJQN1JO738NMGFKUS8926WX9.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_Builtin_stddef-E0NE2ZF4BUWD8A4GY9FXMJMYV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_Builtin_stdarg-535E982KE1LOLGWFRJIE444LB.pcm
+
+ExtractAppIntentsMetadata (in target 'ArgumentParserToolInfo' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name ArgumentParserToolInfo --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk --xcode-version 27A266a --platform-family macOS --deployment-target 12.0 --bundle-identifier swift-argument-parser.ArgumentParserToolInfo --output /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.appintents --target-triple arm64-apple-macos12.0 --binary-file /ci/.derived-data/Build/Products/Debug/ArgumentParserToolInfo.o --dependency-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo_dependency_info.dat --stringsdata-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftFileList --metadata-file-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.DependencyMetadataFileList --static-metadata-file-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/ArgumentParserToolInfo.DependencyStaticMetadataFileList --swift-const-vals-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParserToolInfo-t.build/Objects-normal/arm64/ArgumentParserToolInfo.SwiftConstValuesFileList --force --compile-time-extraction --deployment-aware-processing --no-app-shortcuts-localization
+2026-10-23 13:38:25.682 appintentsmetadataprocessor[39686:973898] Starting appintentsmetadataprocessor export
+2026-10-23 13:38:25.728 appintentsmetadataprocessor[39686:973898] Extracted no relevant App Intents symbols, skipping writing output
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_DarwinFoundation1-31Q4L5F64UHERNAMIRP88YKX.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_DarwinFoundation2-5X7RXHGPMQS5FGYC924M8EST3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_Builtin_limits-8ND7ACPE3CRY1K7AY6F1KWWWT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/string_h-3NV9NA3ZC7CFUGYFYBMCNK2VV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_Builtin_stdint-ABYLK3S4C9HCHS9J4XL7AQMEH.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/sys_types-7NKEEARED9IOOZQ0PV7LOOU21.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/libDER-2A1S6YZDZ62FUJCM7NE9ZYUHZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_DarwinFoundation3-BLPK2UM307QLT81HA2QI6YA1F.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/_Builtin_inttypes-BPWV1VVRKZOP305K3FX3B9UQV.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/Darwin-3P2URI7PRYCKP025T7X82UPOF.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/libkern-8TSAP2Q848XENKYPFGBO069UN.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/MachO-DIBYAWKMYMAF9TLBN54TDVNGZ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/launch-1G89SHFVHHD3RGNU5IGDKGM98.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/ObjectiveC-9H9BDXUIEE8QPLPROHKNHC9EC.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/os_object-EKEWXLSYPXM832H8XUJW361D1.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/os_workgroup-1R6LXTI6QEFEMQT8PPT648P3G.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/Dispatch-1VBRFLKIL5L892H0L8C811NQ.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/CoreFoundation-90N4CE8NSZN15WHEK0IVTRMDG.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/XPC-9VSAMUBN3ON5OUVNNYLPWMBRA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/CFNetwork-BJOU647RBS3TP65FAY6UWIXKT.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/Security-CYOXPTL9U4LO6FSZ81SE913I3.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/IOKit-6JBUJ0S1QRV9J84N4YSNS4ZHU.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/DiskArbitration-31FS0TBLUCTOL7I351FBKL89V.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/CoreServices-E82ILGDSISDH31N0DOGC4DUMA.pcm
+
+SwiftExplicitDependencyGeneratePcm arm64 /ci/.derived-data/SDKExplicitPrecompiledModules/Foundation-4EEP0G4CO2EBW0F01DMFNFN3D.pcm
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ ArgumentParser (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:76:16: warning: stored property 'base' of 'Sendable'-conforming struct 'CleanExit' has non-Sendable type 'CleanExit.Representation'
+ 68 | /// passing it to `exit(with:)`, exits the program with exit code `0`.
+ 69 | public struct CleanExit: Error, CustomStringConvertible {
+ 70 |   internal enum Representation {
+    |                 `- note: consider making enum 'Representation' conform to the 'Sendable' protocol
+ 71 |     case helpRequest(ParsableCommand.Type? = nil)
+ 72 |     case message(String)
+    :
+ 74 |   }
+ 75 |   
+ 76 |   internal var base: Representation
+    |                `- warning: stored property 'base' of 'Sendable'-conforming struct 'CleanExit' has non-Sendable type 'CleanExit.Representation'
+ 77 |   
+ 78 |   /// Treat this error as a help request and display the full help message.
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:66:14: warning: stored property 'ungroupedSubcommands' of 'Sendable'-conforming struct 'CommandConfiguration' contains non-Sendable type 'any ParsableCommand.Type'
+ 64 |   /// An array of types that define subcommands for this command and are
+ 65 |   /// not part of any command group.
+ 66 |   public var ungroupedSubcommands: [ParsableCommand.Type]
+    |              `- warning: stored property 'ungroupedSubcommands' of 'Sendable'-conforming struct 'CommandConfiguration' contains non-Sendable type 'any ParsableCommand.Type'
+ 67 | 
+ 68 |   /// The list of subcommands and subcommand groups.
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:72:14: warning: stored property 'defaultSubcommand' of 'Sendable'-conforming struct 'CommandConfiguration' contains non-Sendable type 'any ParsableCommand.Type'
+ 70 | 
+ 71 |   /// The default command type to run if no subcommand is given.
+ 72 |   public var defaultSubcommand: ParsableCommand.Type?
+    |              `- warning: stored property 'defaultSubcommand' of 'Sendable'-conforming struct 'CommandConfiguration' contains non-Sendable type 'any ParsableCommand.Type'
+ 73 |   
+ 74 |   /// Flag names to be used for help.
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandGroup.swift:18:14: warning: stored property 'subcommands' of 'Sendable'-conforming struct 'CommandGroup' contains non-Sendable type 'any ParsableCommand.Type'
+16 | 
+17 |   /// The list of subcommands that are part of this group.
+18 |   public let subcommands: [ParsableCommand.Type]
+   |              `- warning: stored property 'subcommands' of 'Sendable'-conforming struct 'CommandGroup' contains non-Sendable type 'any ParsableCommand.Type'
+19 | 
+20 |   /// Create a command group.
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:26:7: warning: stored property 'parsableArgumentsType' of 'Sendable'-conforming struct 'ParsableArgumentsValidationError' has non-Sendable type 'any ParsableArguments.Type'
+ 24 | 
+ 25 | struct ParsableArgumentsValidationError: Error, CustomStringConvertible {
+ 26 |   let parsableArgumentsType: ParsableArguments.Type
+    |       `- warning: stored property 'parsableArgumentsType' of 'Sendable'-conforming struct 'ParsableArgumentsValidationError' has non-Sendable type 'any ParsableArguments.Type'
+ 27 |   let underlayingErrors: [Error]
+ 28 |   var description: String {
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:177:9: warning: stored property 'type' of 'Sendable'-conforming struct 'InvalidDecoderError' has non-Sendable type 'any ParsableArguments.Type'
+175 |   
+176 |   struct InvalidDecoderError: ParsableArgumentsValidatorError, CustomStringConvertible {
+177 |     let type: ParsableArguments.Type
+    |         `- warning: stored property 'type' of 'Sendable'-conforming struct 'InvalidDecoderError' has non-Sendable type 'any ParsableArguments.Type'
+178 |     
+179 |     var description: String {
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsing/CommandParser.swift:13:7: warning: stored property 'commandStack' of 'Sendable'-conforming struct 'CommandError' contains non-Sendable type 'any ParsableCommand.Type'
+ 11 | 
+ 12 | struct CommandError: Error {
+ 13 |   var commandStack: [ParsableCommand.Type]
+    |       `- warning: stored property 'commandStack' of 'Sendable'-conforming struct 'CommandError' contains non-Sendable type 'any ParsableCommand.Type'
+ 14 |   var parserError: ParserError
+ 15 | }
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Utilities/Tree.swift:108:10: warning: associated value 'recursiveSubcommand' of 'Sendable'-conforming enum 'InitializationError' has non-Sendable type 'any ParsableCommand.Type'
+106 |     
+107 |   enum InitializationError: Error {
+108 |     case recursiveSubcommand(ParsableCommand.Type)
+    |          `- warning: associated value 'recursiveSubcommand' of 'Sendable'-conforming enum 'InitializationError' has non-Sendable type 'any ParsableCommand.Type'
+109 |     case aliasMatchingCommand(ParsableCommand.Type)
+110 |   }
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Utilities/Tree.swift:109:10: warning: associated value 'aliasMatchingCommand' of 'Sendable'-conforming enum 'InitializationError' has non-Sendable type 'any ParsableCommand.Type'
+107 |   enum InitializationError: Error {
+108 |     case recursiveSubcommand(ParsableCommand.Type)
+109 |     case aliasMatchingCommand(ParsableCommand.Type)
+    |          `- warning: associated value 'aliasMatchingCommand' of 'Sendable'-conforming enum 'InitializationError' has non-Sendable type 'any ParsableCommand.Type'
+110 |   }
+111 | }
+SwiftCompile normal arm64 Compiling\ Platform.swift,\ SequenceExtensions.swift,\ StringExtensions.swift,\ Tree.swift /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/Platform.swift /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/SequenceExtensions.swift /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/StringExtensions.swift /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/Tree.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/Platform.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile Platform.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/SequenceExtensions.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile SequenceExtensions.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/StringExtensions.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile StringExtensions.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/Tree.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile Tree.swift
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Utilities/Tree.swift:108:10: warning: associated value 'recursiveSubcommand' of 'Sendable'-conforming enum 'InitializationError' has non-Sendable type 'any ParsableCommand.Type'
+106 |     
+107 |   enum InitializationError: Error {
+108 |     case recursiveSubcommand(ParsableCommand.Type)
+    |          `- warning: associated value 'recursiveSubcommand' of 'Sendable'-conforming enum 'InitializationError' has non-Sendable type 'any ParsableCommand.Type'
+109 |     case aliasMatchingCommand(ParsableCommand.Type)
+110 |   }
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Utilities/Tree.swift:109:10: warning: associated value 'aliasMatchingCommand' of 'Sendable'-conforming enum 'InitializationError' has non-Sendable type 'any ParsableCommand.Type'
+107 |   enum InitializationError: Error {
+108 |     case recursiveSubcommand(ParsableCommand.Type)
+109 |     case aliasMatchingCommand(ParsableCommand.Type)
+    |          `- warning: associated value 'aliasMatchingCommand' of 'Sendable'-conforming enum 'InitializationError' has non-Sendable type 'any ParsableCommand.Type'
+110 |   }
+111 | }
+SwiftCompile normal arm64 Compiling\ ArgumentDefinition.swift,\ ArgumentSet.swift,\ CommandParser.swift,\ InputKey.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ArgumentDefinition.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ArgumentSet.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/CommandParser.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/InputKey.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsing/CommandParser.swift:13:7: warning: stored property 'commandStack' of 'Sendable'-conforming struct 'CommandError' contains non-Sendable type 'any ParsableCommand.Type'
+ 11 | 
+ 12 | struct CommandError: Error {
+ 13 |   var commandStack: [ParsableCommand.Type]
+    |       `- warning: stored property 'commandStack' of 'Sendable'-conforming struct 'CommandError' contains non-Sendable type 'any ParsableCommand.Type'
+ 14 |   var parserError: ParserError
+ 15 | }
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ArgumentDefinition.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ArgumentDefinition.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ArgumentSet.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ArgumentSet.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/CommandParser.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile CommandParser.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/InputKey.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile InputKey.swift
+
+SwiftCompile normal arm64 Compiling\ ParsableArguments.swift,\ ParsableArgumentsValidation.swift,\ ParsableCommand.swift,\ ArgumentDecoder.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/ParsableArguments.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/ParsableArgumentsValidation.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/ParsableCommand.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ArgumentDecoder.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:26:7: warning: stored property 'parsableArgumentsType' of 'Sendable'-conforming struct 'ParsableArgumentsValidationError' has non-Sendable type 'any ParsableArguments.Type'
+ 24 | 
+ 25 | struct ParsableArgumentsValidationError: Error, CustomStringConvertible {
+ 26 |   let parsableArgumentsType: ParsableArguments.Type
+    |       `- warning: stored property 'parsableArgumentsType' of 'Sendable'-conforming struct 'ParsableArgumentsValidationError' has non-Sendable type 'any ParsableArguments.Type'
+ 27 |   let underlayingErrors: [Error]
+ 28 |   var description: String {
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/ParsableArgumentsValidation.swift:177:9: warning: stored property 'type' of 'Sendable'-conforming struct 'InvalidDecoderError' has non-Sendable type 'any ParsableArguments.Type'
+175 |   
+176 |   struct InvalidDecoderError: ParsableArgumentsValidatorError, CustomStringConvertible {
+177 |     let type: ParsableArguments.Type
+    |         `- warning: stored property 'type' of 'Sendable'-conforming struct 'InvalidDecoderError' has non-Sendable type 'any ParsableArguments.Type'
+178 |     
+179 |     var description: String {
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/ParsableArguments.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ParsableArguments.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/ParsableArgumentsValidation.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ParsableArgumentsValidation.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/ParsableCommand.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ParsableCommand.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ArgumentDecoder.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ArgumentDecoder.swift
+
+SwiftCompile normal arm64 Compiling\ ArgumentHelp.swift,\ ArgumentVisibility.swift,\ CompletionKind.swift,\ Errors.swift,\ Flag.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/ArgumentHelp.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/ArgumentVisibility.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/CompletionKind.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/Errors.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/Flag.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Properties/Errors.swift:76:16: warning: stored property 'base' of 'Sendable'-conforming struct 'CleanExit' has non-Sendable type 'CleanExit.Representation'
+ 68 | /// passing it to `exit(with:)`, exits the program with exit code `0`.
+ 69 | public struct CleanExit: Error, CustomStringConvertible {
+ 70 |   internal enum Representation {
+    |                 `- note: consider making enum 'Representation' conform to the 'Sendable' protocol
+ 71 |     case helpRequest(ParsableCommand.Type? = nil)
+ 72 |     case message(String)
+    :
+ 74 |   }
+ 75 |   
+ 76 |   internal var base: Representation
+    |                `- warning: stored property 'base' of 'Sendable'-conforming struct 'CleanExit' has non-Sendable type 'CleanExit.Representation'
+ 77 |   
+ 78 |   /// Treat this error as a help request and display the full help message.
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/ArgumentHelp.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ArgumentHelp.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/ArgumentVisibility.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ArgumentVisibility.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/CompletionKind.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile CompletionKind.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/Errors.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile Errors.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/Flag.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile Flag.swift
+
+SwiftCompile normal arm64 Compiling\ BashCompletionsGenerator.swift,\ CompletionsGenerator.swift,\ FishCompletionsGenerator.swift,\ ZshCompletionsGenerator.swift,\ Argument.swift /ci/swift-argument-parser/Sources/ArgumentParser/Completions/BashCompletionsGenerator.swift /ci/swift-argument-parser/Sources/ArgumentParser/Completions/CompletionsGenerator.swift /ci/swift-argument-parser/Sources/ArgumentParser/Completions/FishCompletionsGenerator.swift /ci/swift-argument-parser/Sources/ArgumentParser/Completions/ZshCompletionsGenerator.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/Argument.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Completions/BashCompletionsGenerator.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile BashCompletionsGenerator.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Completions/CompletionsGenerator.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile CompletionsGenerator.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Completions/FishCompletionsGenerator.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile FishCompletionsGenerator.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Completions/ZshCompletionsGenerator.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ZshCompletionsGenerator.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/Argument.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile Argument.swift
+
+SwiftCompile normal arm64 Compiling\ ParserError.swift,\ SplitArguments.swift,\ DumpHelpGenerator.swift,\ HelpCommand.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ParserError.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/SplitArguments.swift /ci/swift-argument-parser/Sources/ArgumentParser/Usage/DumpHelpGenerator.swift /ci/swift-argument-parser/Sources/ArgumentParser/Usage/HelpCommand.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ParserError.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ParserError.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/SplitArguments.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile SplitArguments.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Usage/DumpHelpGenerator.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile DumpHelpGenerator.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Usage/HelpCommand.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile HelpCommand.swift
+
+SwiftCompile normal arm64 Compiling\ NameSpecification.swift,\ Option.swift,\ OptionGroup.swift,\ AsyncParsableCommand.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/NameSpecification.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/Option.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/OptionGroup.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/AsyncParsableCommand.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/NameSpecification.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile NameSpecification.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/Option.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile Option.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Properties/OptionGroup.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile OptionGroup.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/AsyncParsableCommand.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile AsyncParsableCommand.swift
+
+SwiftCompile normal arm64 Compiling\ CommandConfiguration.swift,\ CommandGroup.swift,\ EnumerableFlag.swift,\ ExpressibleByArgument.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/CommandConfiguration.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/CommandGroup.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/EnumerableFlag.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/ExpressibleByArgument.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:66:14: warning: stored property 'ungroupedSubcommands' of 'Sendable'-conforming struct 'CommandConfiguration' contains non-Sendable type 'any ParsableCommand.Type'
+ 64 |   /// An array of types that define subcommands for this command and are
+ 65 |   /// not part of any command group.
+ 66 |   public var ungroupedSubcommands: [ParsableCommand.Type]
+    |              `- warning: stored property 'ungroupedSubcommands' of 'Sendable'-conforming struct 'CommandConfiguration' contains non-Sendable type 'any ParsableCommand.Type'
+ 67 | 
+ 68 |   /// The list of subcommands and subcommand groups.
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandConfiguration.swift:72:14: warning: stored property 'defaultSubcommand' of 'Sendable'-conforming struct 'CommandConfiguration' contains non-Sendable type 'any ParsableCommand.Type'
+ 70 | 
+ 71 |   /// The default command type to run if no subcommand is given.
+ 72 |   public var defaultSubcommand: ParsableCommand.Type?
+    |              `- warning: stored property 'defaultSubcommand' of 'Sendable'-conforming struct 'CommandConfiguration' contains non-Sendable type 'any ParsableCommand.Type'
+ 73 |   
+ 74 |   /// Flag names to be used for help.
+
+/ci/swift-argument-parser/Sources/ArgumentParser/Parsable Types/CommandGroup.swift:18:14: warning: stored property 'subcommands' of 'Sendable'-conforming struct 'CommandGroup' contains non-Sendable type 'any ParsableCommand.Type'
+16 | 
+17 |   /// The list of subcommands that are part of this group.
+18 |   public let subcommands: [ParsableCommand.Type]
+   |              `- warning: stored property 'subcommands' of 'Sendable'-conforming struct 'CommandGroup' contains non-Sendable type 'any ParsableCommand.Type'
+19 | 
+20 |   /// Create a command group.
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/CommandConfiguration.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile CommandConfiguration.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/CommandGroup.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile CommandGroup.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/EnumerableFlag.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile EnumerableFlag.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsable\ Types/ExpressibleByArgument.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ExpressibleByArgument.swift
+
+SwiftCompile normal arm64 Compiling\ HelpGenerator.swift,\ MessageInfo.swift,\ UsageGenerator.swift,\ CollectionExtensions.swift /ci/swift-argument-parser/Sources/ArgumentParser/Usage/HelpGenerator.swift /ci/swift-argument-parser/Sources/ArgumentParser/Usage/MessageInfo.swift /ci/swift-argument-parser/Sources/ArgumentParser/Usage/UsageGenerator.swift /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/CollectionExtensions.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Usage/HelpGenerator.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile HelpGenerator.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Usage/MessageInfo.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile MessageInfo.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Usage/UsageGenerator.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile UsageGenerator.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Utilities/CollectionExtensions.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile CollectionExtensions.swift
+
+SwiftCompile normal arm64 Compiling\ InputOrigin.swift,\ Name.swift,\ Parsed.swift,\ ParsedValues.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/InputOrigin.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/Name.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/Parsed.swift /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ParsedValues.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/InputOrigin.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile InputOrigin.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/Name.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile Name.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/Parsed.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile Parsed.swift
+
+SwiftCompile normal arm64 /ci/swift-argument-parser/Sources/ArgumentParser/Parsing/ParsedValues.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-SwiftPerFileCompile ParsedValues.swift
+
+SwiftDriverJobDiscovery normal arm64 Compiling CommandConfiguration.swift, CommandGroup.swift, EnumerableFlag.swift, ExpressibleByArgument.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Compiling NameSpecification.swift, Option.swift, OptionGroup.swift, AsyncParsableCommand.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ArgumentHelp.swift, ArgumentVisibility.swift, CompletionKind.swift, Errors.swift, Flag.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for ArgumentParser (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriver\ Compilation\ Requirements ArgumentParser normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name ArgumentParser -Onone @/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -enable-experimental-feature StrictConcurrency -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-upcoming-feature StrictConcurrency -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -g -module-cache-path /ci/.derived-data/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /ci/.derived-data/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /ci/.derived-data/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /ci/.derived-data/Build/Products/Debug/PackageFrameworks -F /ci/.derived-data/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /ci/.derived-data/SDKStatCaches.noindex/macosx27.0-26A425-7231f6df4def33e022ae2eb8f782df1a.sdkstatcache -output-file-map /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /ci/.derived-data/ModuleCache.noindex -sdk-module-cache-path /ci/.derived-data/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /ci/.derived-data/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser_const_extract_protocols.json -Xcc -I/ci/.derived-data/Build/Products/Debug/include -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources-normal/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-Swift.h -working-directory /ci/swift-argument-parser/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /ci/.derived-data/Build/Intermediates.noindex/GeneratedModuleMaps/ArgumentParser-Swift.h /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-Swift.h (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-swiftHeaderTool -arch arm64 /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-Swift.h -o /ci/.derived-data/Build/Intermediates.noindex/GeneratedModuleMaps/ArgumentParser-Swift.h
+
+Copy /ci/.derived-data/Build/Products/Debug/ArgumentParser.swiftmodule/arm64-apple-macos.swiftmodule /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftmodule (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftmodule /ci/.derived-data/Build/Products/Debug/ArgumentParser.swiftmodule/arm64-apple-macos.swiftmodule
+
+Copy /ci/.derived-data/Build/Products/Debug/ArgumentParser.swiftmodule/arm64-apple-macos.swiftdoc /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftdoc (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftdoc /ci/.derived-data/Build/Products/Debug/ArgumentParser.swiftmodule/arm64-apple-macos.swiftdoc
+
+Copy /ci/.derived-data/Build/Products/Debug/ArgumentParser.swiftmodule/arm64-apple-macos.abi.json /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.abi.json (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.abi.json /ci/.derived-data/Build/Products/Debug/ArgumentParser.swiftmodule/arm64-apple-macos.abi.json
+
+Copy /ci/.derived-data/Build/Products/Debug/ArgumentParser.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftsourceinfo (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftsourceinfo /ci/.derived-data/Build/Products/Debug/ArgumentParser.swiftmodule/Project/arm64-apple-macos.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling InputOrigin.swift, Name.swift, Parsed.swift, ParsedValues.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Compiling BashCompletionsGenerator.swift, CompletionsGenerator.swift, FishCompletionsGenerator.swift, ZshCompletionsGenerator.swift, Argument.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ParsableArguments.swift, ParsableArgumentsValidation.swift, ParsableCommand.swift, ArgumentDecoder.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ArgumentDefinition.swift, ArgumentSet.swift, CommandParser.swift, InputKey.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Compiling Platform.swift, SequenceExtensions.swift, StringExtensions.swift, Tree.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ParserError.swift, SplitArguments.swift, DumpHelpGenerator.swift, HelpCommand.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriverJobDiscovery normal arm64 Compiling HelpGenerator.swift, MessageInfo.swift, UsageGenerator.swift, CollectionExtensions.swift (in target 'ArgumentParser' from project 'swift-argument-parser')
+
+SwiftDriver\ Compilation ArgumentParser normal arm64 com.apple.xcode.tools.swift.compiler (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser/.swiftpm/xcode
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -parse-as-library -module-name ArgumentParser -Onone @/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftFileList -DSWIFT_PACKAGE -DDEBUG -DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE -DXcode -enable-experimental-feature StrictConcurrency -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing -enable-upcoming-feature StrictConcurrency -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -target arm64-apple-macos12.0 -g -module-cache-path /ci/.derived-data/ModuleCache.noindex -Xfrontend -serialize-debugging-options -enable-testing -index-store-path /ci/.derived-data/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /ci/.derived-data/Build/Products/Debug -Isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /ci/.derived-data/Build/Products/Debug/PackageFrameworks -F /ci/.derived-data/Build/Products/Debug -F /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /ci/.derived-data/SDKStatCaches.noindex/macosx27.0-26A425-7231f6df4def33e022ae2eb8f782df1a.sdkstatcache -output-file-map /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-OutputFileMap.json -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /ci/.derived-data/ModuleCache.noindex -sdk-module-cache-path /ci/.derived-data/SDKExplicitPrecompiledModules -emit-dependencies -emit-module -emit-module-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftmodule -serialize-diagnostics -dependency-scan-serialize-diagnostics-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-dependency-scan.dia -validate-clang-modules-once -clang-build-session-file /ci/.derived-data/ModuleCache.noindex/Session.modulevalidation -Xcc -fmodules-prune-interval\=86400 -Xcc -fmodules-prune-after\=345600 -emit-const-values -const-gather-protocols-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser_const_extract_protocols.json -Xcc -I/ci/.derived-data/Build/Products/Debug/include -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources-normal/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources/arm64 -Xcc -I/ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/DerivedSources -Xcc -DSWIFT_PACKAGE -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser-Swift.h -working-directory /ci/swift-argument-parser/.swiftpm/xcode -experimental-emit-module-separately -disable-cmo
+
+Ld /ci/.derived-data/Build/Products/Debug/ArgumentParser.o normal (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-macos12.0 -r -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk -O0 -Xlinker -no_warn_duplicate_libraries -F/ci/.derived-data/Build/Intermediates.noindex/EagerLinkingTBDs/Debug -F/ci/.derived-data/Build/Products/Debug/PackageFrameworks -F/ci/.derived-data/Build/Products/Debug -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -filelist /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.LinkFileList -nostdlib -Xlinker -object_path_lto -Xlinker /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser_lto.o -Xlinker -no_deduplicate -Xlinker -dependency_info -Xlinker /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser_dependency_info.dat -fobjc-link-runtime -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.swiftmodule -o /ci/.derived-data/Build/Products/Debug/ArgumentParser.o
+
+ExtractAppIntentsMetadata (in target 'ArgumentParser' from project 'swift-argument-parser')
+    cd /ci/swift-argument-parser
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name ArgumentParser --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk --xcode-version 27A266a --platform-family macOS --deployment-target 12.0 --bundle-identifier swift-argument-parser.ArgumentParser --output /ci/.derived-data/Build/Products/Debug/ArgumentParser.appintents --target-triple arm64-apple-macos12.0 --binary-file /ci/.derived-data/Build/Products/Debug/ArgumentParser.o --dependency-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser_dependency_info.dat --stringsdata-file /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftFileList --metadata-file-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.DependencyMetadataFileList --static-metadata-file-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/ArgumentParser.DependencyStaticMetadataFileList --swift-const-vals-list /ci/.derived-data/Build/Intermediates.noindex/swift-argument-parser.build/Debug/ArgumentParser-t.build/Objects-normal/arm64/ArgumentParser.SwiftConstValuesFileList --force --compile-time-extraction --deployment-aware-processing --no-app-shortcuts-localization
+2026-10-23 13:38:27.975 appintentsmetadataprocessor[39730:974089] Starting appintentsmetadataprocessor export
+2026-10-23 13:38:28.011 appintentsmetadataprocessor[39730:974089] Extracted no relevant App Intents symbols, skipping writing output
+
+PruneExplicitPrecompiledModules /ci/.derived-data/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /ci/.derived-data/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+PruneExplicitPrecompiledModules /ci/.derived-data/SDKExplicitPrecompiledModules
+
+** BUILD SUCCEEDED **
+

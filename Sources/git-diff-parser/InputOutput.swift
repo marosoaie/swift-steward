@@ -23,7 +23,7 @@ func forEachChunk(ofInput pathArgument: String, _ body: (Data) -> Void) throws {
             // Without a pool per iteration, the autoreleased Data chunks
             // returned by FileHandle.read all stay alive until the process
             // exits, and "streaming" quietly degrades to whole-file memory.
-            let reachedEnd = try autoreleasepool {
+            let reachedEnd = try withAutoreleasePool {
                 guard let data = try handle.read(upToCount: chunkSize), !data.isEmpty else {
                     return true
                 }
@@ -35,6 +35,18 @@ func forEachChunk(ofInput pathArgument: String, _ body: (Data) -> Void) throws {
     } catch {
         throw ValidationError("Failed reading '\(pathArgument)': \(error.localizedDescription)")
     }
+}
+
+/// Runs `body` inside an autorelease pool on Darwin, and directly elsewhere.
+///
+/// swift-corelibs-foundation has no autorelease pools: its `Data` is freed
+/// as soon as the last reference goes, so there is nothing to drain.
+func withAutoreleasePool<Result>(_ body: () throws -> Result) rethrows -> Result {
+    #if canImport(Darwin)
+    try autoreleasepool(invoking: body)
+    #else
+    try body()
+    #endif
 }
 
 extension ChangedLines {
