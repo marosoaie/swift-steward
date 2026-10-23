@@ -21,7 +21,7 @@ jobs:
 
       - name: Select newest Xcode (Swift 6.2+ required)
         run: |
-          sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
+          sudo xcode-select -s "$(printf '%s\n' /Applications/Xcode*.app | sort -V | tail -1)"
           swift --version
 
       - name: Validate version
@@ -41,16 +41,16 @@ jobs:
       # is a mistake.
       - name: Binary version must match the release
         run: |
-          actual="$(.build/release/git-diff-parser --version)"
+          actual="$(.build/release/steward --version)"
           [[ "$actual" == "$VERSION" ]] || { echo "--version prints $actual, expected $VERSION"; exit 1; }
 
       - name: Package
         run: |
-          name="git-diff-parser-$VERSION-macos-arm64"
+          name="steward-$VERSION-macos-arm64"
           mkdir dist
-          cp .build/release/git-diff-parser dist/
+          cp .build/release/steward dist/
           cd dist
-          zip -q "$name.zip" git-diff-parser
+          zip -q "$name.zip" steward
           shasum -a 256 "$name.zip" > "$name.zip.sha256"
 
       - name: Publish release
@@ -63,9 +63,11 @@ jobs:
             --generate-notes \
             dist/*.zip dist/*.sha256
 
-      # Pins Formula/git-diff-parser.rb in marosoaie/homebrew-tap to this
-      # release. Requires the TAP_DEPLOY_KEY secret (a write deploy key on
-      # the tap repo); skips quietly when it is not configured.
+      # Pins Formula/steward.rb in marosoaie/homebrew-tap to this release.
+      # Requires the TAP_DEPLOY_KEY secret (a write deploy key on the tap
+      # repo); skips quietly when it is not configured. Never touches the old
+      # Formula/git-diff-parser.rb: it installs .build/release/git-diff-parser,
+      # which releases since the rename don't produce.
       - name: Bump Homebrew formula
         env:
           TAP_DEPLOY_KEY: ${{ secrets.TAP_DEPLOY_KEY }}
@@ -79,15 +81,20 @@ jobs:
           export GIT_SSH_COMMAND="ssh -i /tmp/tap_deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
           git clone --depth 1 git@github.com:marosoaie/homebrew-tap.git /tmp/tap
           cd /tmp/tap
+          formula=Formula/steward.rb
+          if [ ! -f "$formula" ]; then
+            echo "::warning::$formula is not in the tap yet; pin it to v$VERSION ($GITHUB_SHA) by hand"
+            exit 0
+          fi
           sed -E -i '' \
             -e 's|(tag:[[:space:]]*)"v[^"]*"|\1"v'"$VERSION"'"|' \
             -e 's|(revision:[[:space:]]*)"[0-9a-f]*"|\1"'"$GITHUB_SHA"'"|' \
-            Formula/git-diff-parser.rb
+            "$formula"
           if git diff --quiet; then
             echo "formula already at v$VERSION"
             exit 0
           fi
           git -c user.name="github-actions[bot]" \
               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
-              commit -qam "git-diff-parser $VERSION"
+              commit -qam "steward $VERSION"
           git push -q
