@@ -1,7 +1,15 @@
 extension SpecFix {
     /// The fixes applied before generation, in order. Each names the
     /// fixture under Tests/GitHubAPITests/Fixtures that fails without it.
-    static let all: [SpecFix] = undeclaredResponses + deprecations
+    static let all: [SpecFix] = [unusedWebhooks] + undeclaredResponses + deprecations
+
+    /// Not a discrepancy: the filter keeps root vendor extensions, and
+    /// `x-webhooks` is three quarters of the filtered document (about 20,000
+    /// of 26,700 lines) that the generator never reads.
+    static let unusedWebhooks = SpecFix(
+        why: "x-webhooks: the generator ignores it; the webhook payload schemas stay in components",
+        edit: .remove(path: ["x-webhooks"])
+    )
 
     /// Responses GitHub sends that the description doesn't declare. Without
     /// them the client reports `.undocumented(statusCode: 404, _)`, so a

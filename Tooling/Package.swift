@@ -18,5 +18,9 @@ let package = Package(
             name: "github-spec-fix",
             dependencies: [.product(name: "Yams", package: "Yams")]
         ),
+        .testTarget(
+            name: "GitHubSpecFixTests",
+            dependencies: ["github-spec-fix", .product(name: "Yams", package: "Yams")]
+        ),
     ]
 )

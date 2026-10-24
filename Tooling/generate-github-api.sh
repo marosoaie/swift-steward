@@ -36,10 +36,12 @@ swift build --package-path "$tooling" -c release \
     --product github-spec-fix >/dev/null
 bin=$(swift build --package-path "$tooling" -c release --show-bin-path)
 
+# The filtered document stays uncommitted: `diff` it against openapi.yaml
+# to see exactly what the fixes change.
 "$bin/swift-openapi-generator" filter \
     --config "$specs/openapi-generator-config.yaml" \
-    "$spec" > "$specs/filtered.yaml"
-"$bin/github-spec-fix" "$specs/filtered.yaml" > "$specs/openapi.yaml"
+    "$spec" > "$cache/filtered.yaml"
+"$bin/github-spec-fix" "$cache/filtered.yaml" > "$specs/openapi.yaml"
 
 rm -rf "$root/Sources/GitHubAPI/Generated"
 "$bin/swift-openapi-generator" generate \
