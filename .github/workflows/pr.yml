@@ -60,12 +60,12 @@ jobs:
         run: |
           touch /tmp/build.log /tmp/swiftlint.log
           status=0
-          .build/debug/git-diff-parser filter /tmp/build.log \
+          .build/debug/steward filter /tmp/build.log \
             --diff /tmp/pr.diff \
             --tool xcodebuild \
             --format github \
             --fail-on warning || status=1
-          .build/debug/git-diff-parser filter /tmp/swiftlint.log \
+          .build/debug/steward filter /tmp/swiftlint.log \
             --diff /tmp/pr.diff \
             --tool swiftlint \
             --format github \

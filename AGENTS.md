@@ -1,4 +1,4 @@
-# git-diff-parser — contributor & agent guide
+# swift-steward — contributor & agent guide
 
 Conventions for working in this repository. Written for humans and coding
 agents alike; nothing here is specific to any particular tool or model.
@@ -14,7 +14,7 @@ dependency direction:
 | `GitDiffKit` (dependency) | – | Unified git diffs → changed files + line ranges, from [git-diff-parser](https://github.com/marosoaie/git-diff-parser) |
 | `BuildLogKit` | – | Build/lint logs → `[Diagnostic]` (xcodebuild, SwiftLint, SwiftFormat, SonarQube parsers) |
 | `DiffDiagnostics` | both above | The join: which diagnostics land on changed lines |
-| `git-diff-parser` (CLI) | all three | `changes` and `filter` subcommands |
+| `steward` (CLI, target `StewardCLI`) | all three | `changes` and `filter` subcommands |
 
 `GitDiffKit` and `BuildLogKit` must never import each other; only
 `DiffDiagnostics` couples them. `StreamParsing` is an internal target

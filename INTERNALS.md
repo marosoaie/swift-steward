@@ -1,6 +1,6 @@
 # Implementation notes
 
-How git-diff-parser works under the hood and how it is validated. For usage,
+How steward works under the hood and how it is validated. For usage,
 see the [README](README.md); for contribution conventions, [AGENTS.md](AGENTS.md).
 The diff parser (`DiffParser`, `ChangedLines`, `LineRangeSet`) lives in the
 [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library,
