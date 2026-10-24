@@ -12,8 +12,8 @@ let package = Package(
         .package(url: "https://github.com/jpsim/Yams.git", from: "5.0.0"),
     ],
     targets: [
-        // Applies the reviewed spec fixes in Specs/github/Fixes to the
-        // filtered document, before generation.
+        // Applies the reviewed spec fixes (SpecFix.all) to the filtered
+        // document, before generation.
         .executableTarget(
             name: "github-spec-fix",
             dependencies: [.product(name: "Yams", package: "Yams")]
