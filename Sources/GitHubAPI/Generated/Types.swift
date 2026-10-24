@@ -124,8 +124,14 @@ extension APIProtocol {
     ///
     /// - Remark: HTTP `DELETE /repos/{owner}/{repo}/issues/comments/{comment_id}`.
     /// - Remark: Generated from `#/paths//repos/{owner}/{repo}/issues/comments/{comment_id}/delete(issues/delete-comment)`.
-    internal func issuesDeleteComment(path: Operations.IssuesDeleteComment.Input.Path) async throws -> Operations.IssuesDeleteComment.Output {
-        try await issuesDeleteComment(Operations.IssuesDeleteComment.Input(path: path))
+    internal func issuesDeleteComment(
+        path: Operations.IssuesDeleteComment.Input.Path,
+        headers: Operations.IssuesDeleteComment.Input.Headers = .init()
+    ) async throws -> Operations.IssuesDeleteComment.Output {
+        try await issuesDeleteComment(Operations.IssuesDeleteComment.Input(
+            path: path,
+            headers: headers
+        ))
     }
     /// List issue comments
     ///

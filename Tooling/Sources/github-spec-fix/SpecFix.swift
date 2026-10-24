@@ -19,6 +19,9 @@ struct SpecFix {
         case addEnumValue(schema: [String], property: String, value: String)
         /// Removes `deprecated: true` from a property.
         case undeprecate(schema: [String], property: String)
+        /// Declares a response an operation returns but doesn't list, as a
+        /// reference to a shared response in `components/responses`.
+        case addResponse(path: String, method: String, status: String, response: String)
     }
 
     /// The key path of a component schema.
@@ -58,6 +61,13 @@ struct SpecFix {
                 }
                 mapping["deprecated"] = nil
                 return .mapping(mapping)
+            }
+        case let .addResponse(path, method, status, response):
+            try document.updating(at: ["paths", path, method, "responses"]) { node in
+                guard node.mapping?[status] == nil else {
+                    throw SpecFixError(message: "upstream already declares \(status) for \(method) \(path); drop: \(why)")
+                }
+                return node.setting(status, to: ["$ref": Node("#/components/responses/\(response)")])
             }
         }
     }

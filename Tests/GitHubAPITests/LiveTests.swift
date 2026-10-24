@@ -136,16 +136,10 @@ struct LiveTests {
             path: path,
             body: .json(.init(body: "gone"))
         )
-        guard case .undocumented(statusCode: 404, _) = updateGone else {
-            Issue.record("expected an undocumented 404, got \(updateGone)")
-            return
-        }
+        _ = try updateGone.notFound
         let deleteGone = try await live.client("delete-deleted").issuesDeleteComment(
             path: .init(owner: path.owner, repo: path.repo, commentId: path.commentId)
         )
-        guard case .undocumented(statusCode: 404, _) = deleteGone else {
-            Issue.record("expected an undocumented 404, got \(deleteGone)")
-            return
-        }
+        _ = try deleteGone.notFound
     }
 }

@@ -63,19 +63,38 @@ struct FixtureDecodingTests {
         _ = try deleted.noContent
     }
 
-    @Test("updating or deleting a deleted comment gets a 404 neither operation declares")
+    @Test("a comment by github-actions[bot] decodes, app permissions and all")
+    func botComment() async throws {
+        let created = try await client(replaying: "issues-create-comment.actions-created")
+            .issuesCreateComment(
+                path: .init(owner: owner, repo: repo, issueNumber: 21),
+                body: .json(.init(body: "spike"))
+            )
+        let comment = try created.created.body.json
+        #expect(comment.user?.login == "github-actions[bot]")
+        let app = try #require(comment.performedViaGithubApp)
+        #expect(app.slug == "github-actions")
+        // Undeclared permission names land in `additionalProperties`.
+        #expect(app.permissions.additionalProperties["pull_requests"] == "write")
+
+        let listed = try await client(replaying: "issues-list-comments.actions-listed")
+            .issuesListComments(path: .init(owner: owner, repo: repo, issueNumber: 21))
+        #expect(try listed.ok.body.json.contains { $0.id == comment.id })
+    }
+
+    /// Fails without the `undeclaredResponses` spec fixes: both operations
+    /// then return `.undocumented(statusCode: 404, _)`.
+    @Test("updating or deleting a deleted comment decodes the 404 the spec fixes declare")
     func deletedComment() async throws {
         let update = try await client(replaying: "issues-update-comment.macos-update-deleted")
             .issuesUpdateComment(
                 path: .init(owner: owner, repo: repo, commentId: 1),
                 body: .json(.init(body: "gone"))
             )
+        #expect(try update.notFound.body.json.message == "Not Found")
         let delete = try await client(replaying: "issues-delete-comment.macos-delete-deleted")
             .issuesDeleteComment(path: .init(owner: owner, repo: repo, commentId: 1))
-        guard case .undocumented(statusCode: 404, _) = update, case .undocumented(statusCode: 404, _) = delete else {
-            Issue.record("expected undocumented 404s, got \(update) and \(delete)")
-            return
-        }
+        #expect(try delete.notFound.body.json.message == "Not Found")
     }
 
     @Test("a missing pull request or issue decodes as the declared 404")
