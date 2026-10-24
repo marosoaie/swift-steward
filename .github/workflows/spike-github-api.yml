@@ -1,0 +1,43 @@
+name: Spike GitHub API (step 3.2, not for merging)
+
+on:
+  pull_request:
+
+# pull-requests: write and nothing else: does that cover issue comments on
+# a PR, the permission Steward's Action will ask for?
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  linux-live:
+    if: startsWith(github.head_ref, 'claude/step-3-2-openapi-spike')
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Keep the event payload
+        run: |
+          mkdir -p /tmp/recorded
+          cp "$GITHUB_EVENT_PATH" "/tmp/recorded/pull-request-event.${{ github.event.action }}.json"
+
+      # URLSessionTransport on Linux, as the github-actions[bot] identity:
+      # reads, a create/update/delete round trip on this PR, recording every
+      # response (headers whitelisted, the token never recorded).
+      - name: Live round trip on Linux
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STEWARD_SPIKE_LIVE_REPO: ${{ github.repository }}
+          STEWARD_SPIKE_READ_PRS: "20 1"
+          STEWARD_SPIKE_WRITE_PR: ${{ github.event.pull_request.number }}
+          STEWARD_SPIKE_RECORD_DIR: /tmp/recorded
+          STEWARD_SPIKE_RECORD_LABEL: actions
+        run: swift test --filter "GitHubAPITests"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: recorded-linux
+          path: /tmp/recorded
