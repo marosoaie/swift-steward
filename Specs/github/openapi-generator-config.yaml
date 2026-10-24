@@ -1,0 +1,21 @@
+# swift-openapi-generator config for the GitHub client (step 3.2 spike).
+generate:
+  - types
+  - client
+# Generated types never appear in public API. Internal, not package: with
+# `package`, every generated file warns about an unused `package import`.
+accessModifier: internal
+namingStrategy: idiomatic
+filter:
+  operations:
+    - issues/list-comments
+    - issues/create-comment
+    - issues/update-comment
+    - issues/delete-comment
+    - pulls/get
+  # Not reachable from any operation: the payloads Actions writes to
+  # GITHUB_EVENT_PATH for the default pull_request triggers.
+  schemas:
+    - webhook-pull-request-opened
+    - webhook-pull-request-synchronize
+    - webhook-pull-request-reopened
