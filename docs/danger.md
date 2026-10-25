@@ -4,8 +4,9 @@
 steps 4.2–4.10 build on what this document settles. Each section ends with
 a recommendation and the alternatives weighed, and the
 [open questions](#open-questions) at the end are for the maintainer to
-answer. The maintainer answered questions 1–3 on 2026-10-26, as
-recommended; 4–10 are open. Claims about danger-swift, GitHub, and SwiftPM were checked
+answer. The maintainer answered questions 1–5, 7, and 8 on 2026-10-26,
+each as recommended (7 with a documentation requirement added);
+questions 6, 9, and 10 are open. Claims about danger-swift, GitHub, and SwiftPM were checked
 against their sources or by experiment; [Checks](#checks) lists how.
 
 ## Decisions at a glance
@@ -16,10 +17,10 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 | S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
-| S5 | Summary comment | The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
-| S6 | Posting failures | Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing | Always fail; fail on configuration errors only |
+| S5 | Summary comment | **Clean case and markers decided 2026-10-26.** The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
+| S6 | Posting failures | **Decided 2026-10-26.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing | Always fail; fail on configuration errors only |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
-| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; the Action in a separate `steward-action` repository (decision 3, still open) | `action.yml` at swift-steward's root with a moving `v1` tag |
+| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3) | `action.yml` at swift-steward's root with a moving `v1` tag |
 
 ## Context and constraints
 
@@ -283,15 +284,21 @@ A rule that must tell two Latin-1 names apart uses `diff` and its
 every rule would convert, and two paths that decode to the same string
 are rare enough to document instead (open question 9).
 
-**Locally** (the dry run, 4.3), there is no event payload. The head is
-`HEAD`, the base is `--base <ref>` (default: the remote's default
-branch), and `pullRequest` comes from `pulls/get` when `--pull-request
-<n>` and a token are given. Without them, Steward fills in a placeholder
-pull request from the head commit (its subject as the title, its body as
-the description, the git user as the author) and says so in the printed
-summary, rather than making `pullRequest` optional for every rule just
-for the dry run. Open question 6 asks whether that placeholder is
-acceptable.
+**Locally** (the dry run, 4.3), the git half works as in CI: the head
+is `HEAD`, and the base is `--base <ref>` (default: the remote's default
+branch). The pull request half has no source, because there is no event
+payload. With `--pull-request <n>` and a token, Steward reads the real
+pull request through `pulls/get`. Without them, for example before the
+pull request exists, something has to stand in for `context.pullRequest`:
+
+| Option | `context.pullRequest` in a dry run without `--pull-request` | Cost |
+|---|---|---|
+| **A. Placeholder** | Built from the head commit: its subject as the title, its body as the description, the git user as the author, number 0, no labels, sizes from the local diff. The printed summary says it's a placeholder, and a rule can check `context.run.mode` | A rule about labels or the description may report findings locally that the real pull request wouldn't get |
+| B. Optional | `PullRequest?`, `nil` in a dry run | Every rule that reads it has to unwrap it, although it's never `nil` in CI |
+| C. Required | The dry run refuses to start | Local runs need the network, a token, and an already-open pull request |
+
+**Recommendation (A)**, so rules stay simple and a dry run works on a
+branch nobody has pushed yet. Open question 6 asks for the choice.
 
 Alternatives weighed:
 
@@ -507,8 +514,11 @@ when reading, so the renderer never sees it. Two choices are left:
   per repository, so it has one marker. If several are wanted later, the
   keyed form `<!-- steward-summary:<id> -->` is reserved for them, and
   plain `steward-summary` stays the default id; the marker is internal
-  to `GitHubHost`, so adding keys breaks nothing. Open question 7 asks
-  whether v1 needs it.
+  to `GitHubHost`, so adding keys breaks nothing. **Decided 2026-10-26
+  (question 7): not in v1.** Steward's user documentation (the
+  quickstart, 4.7, and the docs, 4.10) says plainly that several
+  Dangerfiles posting to one pull request are unsupported: their runs
+  would find the same summary and overwrite each other's.
 
 When `summaryComments(onPullRequest:)` returns more than one (two runs
 raced to create one), the runner updates the oldest and deletes the rest,
@@ -575,11 +585,11 @@ everything fit there and at the artifact otherwise.
 | B. Delete (danger-js's default) | deleted | nothing posted |
 | C. Always post | updated | "No findings" posted on every clean pull request |
 
-**Recommendation (A).** Reviewers who saw the failures find the
-resolution where they saw them, and GitHub's edit history keeps the old
-findings; a deleted comment just vanishes, which reads like a glitch. A
-clean pull request never gets a comment, so A adds no noise. Open
-question 5 asks for the choice.
+**Decided (A),** as recommended (question 5, answered 2026-10-26).
+Reviewers who saw the failures find the resolution where they saw them,
+and GitHub's edit history keeps the old findings; a deleted comment just
+vanishes, which reads like a glitch. A clean pull request never gets a
+comment, so A adds no noise.
 
 ### Stale runs
 
@@ -653,8 +663,8 @@ posting, still hold the findings. The question is the exit code.
 | B. Always fails the job | exits 2 |
 | C. Fails on configuration errors only | exits 2 for `forbidden`/`unauthorized`, warns for the rest |
 
-**Recommendation (A).** The check's status should answer "is this pull
-request acceptable?", not "was GitHub reachable?". A failing pull
+**Decided (A),** as recommended (question 4, answered 2026-10-26). The
+check's status should answer "is this pull request acceptable?", not "was GitHub reachable?". A failing pull
 request stays red without the comment, because its failures set exit 1
 on their own, and its findings are in the job summary. A passing one
 shouldn't turn red because of an outage, or on every Dependabot pull
@@ -663,7 +673,7 @@ like a missing permission. The cost is that a missing permission goes
 unnoticed except through the warning annotation on every run, so the
 quickstart's workflow sets `permissions:` explicitly (new repositories
 default the token to read-only), and teams that want it loud set the
-flag. Open question 4 asks for the default.
+flag.
 
 ## 7. From danger-swift (S7)
 
@@ -754,7 +764,7 @@ package, not inside it, so it never joins the app's build graph, and
 `swift test --package-path Dangerfile` runs the rule tests. The template
 (4.7) ships exactly that.
 
-### The Action (decision 3, open)
+### The Action (decision 3, decided 2026-10-26)
 
 The composite Action (4.8) is glue: install a Swift toolchain on Ubuntu,
 restore a cache of `Dangerfile/.build` keyed on `Package.resolved`, the
@@ -762,8 +772,8 @@ Swift version, and the OS, fetch the history section 3 needs, and run
 `swift run --package-path Dangerfile`. It needs `contents: read` and
 `pull-requests: write` (the REST docs list either `issues: write` or
 `pull-requests: write` as enough to create, update, and delete issue
-comments, and an Actions token is an installation token). The open part
-is where it lives:
+comments, and an Actions token is an installation token). Where it lives
+was plan decision 3:
 
 | | A. `action.yml` at swift-steward's root | B. A separate `marosoaie/steward-action` |
 |---|---|---|
@@ -773,14 +783,15 @@ is where it lives:
 | Versions | One release covers both | Independent. The Action doesn't pin Steward anyway; each Dangerfile's `Package.resolved` does |
 | Upkeep | One repository | One more repository, with its own ruleset and a CI job that runs the Action against a fixture Dangerfile |
 
-**Recommendation (B).** The tag clash alone decides it: a moving `v1` in
+**Decided (B),** as recommended (question 8, answered 2026-10-26). The
+tag clash alone decides it: a moving `v1` in
 a repository whose `v1.0.x` tags mean something else would confuse
 everyone, and keeping the Action's major in step with the package's means
 a breaking change to a Swift API forces a new Action major for unchanged
-inputs. A Marketplace listing helps the launch (5.3). If A is chosen
-anyway, only major tags may move: SwiftPM reads a two-part tag such as
-`v1.1` as version 1.1.0, so a moving minor tag would be resolved as a
-release. Open question 8.
+inputs. A Marketplace listing helps the launch (5.3). The SwiftPM check
+still constrains swift-steward's own tags: a two-part tag such as `v1.1`
+is read as version 1.1.0, so the package must never get a moving minor
+tag.
 
 ## What the later steps take from this
 
@@ -791,10 +802,10 @@ release. Open question 8.
 | 4.4 Sticky comment | Section 5 (marker and author, duplicates, format, size, the clean case, stale runs) and section 6 (posting failures) |
 | 4.5 Built-in rule | Section 3 (mapping log lines to the head, dropping unmapped ones) and section 5 (escaping tool output) |
 | 4.6 `StewardTesting` | Section 8 (fixtures, the fake host) and section 1 (rules as values) |
-| 4.7 Template and quickstart | Section 8 (the package's layout), section 2 (the merge-tree caveat, `edited` events), section 6 (`permissions:`) |
-| 4.8 Action | Section 8 (decision 3), section 3 (fetching history), section 5 (the `concurrency` group) |
+| 4.7 Template and quickstart | Section 8 (the package's layout), section 2 (the merge-tree caveat, `edited` events), section 6 (`permissions:`), section 5 (several Dangerfiles per pull request are unsupported) |
+| 4.8 Action | Section 8 (decision 3: a separate `steward-action` repository), section 3 (fetching history), section 5 (the `concurrency` group) |
 | 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step works in merge coordinates) |
-| 4.10 Docs | Section 7 (the mapping table, the start of the migration guide) |
+| 4.10 Docs | Section 7 (the mapping table, the start of the migration guide) and section 5 (several Dangerfiles per pull request are unsupported) |
 | Backlog: fork pull requests | Section 4 (the report and the rules for an untrusted one) |
 
 ## Open questions
@@ -814,28 +825,35 @@ refer to stay stable.
    indeed"). Everything is in head coordinates, and build-log lines are
    mapped from the built tree (the merge commit by default) before
    matching.
-4. **Posting failures (S6).** Should a failed post leave the exit code to
-   the findings, with a warning annotation and an opt-in
-   `--fail-on-post-error`, or fail the job? *Recommended:* leave it to the
-   findings by default; failing on configuration errors only would fail
-   every Dependabot pull request.
-5. **Nothing to report (S5).** Update an existing summary to "all clear",
-   or delete it as danger-js does? *Recommended:* update it, and never
-   create one for a clean pull request.
-6. **Local dry run without a pull request (S2).** Fill in a placeholder
-   pull request from the head commit, make `pullRequest` optional, or
-   require `--pull-request` and a token? *Recommended:* the placeholder,
-   flagged in the printed summary.
-7. **Several Dangerfiles per pull request (S5).** Does v1 need keyed
-   markers (`<!-- steward-summary:<id> -->`) for separate summaries?
-   *Recommended:* not in v1; the syntax is reserved, and adding it breaks
-   nothing.
-8. **Where the Action lives (S8, plan decision 3).** At swift-steward's
-   root with a moving `v1` tag, or in a separate `steward-action`
-   repository? *Recommended:* a separate repository, because swift-steward's
-   existing `v1.0.x` tags clash with a moving `v1` and a Marketplace
-   listing needs a repository of its own. This is the decision 4.8 waits
-   on.
+4. **Posting failures (S6). Answered 2026-10-26: findings decide**
+   ("leave it to the findings by default"). A failed post leaves the exit
+   code to the findings and warns; `--fail-on-post-error` opts into
+   failing the job.
+5. **Nothing to report (S5). Answered 2026-10-26: all clear** ("all
+   clear"). An existing summary is updated to "all clear"; a clean pull
+   request without one gets none.
+6. **Pull request data in a local dry run (S2).** Outside Actions there
+   is no event payload, so `context.pullRequest` (title, description,
+   author, labels, number, sizes) has no source unless Steward asks
+   GitHub. With `--pull-request <n>` and a token, every option reads the
+   real pull request through `pulls/get`. The question is what rules see
+   without them, for example before the pull request is opened:
+   (A) a placeholder built from the head commit (subject as title, body
+   as description, git user as author, no labels), flagged in the
+   printed summary, so a rule about labels or the description may report
+   findings the real pull request wouldn't get; (B) `pullRequest` becomes
+   optional, so every rule unwraps it although it's never `nil` in CI; or
+   (C) the dry run refuses to start without `--pull-request` and a token.
+   *Recommended:* (A).
+7. **Several Dangerfiles per pull request (S5). Answered 2026-10-26:
+   not in v1, and documented as unsupported** ("not in v1, but make a
+   note of it that it's unsupported, in the docs"). One marker per pull
+   request; the keyed syntax stays reserved, and the quickstart (4.7) and
+   the docs (4.10) say that several Dangerfiles per pull request are
+   unsupported.
+8. **Where the Action lives (S8, plan decision 3). Answered 2026-10-26:
+   a separate repository** ("separate repo indeed"), `steward-action`,
+   with its own moving `v1` tag.
 9. **Paths in the DSL (S2).** `String` in the file lists and `Location`,
    decoded lossily from the model's `DiffPath` bytes, or `DiffPath`
    throughout? *Recommended:* `String`, with `DiffPath` in `diff` for
