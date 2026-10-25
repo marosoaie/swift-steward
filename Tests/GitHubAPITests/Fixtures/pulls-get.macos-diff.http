@@ -1,0 +1,370 @@
+HTTP 200
+content-type: application/vnd.github.diff; charset=utf-8
+etag: "641fde47a8ec96d2b2582f88f4fc9cbf5444840761524e332d2951fbef2a2584"
+x-github-api-version-selected: 2022-11-28
+x-github-media-type: github.v3; param=diff
+
+diff --git a/.github/workflows/pr.yml b/.github/workflows/pr.yml
+index 4a69506..4bd846d 100644
+--- a/.github/workflows/pr.yml
++++ b/.github/workflows/pr.yml
+@@ -60,12 +60,12 @@ jobs:
+         run: |
+           touch /tmp/build.log /tmp/swiftlint.log
+           status=0
+-          .build/debug/git-diff-parser filter /tmp/build.log \
++          .build/debug/steward filter /tmp/build.log \
+             --diff /tmp/pr.diff \
+             --tool xcodebuild \
+             --format github \
+             --fail-on warning || status=1
+-          .build/debug/git-diff-parser filter /tmp/swiftlint.log \
++          .build/debug/steward filter /tmp/swiftlint.log \
+             --diff /tmp/pr.diff \
+             --tool swiftlint \
+             --format github \
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+index 9f87c83..db42b20 100644
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -21,7 +21,7 @@ jobs:
+ 
+       - name: Select newest Xcode (Swift 6.2+ required)
+         run: |
+-          sudo xcode-select -s "$(ls -d /Applications/Xcode*.app | sort -V | tail -1)"
++          sudo xcode-select -s "$(printf '%s\n' /Applications/Xcode*.app | sort -V | tail -1)"
+           swift --version
+ 
+       - name: Validate version
+@@ -41,16 +41,16 @@ jobs:
+       # is a mistake.
+       - name: Binary version must match the release
+         run: |
+-          actual="$(.build/release/git-diff-parser --version)"
++          actual="$(.build/release/steward --version)"
+           [[ "$actual" == "$VERSION" ]] || { echo "--version prints $actual, expected $VERSION"; exit 1; }
+ 
+       - name: Package
+         run: |
+-          name="git-diff-parser-$VERSION-macos-arm64"
++          name="steward-$VERSION-macos-arm64"
+           mkdir dist
+-          cp .build/release/git-diff-parser dist/
++          cp .build/release/steward dist/
+           cd dist
+-          zip -q "$name.zip" git-diff-parser
++          zip -q "$name.zip" steward
+           shasum -a 256 "$name.zip" > "$name.zip.sha256"
+ 
+       - name: Publish release
+@@ -63,9 +63,11 @@ jobs:
+             --generate-notes \
+             dist/*.zip dist/*.sha256
+ 
+-      # Pins Formula/git-diff-parser.rb in marosoaie/homebrew-tap to this
+-      # release. Requires the TAP_DEPLOY_KEY secret (a write deploy key on
+-      # the tap repo); skips quietly when it is not configured.
++      # Pins Formula/steward.rb in marosoaie/homebrew-tap to this release.
++      # Requires the TAP_DEPLOY_KEY secret (a write deploy key on the tap
++      # repo); skips quietly when it is not configured. Never touches the old
++      # Formula/git-diff-parser.rb: it installs .build/release/git-diff-parser,
++      # which releases since the rename don't produce.
+       - name: Bump Homebrew formula
+         env:
+           TAP_DEPLOY_KEY: ${{ secrets.TAP_DEPLOY_KEY }}
+@@ -79,15 +81,20 @@ jobs:
+           export GIT_SSH_COMMAND="ssh -i /tmp/tap_deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+           git clone --depth 1 git@github.com:marosoaie/homebrew-tap.git /tmp/tap
+           cd /tmp/tap
++          formula=Formula/steward.rb
++          if [ ! -f "$formula" ]; then
++            echo "::warning::$formula is not in the tap yet; pin it to v$VERSION ($GITHUB_SHA) by hand"
++            exit 0
++          fi
+           sed -E -i '' \
+             -e 's|(tag:[[:space:]]*)"v[^"]*"|\1"v'"$VERSION"'"|' \
+             -e 's|(revision:[[:space:]]*)"[0-9a-f]*"|\1"'"$GITHUB_SHA"'"|' \
+-            Formula/git-diff-parser.rb
++            "$formula"
+           if git diff --quiet; then
+             echo "formula already at v$VERSION"
+             exit 0
+           fi
+           git -c user.name="github-actions[bot]" \
+               -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+-              commit -qam "git-diff-parser $VERSION"
++              commit -qam "steward $VERSION"
+           git push -q
+diff --git a/AGENTS.md b/AGENTS.md
+index af24d64..364cd17 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -1,4 +1,4 @@
+-# git-diff-parser — contributor & agent guide
++# swift-steward — contributor & agent guide
+ 
+ Conventions for working in this repository. Written for humans and coding
+ agents alike; nothing here is specific to any particular tool or model.
+@@ -14,7 +14,7 @@ dependency direction:
+ | `GitDiffKit` (dependency) | – | Unified git diffs → changed files + line ranges, from [git-diff-parser](https://github.com/marosoaie/git-diff-parser) |
+ | `BuildLogKit` | – | Build/lint logs → `[Diagnostic]` (xcodebuild, SwiftLint, SwiftFormat, SonarQube parsers) |
+ | `DiffDiagnostics` | both above | The join: which diagnostics land on changed lines |
+-| `git-diff-parser` (CLI) | all three | `changes` and `filter` subcommands |
++| `steward` (CLI, target `StewardCLI`) | all three | `changes` and `filter` subcommands |
+ 
+ `GitDiffKit` and `BuildLogKit` must never import each other; only
+ `DiffDiagnostics` couples them. `StreamParsing` is an internal target
+diff --git a/INTERNALS.md b/INTERNALS.md
+index 7b71ee5..3db7cd5 100644
+--- a/INTERNALS.md
++++ b/INTERNALS.md
+@@ -1,6 +1,6 @@
+ # Implementation notes
+ 
+-How git-diff-parser works under the hood and how it is validated. For usage,
++How steward works under the hood and how it is validated. For usage,
+ see the [README](README.md); for contribution conventions, [AGENTS.md](AGENTS.md).
+ The diff parser (`DiffParser`, `ChangedLines`, `LineRangeSet`) lives in the
+ [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library,
+diff --git a/Package.swift b/Package.swift
+index c20f0e7..b7b3a7a 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -15,7 +15,7 @@ let package = Package(
+     products: [
+         .library(name: "BuildLogKit", targets: ["BuildLogKit"]),
+         .library(name: "DiffDiagnostics", targets: ["DiffDiagnostics"]),
+-        .executable(name: "git-diff-parser", targets: ["git-diff-parser"]),
++        .executable(name: "steward", targets: ["StewardCLI"]),
+     ],
+     dependencies: [
+         // GitDiffKit. Tagged versions only: SwiftPM rejects branch and
+@@ -47,8 +47,11 @@ let package = Package(
+             ],
+             swiftSettings: swiftSettings
+         ),
++        // The `steward` command. Not named after its product: a module
++        // `steward` would collide with the planned `Steward` library module
++        // on case-insensitive file systems.
+         .executableTarget(
+-            name: "git-diff-parser",
++            name: "StewardCLI",
+             dependencies: [
+                 .product(name: "GitDiffKit", package: "git-diff-parser"),
+                 "BuildLogKit",
+diff --git a/README.md b/README.md
+index 556dfaf..c589740 100644
+--- a/README.md
++++ b/README.md
+@@ -1,6 +1,7 @@
+-# git-diff-parser
++# swift-steward
+ 
+-Show only the build/lint diagnostics that a pull request actually touches.
++`steward` shows only the build/lint diagnostics that a pull request actually
++touches.
+ 
+ Two subcommands, matching the two halves of the problem:
+ 
+@@ -22,9 +23,13 @@ Via [Homebrew](https://github.com/marosoaie/homebrew-tap):
+ ```sh
+ brew tap marosoaie/tap
+ brew trust marosoaie/tap   # one-time; Homebrew 6 gates third-party taps
+-brew install marosoaie/tap/git-diff-parser
++brew install marosoaie/tap/steward
+ ```
+ 
++Up to v1.0.2 the tool was called `git-diff-parser`. `brew upgrade` moves an
++existing `git-diff-parser` install over to `steward`; scripts and workflows
++that call the old name need updating.
++
+ Prebuilt arm64 binaries ship with each
+ [release](https://github.com/marosoaie/swift-steward/releases), with SHA-256
+ checksums attached. They are not yet notarized, so fetch them with `curl`/`gh
+@@ -34,14 +39,14 @@ Or build from source (Swift 6.2+, on macOS 14+ or Linux):
+ 
+ ```sh
+ swift build -c release
+-# binary at .build/release/git-diff-parser
++# binary at .build/release/steward
+ ```
+ 
+ ## `changes` — what lines does the PR touch?
+ 
+ ```sh
+-git diff origin/main...HEAD | git-diff-parser changes -
+-git-diff-parser changes pr.diff --format text
++git diff origin/main...HEAD | steward changes -
++steward changes pr.diff --format text
+ ```
+ 
+ Output (`json` default, or `text` as greppable `path:line` lines). Changed
+@@ -66,7 +71,7 @@ appear under their new path, and only if they contain edits.
+ ## `filter` — which diagnostics should the PR show?
+ 
+ ```sh
+-git-diff-parser filter build.log --diff pr.diff --format github
++steward filter build.log --diff pr.diff --format github
+ ```
+ 
+ The log is scanned for the de-facto standard clang format that `swiftc`,
+@@ -88,7 +93,7 @@ log is ignored, so pipe the raw build output straight in:
+ | `--fail-on <severity>` | Exit 1 if anything at/above `note`/`warning`/`error` matched — lets CI blocking be scoped to *new* problems only |
+ 
+ Duplicate diagnostics (same file/line/message, common in multi-target
+-`xcodebuild` runs) are collapsed. See `git-diff-parser help <subcommand>` for
++`xcodebuild` runs) are collapsed. See `steward help <subcommand>` for
+ the full reference.
+ 
+ ## Getting the right diff
+@@ -117,7 +122,7 @@ GitHub attaches them to the PR's changed lines in the Files tab:
+     xcodebuild build ... 2>&1 | tee build.log
+ - run: |
+     git diff origin/${{ github.base_ref }}...HEAD \
+-      | .build/release/git-diff-parser filter build.log --diff - \
++      | .build/release/steward filter build.log --diff - \
+           --format github --fail-on error
+ ```
+ 
+@@ -135,7 +140,7 @@ server and filter them like any other input:
+ curl -sf -u "$SONAR_TOKEN:" \
+   "$SONAR_HOST/api/issues/search?componentKeys=$PROJECT_KEY&pullRequest=$PR_NUMBER&resolved=false&ps=500" \
+   > sonar.json
+-git-diff-parser filter sonar.json --diff pr.diff --tool sonar --format github
++steward filter sonar.json --diff pr.diff --tool sonar --format github
+ ```
+ 
+ (Drop `pullRequest=` when you only analyze branches.) Issue paths are
+diff --git a/Sources/git-diff-parser/Changes.swift b/Sources/StewardCLI/Changes.swift
+similarity index 96%
+rename from Sources/git-diff-parser/Changes.swift
+rename to Sources/StewardCLI/Changes.swift
+index c7f303f..9db5875 100644
+--- a/Sources/git-diff-parser/Changes.swift
++++ b/Sources/StewardCLI/Changes.swift
+@@ -11,7 +11,7 @@ struct Changes: ParsableCommand {
+             because git represents a modification as a removal plus an addition.
+ 
+             Example:
+-              git diff origin/main...HEAD | git-diff-parser changes -
++              git diff origin/main...HEAD | steward changes -
+             """
+     )
+ 
+diff --git a/Sources/git-diff-parser/Filter.swift b/Sources/StewardCLI/Filter.swift
+similarity index 98%
+rename from Sources/git-diff-parser/Filter.swift
+rename to Sources/StewardCLI/Filter.swift
+index 807f669..f72d414 100644
+--- a/Sources/git-diff-parser/Filter.swift
++++ b/Sources/StewardCLI/Filter.swift
+@@ -18,7 +18,7 @@ struct Filter: ParsableCommand {
+             a --repo-root is rarely needed.
+ 
+             Example:
+-              git-diff-parser filter lint.log --diff pr.diff --tool swiftlint --format github
++              steward filter lint.log --diff pr.diff --tool swiftlint --format github
+             """
+     )
+ 
+diff --git a/Sources/git-diff-parser/InputOutput.swift b/Sources/StewardCLI/InputOutput.swift
+similarity index 100%
+rename from Sources/git-diff-parser/InputOutput.swift
+rename to Sources/StewardCLI/InputOutput.swift
+diff --git a/Sources/git-diff-parser/GitDiffParser.swift b/Sources/StewardCLI/StewardCommand.swift
+similarity index 82%
+rename from Sources/git-diff-parser/GitDiffParser.swift
+rename to Sources/StewardCLI/StewardCommand.swift
+index 1dc5ab0..90071dc 100644
+--- a/Sources/git-diff-parser/GitDiffParser.swift
++++ b/Sources/StewardCLI/StewardCommand.swift
+@@ -1,9 +1,9 @@
+ import ArgumentParser
+ 
+ @main
+-struct GitDiffParser: ParsableCommand {
++struct StewardCommand: ParsableCommand {
+     static let configuration = CommandConfiguration(
+-        commandName: "git-diff-parser",
++        commandName: "steward",
+         abstract: """
+             Map a git diff to its changed lines, and filter build/lint logs \
+             down to the diagnostics that touch those lines.
+@@ -12,7 +12,7 @@ struct GitDiffParser: ParsableCommand {
+             Inputs are streamed, so arbitrarily large diffs and logs are fine. \
+             Pass '-' as any file argument to read that input from stdin.
+             """,
+-        version: "1.0.2",
++        version: "2.0.0",
+         subcommands: [Changes.self, Filter.self]
+     )
+ }
+diff --git a/Tests/SwiftStewardTests/CommandNameTests.swift b/Tests/SwiftStewardTests/CommandNameTests.swift
+new file mode 100644
+index 0000000..f44960a
+--- /dev/null
++++ b/Tests/SwiftStewardTests/CommandNameTests.swift
+@@ -0,0 +1,24 @@
++import Foundation
++import Testing
++
++/// The tool ships as `steward` (it was `git-diff-parser` up to v1.0.2); its
++/// help must use the new name throughout, examples included.
++@Suite("Command name")
++struct CommandNameTests {
++    @Test(
++        "help introduces the tool as steward and never by its old name",
++        arguments: [[], ["changes"], ["filter"]]
++    )
++    func helpUsesTheNewName(subcommand: [String]) throws {
++        let help = String(decoding: try CommandLineTool.run(arguments: subcommand + ["--help"]), as: UTF8.self)
++        let usage = (["steward"] + subcommand).joined(separator: " ")
++        #expect(help.contains("USAGE: \(usage) "))
++        #expect(!help.contains("git-diff-parser"))
++    }
++
++    @Test("the built executable is named steward")
++    func executableName() throws {
++        let tool = try #require(CommandLineTool.url)
++        #expect(tool.lastPathComponent == "steward")
++    }
++}
+diff --git a/Tests/SwiftStewardTests/TestSupport.swift b/Tests/SwiftStewardTests/TestSupport.swift
+index 39d8a15..b5c5306 100644
+--- a/Tests/SwiftStewardTests/TestSupport.swift
++++ b/Tests/SwiftStewardTests/TestSupport.swift
+@@ -1,6 +1,6 @@
+ import Foundation
+ 
+-/// Runs the git-diff-parser executable that the test build produces into the
++/// Runs the steward executable that the test build produces into the
+ /// build products directory.
+ enum CommandLineTool {
+     static var url: URL? {
+@@ -18,7 +18,7 @@ enum CommandLineTool {
+             .filter { $0.bundleURL.pathExtension == "xctest" }
+             .map { $0.bundleURL.deletingLastPathComponent() }
+         for directory in candidates {
+-            let url = directory.appendingPathComponent("git-diff-parser")
++            let url = directory.appendingPathComponent("steward")
+             if FileManager.default.isExecutableFile(atPath: url.path) {
+                 return url
+             }
+@@ -30,7 +30,7 @@ enum CommandLineTool {
+     /// `exitCode`. Standard input comes from `standardInput` when given.
+     static func run(arguments: [String], standardInput: URL? = nil, exitCode: Int32 = 0) throws -> Data {
+         guard let tool = url else {
+-            throw FixtureError("git-diff-parser executable not built alongside tests")
++            throw FixtureError("steward executable not built alongside tests")
+         }
+         let process = Process()
+         process.executableURL = tool
+@@ -48,7 +48,7 @@ enum CommandLineTool {
+         process.waitUntilExit()
+         guard process.terminationStatus == exitCode else {
+             throw FixtureError(
+-                "git-diff-parser \(arguments.joined(separator: " ")) exited with \(process.terminationStatus)"
++                "steward \(arguments.joined(separator: " ")) exited with \(process.terminationStatus)"
+             )
+         }
+         return output

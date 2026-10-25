@@ -22,6 +22,11 @@ let package = Package(
         // revision dependencies underneath a versioned package.
         .package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.1.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
+        // The GitHub client target only (decision 5). The generator itself
+        // lives in Tooling/Package.swift, so packages that depend on this one
+        // never build it.
+        .package(url: "https://github.com/apple/swift-openapi-runtime.git", from: "1.13.3"),
+        .package(url: "https://github.com/apple/swift-openapi-urlsession.git", from: "1.4.0"),
     ],
     targets: [
         // Chunk-to-line plumbing for the streaming log parsers; internal to
@@ -58,6 +63,28 @@ let package = Package(
                 "DiffDiagnostics",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
+            swiftSettings: swiftSettings
+        ),
+        // The GitHub REST client. Generated/ is written by
+        // Tooling/generate-github-api.sh from Specs/github and committed; CI
+        // fails when it drifts from what the pipeline produces. The strict
+        // settings hold for it too: the generator config and two spec fixes
+        // keep it warning-free.
+        .target(
+            name: "GitHubAPI",
+            dependencies: [
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .testTarget(
+            name: "GitHubAPITests",
+            dependencies: [
+                "GitHubAPI",
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+            ],
+            resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings
         ),
         .testTarget(

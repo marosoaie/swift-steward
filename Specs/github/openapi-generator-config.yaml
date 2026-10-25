@@ -1,0 +1,19 @@
+# swift-openapi-generator config for Sources/GitHubAPI, used by both the
+# `filter` and `generate` steps of Tooling/generate-github-api.sh.
+generate:
+  - types
+  - client
+# Internal, not package: with `package`, every generated file imports
+# OpenAPIRuntime as `package import`, and the files that declare nothing warn
+# that the import is unused. Generated types never appear in public API.
+accessModifier: internal
+namingStrategy: idiomatic
+# The operations Steward v1 calls. `filter` keeps only these and the
+# components they reach.
+filter:
+  operations:
+    - issues/list-comments
+    - issues/create-comment
+    - issues/update-comment
+    - issues/delete-comment
+    - pulls/get
