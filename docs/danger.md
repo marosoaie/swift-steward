@@ -18,6 +18,7 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | S5 | Summary comment | The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, full text in the job summary; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing | Always fail; fail on configuration errors only |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
+| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; the Action in a separate `steward-action` repository (decision 3, still open) | `action.yml` at swift-steward's root with a moving `v1` tag |
 
 ## Context and constraints
 
@@ -699,3 +700,67 @@ the event, not the API; nothing that needs inline comments or API access
 from rules. They follow from the plan's decisions (value types, no
 globals, one summary comment) rather than from taste, and the migration
 guide says so.
+
+## 8. Packaging, rule tests, and the Action (S8)
+
+### Products
+
+swift-steward gains two library products:
+
+- **`Steward`**: `Rule`, `Finding`, `Location`, `Context` and its parts,
+  `Report`, the `Dangerfile` protocol and its runner, the summary
+  renderer, and the built-in diagnostics rule. It depends on `GitDiffKit`
+  (the full model, so library 0.2.0 and macOS 26), `BuildLogKit`,
+  `DiffDiagnostics`, `PullRequestHosting`, and `GitHubAPI`. Generated
+  types stay out of its public API, as they do out of the seam's.
+- **`StewardTesting`** (4.6): builds a `Context` from fixtures (a diff
+  as text, which the full model parses exactly as in a real run; a
+  `PullRequest` with defaults for every field; commits) and a fake
+  `PullRequestHost` that records what the runner would post. A rule test
+  is then one call:
+
+  ```swift
+  @Test func `a pull request without a changelog entry gets a warning`() async throws {
+      let context = try Context.fixture(diff: """
+          diff --git a/Sources/App.swift b/Sources/App.swift
+          …
+          """)
+      let findings = try await Checks.changelog.evaluate(context)
+      #expect(findings == [.warning("Add a CHANGELOG entry.")])
+  }
+  ```
+
+A user's `Dangerfile/` is an ordinary package: an executable target that
+depends on `Steward`, a test target that depends on `StewardTesting`, and
+any other dependencies the rules need. It lives beside the user's own
+package, not inside it, so it never joins the app's build graph, and
+`swift test --package-path Dangerfile` runs the rule tests. The template
+(4.7) ships exactly that.
+
+### The Action (decision 3, open)
+
+The composite Action (4.8) is glue: install a Swift toolchain on Ubuntu,
+restore a cache of `Dangerfile/.build` keyed on `Package.resolved`, the
+Swift version, and the OS, fetch the history section 3 needs, and run
+`swift run --package-path Dangerfile`. It needs `contents: read` and
+`pull-requests: write` (the REST docs list either `issues: write` or
+`pull-requests: write` as enough to create, update, and delete issue
+comments, and an Actions token is an installation token). The open part
+is where it lives:
+
+| | A. `action.yml` at swift-steward's root | B. A separate `marosoaie/steward-action` |
+|---|---|---|
+| Usage | `uses: marosoaie/swift-steward@v1` | `uses: marosoaie/steward-action@v1` |
+| Major tag | A moving `v1` beside the package's semver tags. SwiftPM ignores a bare `v1` (checked; see [Checks](#checks)), but swift-steward already has `v1.0.0`–`v1.0.2` and `v2.0.0`, so `@v1` would name neither | The Action's own `v1`, moved on each release as GitHub recommends, meaning only "these inputs" |
+| Marketplace | Not listable: GitHub asks that a listed repository hold only the action's metadata, code, and the files it needs | Listable |
+| Versions | One release covers both | Independent. The Action doesn't pin Steward anyway; each Dangerfile's `Package.resolved` does |
+| Upkeep | One repository | One more repository, with its own ruleset and a CI job that runs the Action against a fixture Dangerfile |
+
+**Recommendation (B).** The tag clash alone decides it: a moving `v1` in
+a repository whose `v1.0.x` tags mean something else would confuse
+everyone, and keeping the Action's major in step with the package's means
+a breaking change to a Swift API forces a new Action major for unchanged
+inputs. A Marketplace listing helps the launch (5.3). If A is chosen
+anyway, only major tags may move: SwiftPM reads a two-part tag such as
+`v1.1` as version 1.1.0, so a moving minor tag would be resolved as a
+release. Open question 8.
