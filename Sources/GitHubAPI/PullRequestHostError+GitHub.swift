@@ -11,15 +11,15 @@ extension PullRequestHostError {
     /// The kind GitHub means by `status`.
     ///
     /// GitHub signals an exhausted rate limit with a 429, or with a 403 that
-    /// either carries `x-ratelimit-remaining: 0` or `retry-after`, or says
-    /// so in its message ("API rate limit exceeded…", "You have exceeded a
-    /// secondary rate limit…"). Documented 403s come without their headers,
-    /// so the message is the only signal there.
-    static func kind(status: Int, message: String?, headers: HTTPFields = [:]) -> Kind {
+    /// says so in its message ("API rate limit exceeded…", "You have
+    /// exceeded a secondary rate limit…") or in its headers. The headers are
+    /// `RateLimitMiddleware`'s to read, since the generated responses drop
+    /// them for declared statuses.
+    static func kind(status: Int, message: String?) -> Kind {
         switch status {
         case 401:
             .unauthorized
-        case 403 where isRateLimit(message: message, headers: headers):
+        case 403 where message?.lowercased().contains("rate limit") == true:
             .rateLimited
         case 403:
             .forbidden
@@ -38,12 +38,6 @@ extension PullRequestHostError {
         }
     }
 
-    private static func isRateLimit(message: String?, headers: HTTPFields) -> Bool {
-        let remaining = HTTPField.Name("x-ratelimit-remaining").flatMap { headers[$0] }
-        let retryAfter = HTTPField.Name("retry-after").flatMap { headers[$0] }
-        return remaining == "0" || retryAfter != nil || message?.lowercased().contains("rate limit") == true
-    }
-
     /// An error response the description declares, with the message from
     /// its body.
     init(operation: String, status: Int, message: String?) {
@@ -60,7 +54,7 @@ extension PullRequestHostError {
     init(operation: String, status: Int, undocumented payload: UndocumentedPayload) async {
         let message = await Self.message(in: payload.body)
         self.init(
-            kind: Self.kind(status: status, message: message, headers: payload.headerFields),
+            kind: Self.kind(status: status, message: message),
             operation: operation,
             status: status,
             message: message
@@ -79,7 +73,7 @@ extension PullRequestHostError {
         // only a success that doesn't decode is malformed.
         guard response.status.kind == .successful else {
             self.init(
-                kind: Self.kind(status: status, message: nil, headers: response.headerFields),
+                kind: Self.kind(status: status, message: nil),
                 operation: operation,
                 status: status
             )
@@ -97,7 +91,9 @@ extension PullRequestHostError {
         let message: String?
     }
 
-    private static func message(in body: HTTPBody?) async -> String? {
+    /// The `message` of GitHub's error JSON in `body`, if that's what it
+    /// holds.
+    static func message(in body: HTTPBody?) async -> String? {
         guard let body, let data = try? await Data(collecting: body, upTo: maximumErrorBodySize) else {
             return nil
         }

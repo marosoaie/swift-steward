@@ -50,7 +50,8 @@ public struct GitHubHost: PullRequestHost, CustomStringConvertible {
         )
     }
 
-    /// `middlewares` run before the one that adds GitHub's headers and the
+    /// `middlewares` run after `RateLimitMiddleware`, so they see every
+    /// response, and before the one that adds GitHub's headers and the
     /// token.
     init(
         owner: String,
@@ -72,7 +73,9 @@ public struct GitHubHost: PullRequestHost, CustomStringConvertible {
         client = Client(
             serverURL: apiURL,
             transport: transport,
-            middlewares: middlewares + [GitHubHeadersMiddleware(token: token.flatMap { $0.isEmpty ? nil : $0 })]
+            middlewares: [RateLimitMiddleware()] + middlewares + [
+                GitHubHeadersMiddleware(token: token.flatMap { $0.isEmpty ? nil : $0 }),
+            ]
         )
     }
 

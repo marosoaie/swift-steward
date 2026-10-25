@@ -63,8 +63,11 @@ struct GitHubHostCommentTests {
         #expect(try await GitHubHost.stubbed(transport).summaryComments(onPullRequest: 21).isEmpty)
     }
 
-    @Test("with an author set, only that login's marked comments count", arguments: [
+    // GitHub-Actions[bot]: regression (Codex review), since logins are
+    // case-insensitive.
+    @Test("with an author set, only that login's marked comments count, in any case", arguments: [
         ("github-actions[bot]", 1),
+        ("GitHub-Actions[bot]", 1),
         ("marosoaie", 0),
     ])
     func author(login: String, count: Int) async throws {

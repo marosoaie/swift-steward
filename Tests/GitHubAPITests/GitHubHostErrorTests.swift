@@ -71,6 +71,13 @@ struct GitHubHostErrorTests {
             kind: .rateLimited
         ),
         StatusCase(status: 403, headers: ["retry-after": "60"], message: "Slow down.", kind: .rateLimited),
+        StatusCase(
+            status: 403,
+            headers: ["x-ratelimit-remaining": "4"],
+            message: "Must have admin rights to Repository.",
+            kind: .forbidden
+        ),
+        StatusCase(status: 429, headers: ["retry-after": "30"], message: "Too many requests.", kind: .rateLimited),
         StatusCase(status: 403, message: "API rate limit exceeded for user ID 1.", kind: .rateLimited),
         StatusCase(status: 403, message: "You have exceeded a secondary rate limit.", kind: .rateLimited),
         StatusCase(status: 429, message: "Too many requests.", kind: .rateLimited),
@@ -107,6 +114,23 @@ struct GitHubHostErrorTests {
         }
         #expect(error == PullRequestHostError(
             kind: kind,
+            operation: "issues/create-comment",
+            status: 403,
+            message: message
+        ))
+    }
+
+    // Regression (Codex review): the generated 403 for create-comment drops
+    // its headers, so only RateLimitMiddleware can see the retry-after.
+    @Test("issues/create-comment's declared 403 with a retry-after is a rate limit, whatever its message")
+    func createThrottled() async throws {
+        let message = "You have triggered an abuse detection mechanism. Please wait a few minutes."
+        let response = try RecordedResponse(status: 403, headers: ["retry-after": "120"], json: ["message": message])
+        let error = await hostError([response]) {
+            _ = try await $0.createSummaryComment(onPullRequest: 21, body: "x")
+        }
+        #expect(error == PullRequestHostError(
+            kind: .rateLimited,
             operation: "issues/create-comment",
             status: 403,
             message: message
@@ -155,6 +179,29 @@ struct GitHubHostErrorTests {
         await #expect(throws: CancellationError.self) {
             _ = try await host.summaryComments(onPullRequest: 21)
         }
+    }
+
+    // Regression (Codex review): URLSession answers cancellation with
+    // URLError(.cancelled), which used to come back as a network error.
+    @Test("cancelling a request in flight is a CancellationError, though the transport throws URLError(.cancelled)")
+    func cancellationInFlight() async throws {
+        let task = Task {
+            try await GitHubHost.stubbed(HangingTransport()).summaryComments(onPullRequest: 21)
+        }
+        task.cancel()
+        let result = await task.result
+        #expect(throws: CancellationError.self) {
+            _ = try result.get()
+        }
+    }
+
+    @Test("URLError(.cancelled) without a cancelled task is a network error")
+    func cancelledByURLSessionAlone() async throws {
+        let host = GitHubHost.stubbed(FailingTransport(error: URLError(.cancelled)))
+        let error = await #expect(throws: PullRequestHostError.self) {
+            _ = try await host.summaryComments(onPullRequest: 21)
+        }
+        #expect(error?.kind == .network)
     }
 
     @Test("the error reads as one line: operation, kind, status, and message")

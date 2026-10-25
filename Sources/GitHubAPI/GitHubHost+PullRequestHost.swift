@@ -134,11 +134,19 @@ extension GitHubHost {
     /// one without the marker line, or by someone other than
     /// `summaryAuthor`.
     func summary(_ comment: Components.Schemas.IssueComment) -> SummaryComment? {
-        guard summaryAuthor.map({ $0 == comment.user?.login }) ?? true,
-              let body = comment.body.flatMap(marker.body(ofMarked:)) else {
+        guard isBySummaryAuthor(comment), let body = comment.body.flatMap(marker.body(ofMarked:)) else {
             return nil
         }
         return SummaryComment(comment, body: body)
+    }
+
+    /// Compares logins ignoring case, as GitHub does: `Marosoaie` and
+    /// `marosoaie` are one account.
+    private func isBySummaryAuthor(_ comment: Components.Schemas.IssueComment) -> Bool {
+        guard let summaryAuthor else {
+            return true
+        }
+        return comment.user?.login.lowercased() == summaryAuthor.lowercased()
     }
 
     /// A comment this host just posted. Its marker comes back stripped; if
@@ -150,17 +158,24 @@ extension GitHubHost {
     /// Runs one request, turning whatever it throws into a
     /// `PullRequestHostError`, except cancellation, which stays a
     /// `CancellationError`.
+    ///
+    /// A cancelled task counts as cancelled whatever the transport threw:
+    /// URLSession answers cancellation with `URLError(.cancelled)`.
     private func perform<Value>(_ operation: String, _ request: () async throws -> Value) async throws -> Value {
         do {
             return try await request()
+        } catch let error where Task.isCancelled
+            || error is CancellationError
+            || (error as? ClientError)?.underlyingError is CancellationError {
+            throw CancellationError()
         } catch let error as PullRequestHostError {
             throw error
-        } catch let error as ClientError where error.underlyingError is CancellationError {
-            throw CancellationError()
         } catch let error as ClientError {
+            // RateLimitMiddleware's verdict, which the client wraps.
+            if let error = error.underlyingError as? PullRequestHostError {
+                throw error
+            }
             throw PullRequestHostError(operation: operation, clientError: error)
-        } catch let error as CancellationError {
-            throw error
         } catch {
             // Only the generated `json` accessors throw anything else, for a
             // body in a content type the response doesn't declare.
