@@ -94,6 +94,15 @@ struct SpecFixListTests {
         }
     }
 
+    @Test("a single stale fix is reported in the singular")
+    func reportsOneStaleFix() {
+        let problem = SpecFixList.Problem.stale([SpecFixFailure(fix: "only", reason: .redundant("upstream has it"))])
+        #expect(problem.description == """
+            1 spec fix no longer applies; update or drop it in Specs/github/fixes.yaml:
+              only: upstream has it; drop the fix
+            """)
+    }
+
     @Test("fixes apply in order, each seeing the previous one's result")
     func appliesInOrder() throws {
         let list = try SpecFixList([
@@ -124,7 +133,7 @@ struct SpecFixListTests {
             SpecFixFailure(fix: "third", reason: .targetMissing(path: ["components", "schemas", "s"])),
         ]))
         #expect(problem?.description == """
-            2 of the spec fixes no longer apply; update or drop them in Specs/github/fixes.yaml:
+            2 spec fixes no longer apply; update or drop them in Specs/github/fixes.yaml:
               first: upstream no longer has gone; drop the fix
               third: the description has no components/schemas/s; update the fix
             """)

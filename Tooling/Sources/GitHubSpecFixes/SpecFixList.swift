@@ -18,7 +18,9 @@ package struct SpecFixList: Equatable, Sendable {
                 "invalid fix list: \(message)"
             case let .stale(failures):
                 """
-                \(failures.count) of the spec fixes no longer apply; update or drop them \
+                \(failures.count == 1
+                    ? "1 spec fix no longer applies; update or drop it"
+                    : "\(failures.count) spec fixes no longer apply; update or drop them") \
                 in Specs/github/fixes.yaml:
                 \(failures.map { "  \($0)" }.joined(separator: "\n"))
                 """
