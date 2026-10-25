@@ -16,6 +16,7 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | S3 | Line numbers | Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, full text in the job summary; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
+| S6 | Posting failures | Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing | Always fail; fail on configuration errors only |
 
 ## Context and constraints
 
@@ -573,3 +574,78 @@ group per pull request with `cancel-in-progress: true`, and just before
 writing, the runner re-reads the pull request (`pulls/get`, one request)
 and skips posting when its head is no longer `headCommit`: a newer run
 will post. The skip is logged, not an error.
+
+## 6. Running, exit codes, and posting failures (S6)
+
+### The run
+
+`Dangerfile`'s default `main()` is the whole runner (4.3):
+
+1. **Mode.** `GITHUB_ACTIONS=true` means a CI run; anything else is a
+   dry run, which never posts, whatever the flags say.
+2. **Context** (section 2) and the line map (section 3). An unsupported
+   event, a missing payload, or a git failure ends the run here.
+3. **Rules** (section 1), into a `Report` (section 4); `--report <path>`
+   writes it out.
+4. **Render** the summary (section 5): to `$GITHUB_STEP_SUMMARY` in CI, to
+   standard output in a dry run.
+5. **Post** through `PullRequestHost`, unless this is a dry run or the
+   pull request comes from a fork (v1 checks `PullRequest.isFromFork`
+   first, says why it won't post, and carries on).
+6. **Exit.**
+
+Options are a handful of hand-parsed flags (`--base`, `--pull-request`,
+`--report`, `--fail-on-post-error`) and environment variables
+(`GITHUB_TOKEN` and the variables Actions sets), because `Steward` is a
+library and AGENTS.md keeps swift-argument-parser in the CLI target. The
+log goes to standard error, grouped with `::group::` in Actions. The
+library's damage reports go there too; an abandoned file (`.error`)
+becomes a `::warning::` annotation, since the rules then saw an
+incomplete diff.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | No `failure` findings. Posting succeeded, was skipped, or failed without `--fail-on-post-error` |
+| 1 | At least one `failure` finding, including a rule that threw |
+| 2 | Steward couldn't do its job: the context couldn't be built, or posting failed with `--fail-on-post-error` |
+
+Exit code 2 wins over 1, since a broken run says nothing reliable about
+the pull request. A dry run exits the same way, so it works as a local
+pre-push check.
+
+### When posting fails
+
+Posting can fail for reasons that say nothing about the pull request:
+
+| `PullRequestHostError.Kind` | Typical cause | What Steward does |
+|---|---|---|
+| `forbidden` | The workflow lacks `pull-requests: write`; or a Dependabot pull request, which is a same-repository branch but gets a read-only token (documented) | Warns with the fix: grant `pull-requests: write` (enough for issue comments on pull requests, per the REST docs), or skip Dependabot |
+| `unauthorized` | No token, or a wrong one. A missing token is caught before any request | Warns |
+| `rateLimited`, `serverError`, `network` | GitHub is busy or down; `GITHUB_TOKEN` has 1,000 requests an hour per repository | Retries once after a short pause (honoring `retry-after` up to a minute), then warns |
+| `notFound` on update | Someone deleted the summary since it was listed | Not a failure: creates a new one (4.4) |
+| `rejected` | Too long despite the budget, or GitHub's spam check | Warns |
+| `malformedResponse`, `unexpectedStatus` | GitHub answered something the client doesn't understand | Warns |
+
+"Warns" means a `::warning title=Steward::` annotation on the run that
+names the error, plus the full summary in the job summary, which
+always gets written. The question is the exit code.
+
+| Option | A posting failure… |
+|---|---|
+| **A. Findings decide; opt-in strictness** | never changes the exit code, unless the workflow passes `--fail-on-post-error` (an Action input) |
+| B. Always fails the job | exits 2 |
+| C. Fails on configuration errors only | exits 2 for `forbidden`/`unauthorized`, warns for the rest |
+
+**Recommendation (A).** The check's status should answer "is this pull
+request acceptable?", not "was GitHub reachable?". A failing pull
+request stays red without the comment, because its failures set exit 1
+on their own, and its findings are in the job summary. A passing one
+shouldn't turn red because of an outage, or on every Dependabot pull
+request, which is what C would do: Dependabot's `forbidden` looks exactly
+like a missing permission. The cost is that a missing permission goes
+unnoticed except through the warning annotation on every run, so the
+quickstart's workflow sets `permissions:` explicitly (new repositories
+default the token to read-only), and teams that want it loud set the
+flag. Open question 4 asks for the default.
