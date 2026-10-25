@@ -168,8 +168,9 @@ The choices, made in step 3.5:
   returns, so callers see only their own text. A CRLF after the marker
   counts (GitHub's web editor writes CRLF); a reply that quotes the
   summary, or a marker anywhere but the first line, doesn't. With
-  `summaryAuthor` set, only that login's comments count, so nobody else's
-  comment can be overwritten by putting the marker on its first line.
+  `summaryAuthor` set, only that login's comments count (ignoring case, as
+  GitHub compares logins), so nobody else's comment can be overwritten by
+  putting the marker on its first line.
   `summaryComments(onPullRequest:)` returns every match, oldest first,
   because two runs that race can each create one; 4.4 decides which one
   to keep. The marker is fixed for now; 4.1's design doc decides the
@@ -184,7 +185,8 @@ The choices, made in step 3.5:
 - **Errors.** Every failure is a `PullRequestHostError`, whether the
   description declares the status or not. Its `kind` is what a caller
   acts on, and `status` and `message` (GitHub's `message`, such as "Bad
-  credentials") are for the log. Cancellation stays a `CancellationError`.
+  credentials") are for the log. Cancellation stays a `CancellationError`,
+  even when URLSession reports it as `URLError(.cancelled)`.
 
   | GitHub answers | `kind` |
   |---|---|
@@ -198,7 +200,10 @@ The choices, made in step 3.5:
   | no response | `network` |
   | a success that doesn't decode, such as the diff media type | `malformedResponse` |
 
-  An error status whose body isn't GitHub's JSON still maps by status.
+  `RateLimitMiddleware` reads the rate-limit headers on every response,
+  because the generated client drops headers for declared statuses (such
+  as `issues/create-comment`'s 403). An error status whose body isn't
+  GitHub's JSON still maps by status.
   Updating a comment someone deleted fails as `notFound` (thanks to the
   `update-comment-404` fix), so 4.4 can post a new one. Deleting a
   comment that's already gone succeeds (the `delete-comment-404` fix).
