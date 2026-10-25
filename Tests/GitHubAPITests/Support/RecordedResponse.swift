@@ -39,14 +39,23 @@ struct RecordedResponse {
 
     /// Keeps only `keptHeaders`, sorted by name, as a recording does.
     init(response: HTTPResponse, body: Data) {
-        self.response = HTTPResponse(
-            status: response.status,
-            headerFields: HTTPFields(
-                response.headerFields
-                    .filter { Self.keptHeaders.contains($0.name) }
-                    .sorted { $0.name.canonicalName < $1.name.canonicalName }
-            )
+        self.init(
+            unfiltered: HTTPResponse(
+                status: response.status,
+                headerFields: HTTPFields(
+                    response.headerFields
+                        .filter { Self.keptHeaders.contains($0.name) }
+                        .sorted { $0.name.canonicalName < $1.name.canonicalName }
+                )
+            ),
+            body: body
         )
+    }
+
+    /// Keeps every header, for made-up responses: they carry headers a
+    /// recording drops, such as `retry-after`.
+    init(unfiltered response: HTTPResponse, body: Data) {
+        self.response = response
         self.body = body
     }
 
