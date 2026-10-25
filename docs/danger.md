@@ -1,19 +1,20 @@
 # Steward: a pure-Swift Danger
 
-**Status: draft for review (plan step 4.1).** No Phase 4 code exists yet;
+**Status: in review (plan step 4.1).** No Phase 4 code exists yet;
 steps 4.2–4.10 build on what this document settles. Each section ends with
 a recommendation and the alternatives weighed, and the
 [open questions](#open-questions) at the end are for the maintainer to
-answer. Claims about danger-swift, GitHub, and SwiftPM were checked
+answer. The maintainer answered questions 1–3 on 2026-10-26, as
+recommended; 4–10 are open. Claims about danger-swift, GitHub, and SwiftPM were checked
 against their sources or by experiment; [Checks](#checks) lists how.
 
 ## Decisions at a glance
 
 | # | Topic | Recommendation | Alternatives considered |
 |---|---|---|---|
-| S1 | Rule shape | `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
+| S1 | Rule shape | **Decided 2026-10-26.** `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
 | S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
-| S3 | Line numbers | Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
+| S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing | Always fail; fail on configuration errors only |
@@ -97,7 +98,7 @@ functional style the repository asks for falls out of them (`filter` the
 files, `map` them to findings), and a rule can't read or drop another
 rule's findings because it never sees them.
 
-**Recommendation (A):**
+**Decided (A),** as recommended (open question 1, answered 2026-10-26):
 
 ```swift
 /// One check over a pull request.
@@ -185,8 +186,8 @@ The details:
 *Trade-off:* a rule with several independent checks either returns an
 array it builds up (`var findings: [Finding] = []`) or becomes several
 rules. The second is usually better anyway: each finding names its rule
-in the report. Open questions 1 and 2 ask for the shape and the error
-behavior.
+in the report. The maintainer chose this shape and this error and order
+behavior on 2026-10-26 (questions 1 and 2).
 
 ## 2. The context (S2)
 
@@ -359,8 +360,8 @@ diagnostics.
 | C. Build the head instead | `base...head` | head coordinates; nothing to map | `blob/<head>` |
 | D. Two diffs | `base...head` | merge coordinates against `base-tip...merge`, findings mapped to the head afterwards | `blob/<head>` |
 
-**Recommendation (A).** Everything a rule or a reader sees is in head
-coordinates, and the one tree that differs, the built one, is mapped once,
+**Decided (A),** as recommended (open question 3, answered 2026-10-26).
+Everything a rule or a reader sees is in head coordinates, and the one tree that differs, the built one, is mapped once,
 at the edge:
 
 - `Run.builtCommit` names the commit the logs came from: `GITHUB_SHA` by
@@ -408,8 +409,6 @@ Constraints this puts on the workflow:
   workflows for it then (see [Checks](#checks)).
 - **Deleted files.** A finding on a deleted file has a path but no head
   line; the summary shows the path without a link.
-
-Open question 3 asks for the choice.
 
 ## 4. The report (S4)
 
@@ -801,21 +800,20 @@ release. Open question 8.
 ## Open questions
 
 For the maintainer. Each has a recommendation; none is decided until
-answered.
+answered. Answers are recorded in place, so the numbers that the sections
+refer to stay stable.
 
-1. **Rule shape (S1).** Pure `(Context) async throws -> [Finding]`
-   closures composed with a result builder, or an `inout` report
-   (`report.warn("…")`), which is closer to danger-swift?
-   *Recommended:* pure closures.
-2. **Broken rules and order (S1).** Should a rule that throws become a
-   failure of that rule while the others still run, and should rules run
-   one at a time in declaration order? *Recommended:* yes to both; running
-   them concurrently can come later without an API change.
-3. **Line numbers (S3).** Everything in head coordinates, with build-log
-   lines mapped from the built tree (the merge commit by default) before
-   matching? *Recommended:* yes (option A). The alternatives are merge
-   coordinates throughout, as `pr.yml` does today, or requiring workflows
-   to build the head.
+1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
+   closures"). Rules are pure `(Context) async throws -> [Finding]`
+   closures composed with a result builder, not an `inout` report.
+2. **Broken rules and order (S1). Answered 2026-10-26: yes to both**
+   ("yes and yes"). A rule that throws becomes a failure of that rule
+   while the others still run, and rules run one at a time in
+   declaration order.
+3. **Line numbers (S3). Answered 2026-10-26: head coordinates** ("head
+   indeed"). Everything is in head coordinates, and build-log lines are
+   mapped from the built tree (the merge commit by default) before
+   matching.
 4. **Posting failures (S6).** Should a failed post leave the exit code to
    the findings, with a warning annotation and an opt-in
    `--fail-on-post-error`, or fail the job? *Recommended:* leave it to the
