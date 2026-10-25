@@ -4,9 +4,9 @@
 steps 4.2–4.10 build on what this document settles. Each section ends with
 a recommendation and the alternatives weighed, and the
 [open questions](#open-questions) at the end are for the maintainer to
-answer. The maintainer answered questions 1–5, 7, and 8 on 2026-10-26,
-each as recommended (7 with a documentation requirement added);
-questions 6, 9, and 10 are open. Claims about danger-swift, GitHub, and SwiftPM were checked
+answer. The maintainer answered questions 1–8 on 2026-10-26, each as
+recommended (7 with a documentation requirement added); questions 9 and
+10 are open. Claims about danger-swift, GitHub, and SwiftPM were checked
 against their sources or by experiment; [Checks](#checks) lists how.
 
 ## Decisions at a glance
@@ -14,7 +14,7 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | # | Topic | Recommendation | Alternatives considered |
 |---|---|---|---|
 | S1 | Rule shape | **Decided 2026-10-26.** `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
-| S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
+| S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; **decided 2026-10-26:** a placeholder pull request in a local dry run without `--pull-request` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 | S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | **Clean case and markers decided 2026-10-26.** The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
@@ -297,8 +297,8 @@ pull request exists, something has to stand in for `context.pullRequest`:
 | B. Optional | `PullRequest?`, `nil` in a dry run | Every rule that reads it has to unwrap it, although it's never `nil` in CI |
 | C. Required | The dry run refuses to start | Local runs need the network, a token, and an already-open pull request |
 
-**Recommendation (A)**, so rules stay simple and a dry run works on a
-branch nobody has pushed yet. Open question 6 asks for the choice.
+**Decided (A),** as recommended (question 6, answered 2026-10-26), so
+rules stay simple and a dry run works on a branch nobody has pushed yet.
 
 Alternatives weighed:
 
@@ -832,19 +832,13 @@ refer to stay stable.
 5. **Nothing to report (S5). Answered 2026-10-26: all clear** ("all
    clear"). An existing summary is updated to "all clear"; a clean pull
    request without one gets none.
-6. **Pull request data in a local dry run (S2).** Outside Actions there
-   is no event payload, so `context.pullRequest` (title, description,
-   author, labels, number, sizes) has no source unless Steward asks
-   GitHub. With `--pull-request <n>` and a token, every option reads the
-   real pull request through `pulls/get`. The question is what rules see
-   without them, for example before the pull request is opened:
-   (A) a placeholder built from the head commit (subject as title, body
-   as description, git user as author, no labels), flagged in the
-   printed summary, so a rule about labels or the description may report
-   findings the real pull request wouldn't get; (B) `pullRequest` becomes
-   optional, so every rule unwraps it although it's never `nil` in CI; or
-   (C) the dry run refuses to start without `--pull-request` and a token.
-   *Recommended:* (A).
+6. **Pull request data in a local dry run (S2). Answered 2026-10-26:
+   the placeholder** ("A, the placeholder built from the head commit").
+   With `--pull-request <n>` and a token, a dry run reads the real pull
+   request through `pulls/get`. Without them, `context.pullRequest` is
+   built from the head commit (subject as title, body as description,
+   git user as author, no labels, sizes from the local diff), and the
+   printed summary says it's a placeholder.
 7. **Several Dangerfiles per pull request (S5). Answered 2026-10-26:
    not in v1, and documented as unsupported** ("not in v1, but make a
    note of it that it's unsupported, in the docs"). One marker per pull
