@@ -123,13 +123,20 @@ struct LiveClientSupportTests {
         #expect(read.body == recorded.body)
     }
 
-    static let fixtures = (Bundle.module.urls(forResourcesWithExtension: "http", subdirectory: "Fixtures") ?? [])
-        .map(\.lastPathComponent)
-        .sorted()
+    // Not Bundle.urls(forResourcesWithExtension:subdirectory:): on Linux it
+    // answers NSURLs, whose lastPathComponent is optional.
+    static func fixtures() throws -> [String] {
+        let folder = try #require(Bundle.module.resourceURL).appendingPathComponent("Fixtures")
+        let names = try FileManager.default.contentsOfDirectory(atPath: folder.path)
+            .filter { $0.hasSuffix(".http") }
+            .sorted()
+        try #require(!names.isEmpty, "no recorded responses in \(folder.path)")
+        return names
+    }
 
     // The fixtures were recorded by the 3.2 spike's recorder, so they are the
     // oracle for the format this one writes.
-    @Test("recording a fixture's response again reproduces the fixture byte for byte", arguments: fixtures)
+    @Test("recording a fixture's response again reproduces the fixture byte for byte", arguments: try fixtures())
     func rerecording(fixture: String) async throws {
         let original = try #require(
             Bundle.module.url(forResource: fixture, withExtension: nil, subdirectory: "Fixtures")

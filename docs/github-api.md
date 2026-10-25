@@ -91,7 +91,9 @@ fixes.
    the fixture.
 
 Before committing, drop the entry, regenerate, and watch the new test
-fail: a test that passes either way proves nothing. The Tooling tests
+fail: a test that passes either way proves nothing. (The two 404 tests
+stop compiling instead, since their operation loses its `notFound`
+case.) The Tooling tests
 can't run that check themselves, because it takes a regeneration per
 fix.
 
@@ -139,7 +141,7 @@ field, a duplicate name, or a correction without a fixture all fail.
 
 | Suite | Checks |
 |---|---|
-| `FixtureDecodingTests` | Every recorded response for the five operations decodes through the client's real path: status dispatch, content-type check, JSON decoding |
+| `FixtureDecodingTests` | Every recorded response for the five operations decodes through the client's real path: status dispatch, content-type check, JSON decoding. Fails when a file in `Fixtures/` isn't replayed by any test |
 | `EventPayloadTests` | The `GITHUB_EVENT_PATH` payloads of an `opened` and a `synchronize` event decode with the REST `PullRequest` and `Repository` schemas, which `pulls/get` uses too |
 | `SpecFixRegressionTests` | One test per correction, on its fixture |
 | `SpecAdaptationTests` (Tooling) | One test per adaptation, on the committed `openapi.yaml` |

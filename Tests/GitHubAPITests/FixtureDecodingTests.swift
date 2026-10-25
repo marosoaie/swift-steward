@@ -109,4 +109,22 @@ struct FixtureDecodingTests {
         let reason = error.map { String(describing: $0.underlyingError) } ?? ""
         #expect(reason.contains("application/vnd.github.diff"), "\(reason)")
     }
+
+    // Reads the source tree, not the bundle, so a fixture committed without
+    // a test fails here instead of sitting unchecked.
+    @Test("every recorded response and event payload is replayed by a test")
+    func everyFixtureIsReplayed() throws {
+        let folder = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+        let sources = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+            .filter { $0.pathExtension == "swift" }
+            .map { try String(contentsOf: $0, encoding: .utf8) }
+            .joined()
+        let fixtures = try FileManager.default
+            .contentsOfDirectory(at: folder.appendingPathComponent("Fixtures"), includingPropertiesForKeys: nil)
+            .map { $0.deletingPathExtension().lastPathComponent }
+        try #require(!fixtures.isEmpty)
+        fixtures.forEach { fixture in
+            #expect(sources.contains("\"\(fixture)\""), "no test replays \(fixture)")
+        }
+    }
 }
