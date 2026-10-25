@@ -24,9 +24,13 @@ swift-argument-parser is allowed in the CLI target only, and Apple's
 swift-openapi-runtime and swift-openapi-urlsession in the `GitHubAPI`
 target only.
 
-`GitHubAPI` (not a product yet) is a GitHub REST client generated from
-GitHub's OpenAPI description and committed under `Generated/`. Never edit
-the generated code: change `Specs/github/` and regenerate. The generator
+`PullRequestHosting` (not a product yet) is the host seam: the
+`PullRequestHost` protocol and its models, with no dependencies.
+`GitHubAPI` (not a product yet) implements it as `GitHubHost`, over a
+GitHub REST client generated from GitHub's OpenAPI description and
+committed under `Generated/`. Generated types stay internal, so they
+never reach public API: map them to hand-written models instead. Never
+edit the generated code: change `Specs/github/` and regenerate. The generator
 lives in the nested `Tooling/` package, which the root manifest never
 depends on. See [docs/github-api.md](docs/github-api.md) for the pin, the
 spec fixes, and how to update them.

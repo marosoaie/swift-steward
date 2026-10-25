@@ -3,9 +3,10 @@
 The `GitHubAPI` target is a GitHub REST client that
 [swift-openapi-generator](https://github.com/apple/swift-openapi-generator)
 generates from GitHub's published OpenAPI description. It's filtered to
-the operations Steward calls, and the output is committed. Nothing here is
-public API: 3.5's host seam wraps the client, so generated types never
-reach Steward's users.
+the operations Steward calls, and the output is committed. The generated
+types are internal: `GitHubHost`, the GitHub implementation of the host
+seam, wraps the client, so they never reach Steward's users (see
+[The host seam](#the-host-seam)).
 
 | Path | What it holds |
 |---|---|
@@ -14,6 +15,8 @@ reach Steward's users.
 | `Specs/github/fixes.yaml` | The reviewed fixes to the description, one per entry |
 | `Specs/github/openapi.yaml` | The generator's input: the filtered, fixed description. Written by the pipeline, committed for review |
 | `Sources/GitHubAPI/Generated/` | The generated client. Written by the pipeline; never edit it by hand |
+| `Sources/GitHubAPI/*.swift` | `GitHubHost` and its helpers, written by hand |
+| `Sources/PullRequestHosting/` | The host seam: the `PullRequestHost` protocol and its models, with no dependencies |
 | `Tooling/` | A nested package with the generator and the spec-fix engine, so the root manifest never depends on them |
 | `Tests/GitHubAPITests/` | Recorded responses and event payloads, the tests that decode them, and the opt-in live test |
 
@@ -137,6 +140,85 @@ compile-time checking of the entries, the decoder and `SpecFixList`'s
 rules cover at the start of every run: an unknown kind of edit, a missing
 field, a duplicate name, or a correction without a fixture all fail.
 
+## The host seam
+
+Steward talks to GitHub only through `PullRequestHost`, a protocol in the
+dependency-free `PullRequestHosting` target: read a pull request; find,
+create, update, and delete the summary comment. Its models
+(`PullRequest`, `SummaryComment`, `PullRequestHostError`) are
+hand-written, so regenerating the client never changes public API, and a
+rule's tests can fake a host without the OpenAPI runtime. `GitHubHost`
+implements it for one repository:
+
+```swift
+let host = GitHubHost(
+    owner: "marosoaie",
+    repository: "swift-steward",
+    token: environment["GITHUB_TOKEN"],
+    apiURL: apiURL,                       // GITHUB_API_URL in Actions
+    summaryAuthor: "github-actions[bot]"  // optional
+)
+```
+
+The choices, made in step 3.5:
+
+- **Which comment is the summary.** The one whose first line is exactly
+  `<!-- steward-summary -->`, an HTML comment GitHub renders as nothing.
+  The host adds the line when it posts and strips it from what it
+  returns, so callers see only their own text. A CRLF after the marker
+  counts (GitHub's web editor writes CRLF); a reply that quotes the
+  summary, or a marker anywhere but the first line, doesn't. With
+  `summaryAuthor` set, only that login's comments count, so nobody else's
+  comment can be overwritten by putting the marker on its first line.
+  `summaryComments(onPullRequest:)` returns every match, oldest first,
+  because two runs that race can each create one; 4.4 decides which one
+  to keep. The marker is fixed for now; 4.1's design doc decides the
+  summary's format, and whether several Dangerfiles need markers of
+  their own.
+- **Pagination.** Comments are listed 100 a page (GitHub's maximum), and
+  the next page is read only while the `link` header names a
+  `rel="next"`. An empty page ends the list whatever the header says.
+  After 100 pages (10,000 comments) the host gives up with a
+  `malformedResponse` error rather than read forever or quietly miss a
+  summary, which would make 4.4 post a second one.
+- **Errors.** Every failure is a `PullRequestHostError`, whether the
+  description declares the status or not. Its `kind` is what a caller
+  acts on, and `status` and `message` (GitHub's `message`, such as "Bad
+  credentials") are for the log. Cancellation stays a `CancellationError`.
+
+  | GitHub answers | `kind` |
+  |---|---|
+  | 401 (declared nowhere) | `unauthorized` |
+  | 403 with `x-ratelimit-remaining: 0`, a `retry-after`, or "rate limit" in the message; or 429 | `rateLimited` |
+  | any other 403 | `forbidden` |
+  | 404, or 410 (issues turned off) | `notFound` |
+  | 422 | `rejected` |
+  | 5xx | `serverError` |
+  | any other status, such as 304 or 406 | `unexpectedStatus` |
+  | no response | `network` |
+  | a success that doesn't decode, such as the diff media type | `malformedResponse` |
+
+  An error status whose body isn't GitHub's JSON still maps by status.
+  Updating a comment someone deleted fails as `notFound` (thanks to the
+  `update-comment-404` fix), so 4.4 can post a new one. Deleting a
+  comment that's already gone succeeds (the `delete-comment-404` fix).
+  Nothing is retried: whether a rate limit is worth waiting for is the
+  runner's call.
+- **The token** lives in a `Credential` that prints as `<redacted>` in
+  descriptions, debug output, and `dump`. It's added by a middleware, so
+  the request a `ClientError` prints never carries it, and an empty token
+  is treated as none.
+- **Event payloads.** `PullRequest`'s mapping from the REST schema also
+  maps an Actions event's `pull_request`, which decodes with the same
+  schema, so 4.2 can read the context from `GITHUB_EVENT_PATH` without an
+  API call.
+
+Left for Phase 4: GitHub caps a comment at 65,536 characters and answers
+a longer one with a 422 (`rejected`), so 4.4 has to truncate the summary.
+And `head.repo` is null for a pull request from a deleted fork, which the
+schema doesn't allow, so it fails as `malformedResponse`. v1 serves
+same-repository pull requests only, so neither case can happen yet.
+
 ## Tests
 
 | Suite | Checks |
@@ -146,8 +228,14 @@ field, a duplicate name, or a correction without a fixture all fail.
 | `SpecFixRegressionTests` | One test per correction, on its fixture |
 | `SpecAdaptationTests` (Tooling) | One test per adaptation, on the committed `openapi.yaml` |
 | `RepositoryFixListTests` (Tooling) | Every fix has a test named after it and no test outlives its fix; every fixture a fix names exists; every fix detects its own result |
+| `GitHubHostPullRequestTests` | `GitHubHost` maps every recorded pull request and both event payloads, compared with the JSON read by `JSONSerialization`; the request it sends |
+| `GitHubHostCommentTests` | The spike's recorded create → list → update → delete exchange, replayed request by request; the marker and author rules; pagination over made-up pages; deleted comments |
+| `GitHubHostErrorTests` | Every status, recorded or made up, maps to its `kind`; network failures and cancellation; the token never shows up in descriptions, `dump`, or errors |
+| `SummaryMarkerTests`, `LinkHeaderTests` | The first-line rule, CRLF included; `rel="next"` parsing |
 | `LiveClientSupportTests` | The live test's client, offline: it refuses writes, sends the token without ever printing it, and records fixtures byte for byte |
-| `LiveTests` | Opt-in: real responses from api.github.com decode |
+| `LiveSandboxSupportTests` | The write test's fence, offline: it lets through the sandbox pull request's requests and nothing else |
+| `LiveTests`, `LiveHostTests` | Opt-in: real responses from api.github.com decode, and `GitHubHost` maps them as the raw responses say |
+| `LiveSandboxTests` | Opt-in, writes: the summary comment's whole life on a sandbox pull request |
 
 The offline suites run on macOS and Linux in PR CI. The Tooling suites run
 in the drift guard's job.
@@ -185,11 +273,43 @@ The environment:
 | `GITHUB_TOKEN` | Optional, since the pull requests are public. Authenticates the requests, raising the rate limit from 60 an hour to 5,000 |
 | `STEWARD_LIVE_GITHUB_RECORD_DIR` | Records every response there as `<operation>.live-<scenario>.http`, keeping only `RecordedResponse`'s headers |
 
-It never creates or changes anything on GitHub: every client it builds
-refuses any method but `GET` before the request leaves the process
-(`ReadOnlyMiddleware`, with an offline test). So `issues/create-comment`,
-`update-comment`, and `delete-comment` aren't exercised live here; 3.5
-checks the write path on a sandbox pull request.
+`LiveHostTests` runs with the same variable and sends nine more `GET`s
+through `GitHubHost`. It maps both pull requests and compares each with
+the raw response it came from. It also finds the fork pull request's
+last comment by its first line at five comments a page, which takes two
+pages, and compares the result with one page of 100.
+
+Neither suite creates or changes anything on GitHub: every client they
+build refuses any method but `GET` before the request leaves the process
+(`ReadOnlyMiddleware`, with an offline test).
+
+### The live write test
+
+```sh
+STEWARD_LIVE_GITHUB_WRITE_TESTS=1 STEWARD_SANDBOX_REPOSITORY=<owner>/<name> \
+    STEWARD_SANDBOX_PULL_REQUEST=<number> GITHUB_TOKEN=<token> \
+    swift test --filter LiveSandboxTests
+```
+
+The one test that writes, for Phase 3's "the client creates, updates, and
+deletes a comment on a sandbox PR". It's skipped unless
+`STEWARD_LIVE_GITHUB_WRITE_TESTS` is `1`, and it fails before sending
+anything if the other three variables are missing. The token needs to
+be able to comment on the pull request. Its comment carries a marker
+unique to the run, and `SandboxOnlyMiddleware` refuses every request
+except reads in the sandbox repository, comments on its pull request,
+and edits of issue comments there, before the request leaves the
+process. So the test can't touch another repository, another pull
+request, or a comment it didn't find through its own marker.
+
+It reads the pull request, creates the comment, finds it (two comments a
+page, so it pages through any others), updates it, finds it again, and
+deletes it. After each step it checks the raw comment list, read without
+the host. Then it checks GitHub's two 404s for the deleted comment:
+deleting it again succeeds, and updating it fails as `notFound`. If a
+step fails after the comment exists, it deletes the comment before
+failing. At least 13 requests in all, more when the pull request has
+other comments.
 
 When it fails, GitHub changed something. Run it again with
 `STEWARD_LIVE_GITHUB_RECORD_DIR` set and compare the recording with
