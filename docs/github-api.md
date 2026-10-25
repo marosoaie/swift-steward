@@ -15,7 +15,7 @@ reach Steward's users.
 | `Specs/github/openapi.yaml` | The generator's input: the filtered, fixed description. Written by the pipeline, committed for review |
 | `Sources/GitHubAPI/Generated/` | The generated client. Written by the pipeline; never edit it by hand |
 | `Tooling/` | A nested package with the generator and the spec-fix engine, so the root manifest never depends on them |
-| `Tests/GitHubAPITests/` | Recorded responses and the tests that decode them |
+| `Tests/GitHubAPITests/` | Recorded responses and event payloads, the tests that decode them, and the opt-in live test |
 
 ## Regenerating
 
@@ -56,7 +56,8 @@ commits. So the pin is a commit plus the checksum of one file.
    `upstream.env`, and run the script.
 3. If it fails naming a fix, upstream has changed what the fix edits:
    - "drop the fix": upstream now says what the fix said. Delete the
-     entry and its test in `SpecFixRegressionTests`. Keep the fixture: the
+     entry and its test, in `SpecFixRegressionTests` or, for an
+     adaptation, `SpecAdaptationTests`. Keep a correction's fixture: the
      response still has to decode, so move its test to
      `FixtureDecodingTests`.
    - "update the fix": the node the fix edits is gone or has moved. Find
@@ -78,7 +79,9 @@ fixes.
 
 1. Record the response as `Tests/GitHubAPITests/Fixtures/<operation>.<scenario>.http`:
    `HTTP <status>`, the kept headers (see `RecordedResponse`), a blank
-   line, then the body. Scan it for tokens before committing.
+   line, then the body. The live test's recorder writes this format for
+   the responses it reads (see [The live test](#the-live-test)). Scan it
+   for tokens before committing.
 2. Add an entry to `fixes.yaml` with a `name`, a `why`, the `fixture`, and
    the `edit`.
 3. Add a test to `SpecFixRegressionTests`, named `"<fix name>: …"`, that
@@ -86,6 +89,13 @@ fixes.
 4. Regenerate, and run both test suites. The Tooling tests check that the
    fixture exists and that a regression test names the fix and replays
    the fixture.
+
+Before committing, drop the entry, regenerate, and watch the new test
+fail: a test that passes either way proves nothing. (The two 404 tests
+stop compiling instead, since their operation loses its `notFound`
+case.) The Tooling tests
+can't run that check themselves, because it takes a regeneration per
+fix.
 
 The kinds of edit are `makeNullable`, `makeOptional`, `addEnumValue`,
 `undeprecate`, `remove`, and `addResponse`
@@ -96,7 +106,16 @@ Two kinds don't correct upstream and need no fixture: `remove` (the fix
 list uses it to drop the 20,000-line `x-webhooks` extension, which the
 generator never reads) and `undeprecate` (the generated initializers
 assign deprecated properties, which warns, and the build must be
-warning-free).
+warning-free). Such an adaptation still gets a test, named
+`"<fix name>: …"`, in
+`Tooling/Tests/GitHubSpecFixesTests/SpecAdaptationTests.swift`: it checks
+the committed `openapi.yaml` for the fix's effect, so it fails once the
+entry is dropped and the client regenerated (a removed node is back, a
+deprecation marker returns).
+
+The Tooling tests fail when a fix has no test named after it, and when a
+test is named after a fix that's no longer on the list, so a dropped fix
+can't leave a test that passes for no reason.
 
 ### Why a Swift transform, and why the list is YAML
 
@@ -117,6 +136,66 @@ and `why` fields read as the review record. What Swift values would add,
 compile-time checking of the entries, the decoder and `SpecFixList`'s
 rules cover at the start of every run: an unknown kind of edit, a missing
 field, a duplicate name, or a correction without a fixture all fail.
+
+## Tests
+
+| Suite | Checks |
+|---|---|
+| `FixtureDecodingTests` | Every recorded response for the five operations decodes through the client's real path: status dispatch, content-type check, JSON decoding. Fails when a file in `Fixtures/` isn't replayed by any test |
+| `EventPayloadTests` | The `GITHUB_EVENT_PATH` payloads of an `opened` and a `synchronize` event decode with the REST `PullRequest` and `Repository` schemas, which `pulls/get` uses too |
+| `SpecFixRegressionTests` | One test per correction, on its fixture |
+| `SpecAdaptationTests` (Tooling) | One test per adaptation, on the committed `openapi.yaml` |
+| `RepositoryFixListTests` (Tooling) | Every fix has a test named after it and no test outlives its fix; every fixture a fix names exists; every fix detects its own result |
+| `LiveClientSupportTests` | The live test's client, offline: it refuses writes, sends the token without ever printing it, and records fixtures byte for byte |
+| `LiveTests` | Opt-in: real responses from api.github.com decode |
+
+The offline suites run on macOS and Linux in PR CI. The Tooling suites run
+in the drift guard's job.
+
+Not covered by fixtures: pull requests from forks and paginated comments,
+since this repository has neither, and recording another project's pull
+request text and comments into this one isn't ours to do. The live test
+covers both.
+
+### The live test
+
+```sh
+STEWARD_LIVE_GITHUB_TESTS=1 GITHUB_TOKEN=$(gh auth token) swift test --filter LiveTests
+```
+
+It's skipped unless `STEWARD_LIVE_GITHUB_TESTS` is `1`, and CI doesn't set
+it. It catches what fixtures can't: GitHub changing a response after the
+pin. It sends eight requests to api.github.com, all `GET`, about a second
+in all:
+
+- `pulls/get` on [swift-steward#20](https://github.com/marosoaie/swift-steward/pull/20)
+  (same repository, merged) and on
+  [apple/swift-openapi-generator#883](https://github.com/apple/swift-openapi-generator/pull/883)
+  (from a fork, merged);
+- `issues/list-comments` on the latter, two pages of five comments as
+  `full+json`, linked by the `link` header;
+- a missing pull request and issue (the declared 404), a bad token (the
+  undeclared 401), and the diff media type (still undeclared).
+
+The environment:
+
+| Variable | Effect |
+|---|---|
+| `STEWARD_LIVE_GITHUB_TESTS=1` | Runs the live test |
+| `GITHUB_TOKEN` | Optional, since the pull requests are public. Authenticates the requests, raising the rate limit from 60 an hour to 5,000 |
+| `STEWARD_LIVE_GITHUB_RECORD_DIR` | Records every response there as `<operation>.live-<scenario>.http`, keeping only `RecordedResponse`'s headers |
+
+It never creates or changes anything on GitHub: every client it builds
+refuses any method but `GET` before the request leaves the process
+(`ReadOnlyMiddleware`, with an offline test). So `issues/create-comment`,
+`update-comment`, and `delete-comment` aren't exercised live here; 3.5
+checks the write path on a sandbox pull request.
+
+When it fails, GitHub changed something. Run it again with
+`STEWARD_LIVE_GITHUB_RECORD_DIR` set and compare the recording with
+`Specs/github/openapi.yaml`. If the description is wrong, the recording
+becomes the fixture for a new fix (rename its scenario after who recorded
+it, `macos-…` or `actions-…`; see [Adding a fix](#adding-a-fix)).
 
 ## The drift guard
 

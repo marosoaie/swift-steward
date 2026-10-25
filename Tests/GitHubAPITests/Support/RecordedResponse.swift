@@ -26,8 +26,29 @@ struct RecordedResponse {
         }
     }
 
+    static let keptHeaders: [HTTPField.Name] = [
+        .contentType,
+        HTTPField.Name("etag")!,
+        HTTPField.Name("link")!,
+        HTTPField.Name("x-github-media-type")!,
+        HTTPField.Name("x-github-api-version-selected")!,
+    ]
+
     let response: HTTPResponse
     let body: Data
+
+    /// Keeps only `keptHeaders`, sorted by name, as a recording does.
+    init(response: HTTPResponse, body: Data) {
+        self.response = HTTPResponse(
+            status: response.status,
+            headerFields: HTTPFields(
+                response.headerFields
+                    .filter { Self.keptHeaders.contains($0.name) }
+                    .sorted { $0.name.canonicalName < $1.name.canonicalName }
+            )
+        )
+        self.body = body
+    }
 
     init(contentsOf url: URL) throws {
         let data = try Data(contentsOf: url)
@@ -49,5 +70,12 @@ struct RecordedResponse {
         }
         response = HTTPResponse(status: .init(code: code), headerFields: HTTPFields(fields))
         body = data[blankLine.upperBound...]
+    }
+
+    /// The on-disk form `init(contentsOf:)` reads.
+    var encoded: Data {
+        let head = ["HTTP \(response.status.code)"]
+            + response.headerFields.map { "\($0.name.canonicalName): \($0.value)" }
+        return Data((head.joined(separator: "\n") + "\n\n").utf8) + body
     }
 }
