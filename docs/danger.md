@@ -13,6 +13,7 @@ against their sources or by experiment; [Checks](#checks) lists how.
 |---|---|---|---|
 | S1 | Rule shape | `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
 | S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
+| S3 | Line numbers | Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
 
 ## Context and constraints
 
@@ -303,3 +304,91 @@ Alternatives weighed:
   file reading in v1; the quickstart (4.7) documents the caveat, and
   `GitChanges` can grow a `contents(of:at:)` that reads a blob
   from either commit when a rule needs it.
+
+## 3. Which tree line numbers refer to (S3)
+
+Two trees are in play in every `pull_request` run:
+
+- **The pull request view.** GitHub's Files changed tab shows the
+  three-dot diff `base...head`: from the merge base of the two branches
+  to the head commit. Its new-side line numbers are the head commit's,
+  and so are the `#L` anchors of a blob link at the head SHA.
+- **The merge commit.** `actions/checkout` checks out `GITHUB_SHA`, the
+  test merge GitHub keeps at `refs/pull/N/merge`, whose parents are the
+  base branch's tip and the head. Whatever the workflow builds and lints
+  is that tree, so build logs carry its line numbers.
+
+The two agree on a file unless the base branch changed that file *above*
+the pull request's edits after the branch was cut. Then every line below
+the base's change shifts in the merge tree. The repositories' own history
+shows how it plays out. Of the merged pull requests in both repositories,
+six merged after their base had moved, and two of those touched a file
+the base had also changed (`AGENTS.md`, swift-steward#20 and
+git-diff-parser#2); both times the base's edit sat below the pull
+request's, so the numbers agreed. Replaying the same two library pull
+requests in the other order shows the shift. Had git-diff-parser#2 (three
+lines added near the top of `AGENTS.md`, two more lower down) landed
+before git-diff-parser#1:
+
+| | Hunk for `AGENTS.md` | The added line `**Doc comments on public API; …**` |
+|---|---|---|
+| Pull request view, `ce8bbbf...b81007f` | `@@ -91,3 +91,8 @@` | line 91 |
+| Merge tree CI would build (`git merge-tree` of `ce6e916` and `b81007f`) | `@@ -96,3 +96,8 @@` | line 96 |
+
+A linter run in that job would report line 96; the reviewer sees the line
+as 91, and a link to `blob/b81007f/AGENTS.md#L96` would land five lines
+off. [Checks](#checks) has the commands.
+
+`danger.git` has to match what the reviewer sees, so `context.git` is the
+pull request view: `git diff` from `merge-base(base.sha, head.sha)` to
+`head.sha`, both SHAs from the event payload. Because it's three-dot, the
+base moving again after the event doesn't change it. The open part is the
+diagnostics.
+
+| Option | `context.git` | Diagnostics matched in | Links point at |
+|---|---|---|---|
+| **A. Head coordinates, logs translated** | `base...head` | head coordinates, after mapping each log line from the built tree to the head | `blob/<head>` |
+| B. Merge coordinates throughout | `base-tip...merge`, as `pr.yml` diffs today | merge coordinates | `blob/<merge>`, which GitHub recomputes and replaces on every push to either branch |
+| C. Build the head instead | `base...head` | head coordinates; nothing to map | `blob/<head>` |
+| D. Two diffs | `base...head` | merge coordinates against `base-tip...merge`, findings mapped to the head afterwards | `blob/<head>` |
+
+**Recommendation (A).** Everything a rule or a reader sees is in head
+coordinates, and the one tree that differs, the built one, is mapped once,
+at the edge:
+
+- `Run.builtCommit` names the commit the logs came from: `GITHUB_SHA` by
+  default, or the head itself, or whatever a log source declares
+  (`.xcodebuild("build.log", builtAt: sha)`) when the build ran in
+  another job with another checkout.
+- When the built commit is the head, the mapping is the identity and
+  nothing runs. Otherwise Steward runs `git diff -U0 -M <head> <built>`
+  over the pull request's files and turns its hunks into a monotonic map
+  from built-tree lines to head lines: a line outside every hunk shifts by
+  the hunks above it; a line inside one, one that the base changed or the
+  merge rewrote, has no head counterpart. A path the base renamed maps
+  back through the rename.
+- The built-in rule (4.5) maps each diagnostic, drops the ones with no
+  head counterpart (they can't be on the pull request's changes, which
+  exist in the head), and matches the rest against `context.git` with
+  `DiagnosticMatcher`. Dropped diagnostics are counted in the log.
+
+Why not the others: B makes the summary disagree with the Files changed
+tab, and its links rot as soon as the merge ref moves. C is consistent
+and free, and Steward supports it (it's the identity case), but the build
+then stops testing what will actually merge, and the build job is the
+user's to configure, not Steward's. D gives the same answers as A with
+two diffs and two coordinate systems to keep straight.
+
+Constraints this puts on the workflow:
+
+- **History.** The mapping and the merge base need the head, the base
+  tip, their merge base, and the built commit in the local repository.
+  `actions/checkout`'s default depth of 1 has only the merge commit. The
+  quickstart can say `fetch-depth: 0`; the composite Action (4.8) should
+  fetch just what it needs (the two SHAs, with history back to their
+  merge base) so large repositories don't pay for a full clone.
+- **Conflicts.** A pull request with conflicts has no test merge commit,
+  so there's no merge tree to map from; GitHub doesn't run `pull_request`
+  workflows for it then (see [Checks](#checks)).
+- **Deleted files.** A finding on a deleted file has a path but no head
+  line; the summary shows the path without a link.
