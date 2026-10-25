@@ -185,7 +185,8 @@ The details:
 *Trade-off:* a rule with several independent checks either returns an
 array it builds up (`var findings: [Finding] = []`) or becomes several
 rules. The second is usually better anyway: each finding names its rule
-in the report.
+in the report. Open questions 1 and 2 ask for the shape and the error
+behavior.
 
 ## 2. The context (S2)
 
@@ -279,7 +280,7 @@ links, and the JSON report all need text, so the lists decode
 A rule that must tell two Latin-1 names apart uses `diff` and its
 `DiffPath`s. Making the lists `[DiffPath]` was weighed; it's exact, but
 every rule would convert, and two paths that decode to the same string
-are rare enough to document instead.
+are rare enough to document instead (open question 9).
 
 **Locally** (the dry run, 4.3), there is no event payload. The head is
 `HEAD`, the base is `--base <ref>` (default: the remote's default
@@ -403,6 +404,8 @@ Constraints this puts on the workflow:
   workflows for it then (see [Checks](#checks)).
 - **Deleted files.** A finding on a deleted file has a path but no head
   line; the summary shows the path without a link.
+
+Open question 3 asks for the choice.
 
 ## 4. The report (S4)
 
@@ -593,7 +596,7 @@ will post. The skip is logged, not an error.
    standard output in a dry run.
 5. **Post** through `PullRequestHost`, unless this is a dry run or the
    pull request comes from a fork (v1 checks `PullRequest.isFromFork`
-   first, says why it won't post, and carries on).
+   first, says why it won't post, and carries on; open question 10).
 6. **Exit.**
 
 Options are a handful of hand-parsed flags (`--base`, `--pull-request`,
@@ -765,3 +768,124 @@ inputs. A Marketplace listing helps the launch (5.3). If A is chosen
 anyway, only major tags may move: SwiftPM reads a two-part tag such as
 `v1.1` as version 1.1.0, so a moving minor tag would be resolved as a
 release. Open question 8.
+
+## What the later steps take from this
+
+| Step | Builds on |
+|---|---|
+| 4.2 Context | Section 2 (sources, event types, pinned git options) and section 3 (merge base, built commit, the line map, the history it needs) |
+| 4.3 Runner and DSL | Section 1 (`Rule`, `Finding`, `Dangerfile`, the builder, thrown errors) and section 6 (stages, flags, exit codes, the dry run) |
+| 4.4 Sticky comment | Section 5 (marker and author, duplicates, format, size, the clean case, stale runs) and section 6 (posting failures) |
+| 4.5 Built-in rule | Section 3 (mapping log lines to the head, dropping unmapped ones) and section 5 (escaping tool output) |
+| 4.6 `StewardTesting` | Section 8 (fixtures, the fake host) and section 1 (rules as values) |
+| 4.7 Template and quickstart | Section 8 (the package's layout), section 2 (the merge-tree caveat, `edited` events), section 6 (`permissions:`) |
+| 4.8 Action | Section 8 (decision 3), section 3 (fetching history), section 5 (the `concurrency` group) |
+| 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step works in merge coordinates) |
+| 4.10 Docs | Section 7 (the mapping table, the start of the migration guide) |
+| Backlog: fork pull requests | Section 4 (the report and the rules for an untrusted one) |
+
+## Open questions
+
+For the maintainer. Each has a recommendation; none is decided until
+answered.
+
+1. **Rule shape (S1).** Pure `(Context) async throws -> [Finding]`
+   closures composed with a result builder, or an `inout` report
+   (`report.warn("…")`), which is closer to danger-swift?
+   *Recommended:* pure closures.
+2. **Broken rules and order (S1).** Should a rule that throws become a
+   failure of that rule while the others still run, and should rules run
+   one at a time in declaration order? *Recommended:* yes to both; running
+   them concurrently can come later without an API change.
+3. **Line numbers (S3).** Everything in head coordinates, with build-log
+   lines mapped from the built tree (the merge commit by default) before
+   matching? *Recommended:* yes (option A). The alternatives are merge
+   coordinates throughout, as `pr.yml` does today, or requiring workflows
+   to build the head.
+4. **Posting failures (S6).** Should a failed post leave the exit code to
+   the findings, with a warning annotation and an opt-in
+   `--fail-on-post-error`, or fail the job? *Recommended:* leave it to the
+   findings by default; failing on configuration errors only would fail
+   every Dependabot pull request.
+5. **Nothing to report (S5).** Update an existing summary to "all clear",
+   or delete it as danger-js does? *Recommended:* update it, and never
+   create one for a clean pull request.
+6. **Local dry run without a pull request (S2).** Fill in a placeholder
+   pull request from the head commit, make `pullRequest` optional, or
+   require `--pull-request` and a token? *Recommended:* the placeholder,
+   flagged in the printed summary.
+7. **Several Dangerfiles per pull request (S5).** Does v1 need keyed
+   markers (`<!-- steward-summary:<id> -->`) for separate summaries?
+   *Recommended:* not in v1; the syntax is reserved, and adding it breaks
+   nothing.
+8. **Where the Action lives (S8, plan decision 3).** At swift-steward's
+   root with a moving `v1` tag, or in a separate `steward-action`
+   repository? *Recommended:* a separate repository, because swift-steward's
+   existing `v1.0.x` tags clash with a moving `v1` and a Marketplace
+   listing needs a repository of its own. This is the decision 4.8 waits
+   on.
+9. **Paths in the DSL (S2).** `String` in the file lists and `Location`,
+   decoded lossily from the model's `DiffPath` bytes, or `DiffPath`
+   throughout? *Recommended:* `String`, with `DiffPath` in `diff` for
+   rules that must be exact.
+10. **Fork pull requests in v1 (S6).** Evaluate the rules, skip posting
+    with a notice, and exit by the findings, or refuse to run (exit 2)?
+    *Recommended:* evaluate and skip posting, so fork contributors still
+    get a check status and the job summary until the fork flow (S4)
+    lands.
+
+## Checks
+
+How the factual claims were verified (2026-10-25/26):
+
+- **danger-swift and danger-js**, read from source: danger-swift at tag
+  `3.23.1` (`Sources/Danger/GitDSL.swift`, `Report.swift`,
+  `DangerUtils.swift`, `GitHubDSL.swift`, `Plugins/SwiftLint/SwiftLint.swift`,
+  the runner's `RunDangerJS.swift`), danger-js at `14.0.6`
+  (`runner/templates/githubIssueTemplate.ts`, `runner/Executor.ts`,
+  `platforms/github/comms/issueCommenter.ts`, `platforms/GitHub.ts`).
+  `Git`'s properties, `DangerUtils`' signatures, the empty-results
+  deletion (`DANGER_SKIP_WHEN_EMPTY`, `deleteMainComment`), and the token
+  variables were re-read directly after a subagent's survey.
+- **GitHub**, from docs.github.com: `per_page` up to 100 and the `link`
+  header (REST pagination); read-only tokens for fork and Dependabot
+  pull requests (events that trigger workflows; Dependabot on Actions);
+  `GITHUB_SHA` and `GITHUB_REF` for `pull_request`, and checkout of the
+  merge commit; no `pull_request` runs while a pull request has conflicts
+  (quote checked directly); three-dot diffs in pull requests (comparing
+  branches); either `issues: write` or `pull-requests: write` for issue
+  comments (REST issue comments); 1 MiB per step and 20 job summaries per
+  job (workflow commands, checked directly); 10 warning and 10 error
+  annotations per step (checks API); `pull_request_target` running in the
+  default branch's context (checked directly), and its announced default
+  block for public repositories; `workflow_run` artifacts as untrusted
+  data; read-only default tokens for new repositories; 1,000 requests an
+  hour for `GITHUB_TOKEN`; Marketplace repositories holding only the
+  action; moving major tags (managing custom actions). The comment limit
+  isn't documented: "maximum is 65536 characters" is the API's error
+  text, and the byte limit underneath comes from community measurements
+  (github.com/orgs/community/discussions/27190), hence the byte budget.
+  This repository's last three `pull_request` runs report the branch tip
+  as their head SHA (for example run 40203970914 on `d40497b`), not the
+  merge commit.
+- **Line numbers**, on both repositories' history: every merge commit
+  `M` on `main` whose base had moved (`merge-base(M^1, M^2) != M^1`; six
+  of them), with the files both sides changed. Two shared a file, and in
+  both the base's edit was below the pull request's. The shifted case
+  replays git-diff-parser#1 onto #2:
+
+  ```sh
+  # in git-diff-parser; ce8bbbf: fork point; b81007f: #1's head; ce6e916: #2's head
+  git diff -U0 ce8bbbf...b81007f -- AGENTS.md            # @@ -91,3 +91,8 @@
+  tree=$(git merge-tree --write-tree ce6e916 b81007f)
+  git diff -U0 ce6e916 "$tree" -- AGENTS.md              # @@ -96,3 +96,8 @@
+  ```
+
+- **SwiftPM and a moving tag**, by experiment under Swift 6.4: a scratch
+  library tagged `1.0.0` on one commit and `v1` on the next resolves
+  `from: "1.0.0"` to `1.0.0` on the first commit (the bare `v1` is
+  ignored); with only `v1`, resolution fails; adding `v1.1` on the second
+  commit makes it resolve to version 1.1.0.
+- **The rule-shape example**: section 1's two hand-written rules, the
+  builder, and stub types type-check with `swiftc -swift-version 6
+  -typecheck` under Swift 6.4.
