@@ -720,7 +720,8 @@ swift-steward gains two library products:
   is then one call:
 
   ```swift
-  @Test func `a pull request without a changelog entry gets a warning`() async throws {
+  @Test("a pull request without a changelog entry gets a warning")
+  func missingChangelog() async throws {
       let context = try Context.fixture(diff: """
           diff --git a/Sources/App.swift b/Sources/App.swift
           …
