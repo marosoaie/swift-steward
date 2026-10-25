@@ -14,6 +14,7 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | S1 | Rule shape | `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
 | S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 | S3 | Line numbers | Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
+| S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 
 ## Context and constraints
 
@@ -239,8 +240,9 @@ Where each part comes from (step 4.2):
   fired: labels added since then aren't in it. v1 accepts `pull_request`
   events only (`opened`, `synchronize`, `reopened`, plus `edited` if the
   workflow lists it for title and body rules) and refuses any other event
-  with a clear message, `pull_request_target` included, whose checkout is
-  the base branch.
+  with a clear message. That includes `pull_request_target`, which runs
+  in the context of the default branch, so its checkout isn't the pull
+  request at all.
 - **`git`** from the local checkout: `git diff` from the merge base to
   the head commit, parsed by the library's full-model entry point (64 MiB
   line cap), and `git log` over the same range. Both run once, eagerly;
@@ -373,7 +375,12 @@ at the edge:
   `DiagnosticMatcher`. Dropped diagnostics are counted in the log.
 
 Why not the others: B makes the summary disagree with the Files changed
-tab, and its links rot as soon as the merge ref moves. C is consistent
+tab, and its links rot as soon as the merge ref moves. B is also what
+`pr.yml` does today: its `filter` step diffs `origin/<base>...HEAD` on the
+merge commit. The check runs it annotates sit on the head commit (this
+repository's `pull_request` runs report the head SHA), so in the shifted
+case its annotations probably land on the wrong lines; GitHub doesn't
+document how it places them. 4.9 replaces that step. C is consistent
 and free, and Steward supports it (it's the identity case), but the build
 then stops testing what will actually merge, and the build job is the
 user's to configure, not Steward's. D gives the same answers as A with
@@ -392,3 +399,77 @@ Constraints this puts on the workflow:
   workflows for it then (see [Checks](#checks)).
 - **Deleted files.** A finding on a deleted file has a path but no head
   line; the summary shows the path without a link.
+
+## 4. The report (S4)
+
+Evaluating rules and posting their results are separate stages joined by
+one value:
+
+```swift
+/// What one run of a Dangerfile found, ready to render or to hand to a
+/// later, privileged job.
+public struct Report: Sendable, Hashable, Codable {
+    public var schemaVersion: Int     // 1; bumped on any breaking change
+    public var repository: String     // owner/name of the base repository
+    public var pullRequest: Int
+    public var headCommit: String     // the SHA the findings describe
+    public var findings: [Finding]    // rule order, then the order each rule returned them
+    public var generator: String      // e.g. "Steward 1.0.0", for the log
+
+    public var hasFailures: Bool { get }
+}
+```
+
+The JSON keys are a wire contract, so they're fixed with `CodingKeys`
+rather than taken from property names: `schema_version`, `repository`,
+`pull_request`, `head_commit`, `findings`, `generator`, and in a finding
+`kind`, `text`, `location` (`path`, `line`), and `rule`. Snake case
+matches the GitHub payloads the same workflows read. The encoder sorts
+keys, so one report always encodes to the same bytes. Decoding fails on
+an unknown `kind` or a newer `schema_version` rather than guessing.
+
+In v1 the stages run in one process: rules → `Report` → summary text →
+`PullRequestHost`, and `--report <path>` also writes the report to a
+file. The point of the seam is the fork flow in the backlog. A fork's
+`pull_request` run gets a read-only token, so it can't post. The standard
+answer is a second workflow on `workflow_run`, which runs from the
+default branch with a write token after the first one completes, and can
+download its artifacts:
+
+1. The unprivileged `pull_request` job evaluates the rules, writes
+   `report.json`, uploads it as an artifact, and exits with the findings'
+   status. It needs no token and posts nothing.
+2. The privileged `workflow_run` job downloads the artifact, renders the
+   summary, and posts it. It never checks out or runs the pull request's
+   code (actions/checkout v7 refuses to check out fork code under
+   `workflow_run` by default anyway).
+
+GitHub's documentation says to treat such artifacts as untrusted, and the
+report is exactly that: a fork's author controls every byte. So the
+design commits to these rules now, while the format is new:
+
+- **The report is data, not presentation.** It carries findings, not
+  rendered Markdown, so the privileged side owns the format, the marker,
+  the size limit, and escaping. A pre-rendered comment in the artifact was
+  weighed: simpler, but the trusted job would post attacker-chosen text
+  verbatim, and the evaluating and posting sides could never differ in
+  version.
+- **Where to post never comes from the report.** The poster takes the
+  repository and the pull request from the trusted `workflow_run`
+  payload and its head SHA, and refuses a report whose `repository` or
+  `head_commit` disagrees. Otherwise a fork could aim the bot at any pull
+  request.
+- **Size and content are bounded on the trusted side**: a cap on the
+  number of findings and on each text before rendering, and the summary's
+  own size limit (section 5).
+
+`pull_request_target` was the other way to get a write token for forks.
+It runs with secrets in the base repository's context, GitHub warns
+against running the pull request's code in it, and GitHub has announced a
+default policy that blocks it in public repositories (evaluation now,
+enforcement from 2026-12-02), so it isn't a path to build on.
+
+*Trade-off:* a versioned, public JSON format is one more contract to keep
+stable. It stays small (six fields and a finding), and `schema_version`
+lets the two sides of a fork flow refuse each other clearly when they
+drift.
