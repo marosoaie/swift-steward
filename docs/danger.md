@@ -12,6 +12,7 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | # | Topic | Recommendation | Alternatives considered |
 |---|---|---|---|
 | S1 | Rule shape | `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
+| S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 
 ## Context and constraints
 
@@ -179,3 +180,126 @@ The details:
 array it builds up (`var findings: [Finding] = []`) or becomes several
 rules. The second is usually better anyway: each finding names its rule
 in the report.
+
+## 2. The context (S2)
+
+`Context` is everything a rule may look at, gathered once before the
+first rule runs and then immutable:
+
+```swift
+public struct Context: Sendable {
+    public var pullRequest: PullRequest   // PullRequestHosting's model
+    public var git: GitChanges            // the pull request's changes, base...head
+    public var run: Run                   // where Steward runs, and on which trees
+}
+
+public struct GitChanges: Sendable {
+    public var diff: Diff                 // GitDiffKit's full model
+    public var commits: [Commit]          // base..head, oldest first
+    public var mergeBase: String          // commit SHAs
+    public var head: String
+
+    public var createdFiles: [String] { get }
+    public var modifiedFiles: [String] { get }
+    public var deletedFiles: [String] { get }
+    public var renamedFiles: [Rename] { get }   // from, to
+    public func file(at path: String) -> DiffFile?
+}
+
+public struct Commit: Sendable, Hashable {
+    public var sha: String
+    public var parents: [String]
+    public var author: Signature          // name, email, date
+    public var committer: Signature
+    public var subject: String
+    public var body: String
+}
+
+public struct Run: Sendable {
+    public var mode: Mode                 // .actions, or .dryRun outside Actions
+    public var workspace: String          // the checkout's root
+    public var builtCommit: String        // the tree build logs refer to (section 3)
+}
+
+public struct Location: Sendable, Hashable, Codable {
+    public var path: String               // repository-relative, `/`-separated
+    public var line: Int?                 // 1-based, head side
+    public init(path: String, line: Int? = nil)
+}
+```
+
+Where each part comes from (step 4.2):
+
+- **`pullRequest`** from the event payload at `GITHUB_EVENT_PATH`, through
+  the mapping `GitHubHost` already uses for `pulls/get`
+  ([`EventPayloadTests`](github-api.md#tests) decodes real payloads). No
+  API call, so a rule can't burn rate limit or fail on the network just
+  by reading the title. The payload is a snapshot from when the event
+  fired: labels added since then aren't in it. v1 accepts `pull_request`
+  events only (`opened`, `synchronize`, `reopened`, plus `edited` if the
+  workflow lists it for title and body rules) and refuses any other event
+  with a clear message, `pull_request_target` included, whose checkout is
+  the base branch.
+- **`git`** from the local checkout: `git diff` from the merge base to
+  the head commit, parsed by the library's full-model entry point (64 MiB
+  line cap), and `git log` over the same range. Both run once, eagerly;
+  memory grows with the pull request's diff, which is fine at pull
+  request sizes. Damage reports are logged to standard error, never shown
+  in the summary. Steward pins every git option that changes the output's
+  shape rather than trusting the user's configuration:
+  `--no-color --no-ext-diff --no-textconv --no-relative
+  --src-prefix=a/ --dst-prefix=b/ -M`, so `diff.noprefix`,
+  `color.ui=always`, or an external diff tool can't break parsing. The
+  log is read with NUL-separated `--format` fields, so any subject parses.
+- **`run`** from the environment: `GITHUB_ACTIONS`, `GITHUB_WORKSPACE`,
+  and `GITHUB_SHA` (the commit the workflow checked out, which for
+  `pull_request` is the merge commit; see section 3). `GITHUB_API_URL` and
+  `GITHUB_SERVER_URL` point the host and the summary's links at GitHub
+  Enterprise without configuration.
+
+The file lists follow the diff model: `createdFiles` are `.added`,
+`deletedFiles` `.deleted`, `renamedFiles` `.renamed` (old and new path),
+and `modifiedFiles` everything else that exists on both sides, including
+renamed files under their new path, which matches what a reviewer sees
+as "changed" in the Files tab. Steward passes `-M` but not `-C`, so a
+copy shows up as a created file. Binary and mode-only changes are listed
+like any other.
+
+**Paths are `String`s in the conveniences, bytes in `diff`.** Rules
+compare paths with literals (`contains("CHANGELOG.md")`), and findings,
+links, and the JSON report all need text, so the lists decode
+`DiffPath`'s bytes with its lossy `string`, which the library documents.
+A rule that must tell two Latin-1 names apart uses `diff` and its
+`DiffPath`s. Making the lists `[DiffPath]` was weighed; it's exact, but
+every rule would convert, and two paths that decode to the same string
+are rare enough to document instead.
+
+**Locally** (the dry run, 4.3), there is no event payload. The head is
+`HEAD`, the base is `--base <ref>` (default: the remote's default
+branch), and `pullRequest` comes from `pulls/get` when `--pull-request
+<n>` and a token are given. Without them, Steward fills in a placeholder
+pull request from the head commit (its subject as the title, its body as
+the description, the git user as the author) and says so in the printed
+summary, rather than making `pullRequest` optional for every rule just
+for the dry run. Open question 6 asks whether that placeholder is
+acceptable.
+
+Alternatives weighed:
+
+- **Lazy git data** (run `git log` only when a rule asks): saves
+  milliseconds, but makes reading a property fallible and async. Eager
+  is simpler, and the diff is needed by the built-in rule anyway.
+- **Reading pull request data through the API** every run: fresher labels,
+  but one more request, one more failure mode, and a token for reading.
+  A rule that needs live data can wait for a later version that exposes
+  the host to rules; v1 doesn't.
+- **A `danger.github` namespace** mirroring danger-swift (`context.github
+  .pullRequest`): GitHub is the only host in v1 but sits behind the seam,
+  and `PullRequest` is host-neutral, so the context says `pullRequest`.
+  Host-specific extras, if they come, go in a `github` property then.
+- **Exposing the working tree's files**: the checkout in a `pull_request`
+  run is the merge commit, not the head (section 3), so a rule that reads
+  `Package.swift` from disk sees the merged file. Steward doesn't wrap
+  file reading in v1; the quickstart (4.7) documents the caveat, and
+  `GitChanges` can grow a `contents(of:at:)` that reads a blob
+  from either commit when a rule needs it.
