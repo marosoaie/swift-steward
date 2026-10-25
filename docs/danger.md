@@ -895,6 +895,10 @@ How the factual claims were verified (2026-10-25/26):
   git diff -U0 ce6e916 "$tree" -- AGENTS.md              # @@ -96,3 +96,8 @@
   ```
 
+- **Renames under a pathspec**, by experiment: in a scratch repository
+  where one commit renames `A.txt` to `B.txt`, `git diff -M --name-status
+  HEAD~1 HEAD -- A.txt` reports `D A.txt`, and the same diff without the
+  pathspec reports `R100 A.txt B.txt` (section 3's mapping).
 - **SwiftPM and a moving tag**, by experiment under Swift 6.4: a scratch
   library tagged `1.0.0` on one commit and `v1` on the next resolves
   `from: "1.0.0"` to `1.0.0` on the first commit (the bare `v1` is
