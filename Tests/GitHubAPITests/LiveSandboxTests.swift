@@ -33,7 +33,7 @@ struct LiveSandboxTests {
             apiURL: apiURL,
             marker: marker,
             commentsPerPage: 2,
-            transport: URLSessionTransport(),
+            transport: GitHubHost.uncachedTransport(),
             middlewares: [SandboxOnlyMiddleware(
                 owner: sandbox.owner,
                 repository: sandbox.repository,
@@ -80,7 +80,7 @@ struct LiveSandboxTests {
     func rawText(of id: SummaryComment.ID, in sandbox: LiveSandbox) async throws -> String? {
         let comments = try await Client(
             serverURL: apiURL,
-            transport: URLSessionTransport(),
+            transport: GitHubHost.uncachedTransport(),
             middlewares: [ReadOnlyMiddleware(), GitHubHeadersMiddleware(token: sandbox.token)]
         )
         .issuesListComments(

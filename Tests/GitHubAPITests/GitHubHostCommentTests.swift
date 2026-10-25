@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import GitHubAPI
 import HTTPTypes
 import PullRequestHosting
@@ -187,6 +190,16 @@ struct GitHubHostCommentTests {
         }
         #expect(error?.kind == .notFound)
         #expect(error?.status == 404)
+    }
+
+    // Regression (the live run on swift-steward#24): on URLSession.shared,
+    // a second listing within a minute came from the cache, so a comment
+    // just created was missing and a deleted one was still there.
+    @Test("the public host's session never answers from a cache")
+    func uncachedSession() {
+        let configuration = GitHubHost.uncachedSession.configuration
+        #expect(configuration.urlCache == nil)
+        #expect(configuration.requestCachePolicy == .reloadIgnoringLocalCacheData)
     }
 
     @Test("a created comment whose text lost its marker keeps the text whole")

@@ -37,7 +37,7 @@ struct LiveGitHub {
         ] + (recordDirectory.map { [RecordingMiddleware(directory: $0, scenario: "live-\(scenario)")] } ?? [])
         return Client(
             serverURL: URL(string: "https://api.github.com")!,
-            transport: URLSessionTransport(),
+            transport: GitHubHost.uncachedTransport(),
             middlewares: middlewares
         )
     }
@@ -60,7 +60,7 @@ struct LiveGitHub {
             apiURL: URL(string: "https://api.github.com")!,
             marker: marker,
             commentsPerPage: commentsPerPage,
-            transport: URLSessionTransport(),
+            transport: GitHubHost.uncachedTransport(),
             middlewares: [ReadOnlyMiddleware()] + ((recordDirectory ?? self.recordDirectory).map {
                 [RecordingMiddleware(directory: $0, scenario: "live-\(scenario)")]
             } ?? [])

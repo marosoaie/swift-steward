@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import OpenAPIRuntime
 import OpenAPIURLSession
 import PullRequestHosting
@@ -18,6 +21,23 @@ public struct GitHubHost: PullRequestHost, CustomStringConvertible {
     /// pull request, so a server that always links a next page can't keep
     /// it reading forever.
     static let maximumCommentPages = 100
+
+    /// A session that never answers from a cache. GitHub marks its responses
+    /// `Cache-Control: private, max-age=60`, so `URLSession.shared` serves a
+    /// repeated request from its cache for a minute: a comment posted or
+    /// deleted a moment ago would be missing from the list, or still in it,
+    /// and Steward would post a second summary.
+    static let uncachedSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: configuration)
+    }()
+
+    /// The transport the public initializer uses, on `uncachedSession`.
+    static func uncachedTransport() -> URLSessionTransport {
+        URLSessionTransport(configuration: .init(session: uncachedSession))
+    }
 
     let client: Client
     let owner: String
@@ -46,7 +66,7 @@ public struct GitHubHost: PullRequestHost, CustomStringConvertible {
             token: token,
             apiURL: apiURL,
             summaryAuthor: summaryAuthor,
-            transport: URLSessionTransport()
+            transport: Self.uncachedTransport()
         )
     }
 
