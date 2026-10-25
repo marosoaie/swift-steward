@@ -65,7 +65,15 @@ let package = Package(
             ],
             swiftSettings: swiftSettings
         ),
-        // The GitHub REST client. Generated/ is written by
+        // The host seam: what Steward needs from the service hosting a pull
+        // request, with no dependencies, so rules and fakes never pull in
+        // the GitHub client.
+        .target(
+            name: "PullRequestHosting",
+            swiftSettings: swiftSettings
+        ),
+        // The GitHub REST client, and GitHubHost, its PullRequestHosting
+        // implementation. Generated/ is written by
         // Tooling/generate-github-api.sh from Specs/github and committed; CI
         // fails when it drifts from what the pipeline produces. The strict
         // settings hold for it too: the generator config and two spec fixes
@@ -73,6 +81,7 @@ let package = Package(
         .target(
             name: "GitHubAPI",
             dependencies: [
+                "PullRequestHosting",
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
             ],
@@ -82,6 +91,7 @@ let package = Package(
             name: "GitHubAPITests",
             dependencies: [
                 "GitHubAPI",
+                "PullRequestHosting",
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
                 // The opt-in live tests' transport.
                 .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),

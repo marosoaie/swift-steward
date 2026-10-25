@@ -53,6 +53,12 @@ line_length:
   error: 200
   ignores_urls: true
 
+type_name:
+  # `ID` is the conventional name for an Identifiable type's identifier
+  # (`SummaryComment.ID`).
+  excluded:
+    - ID
+
 identifier_name:
   # lo/hi/i are idiomatic in the byte-level scanning and binary-search code;
   # keep the rule for casing but drop the length floor.

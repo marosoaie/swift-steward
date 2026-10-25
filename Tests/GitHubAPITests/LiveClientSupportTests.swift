@@ -61,7 +61,7 @@ struct LiveClientSupportTests {
         let request = try #require((error as? CapturingTransport.Sent)?.request)
         #expect(request.method == .get)
         #expect(request.path == "/repos/marosoaie/swift-steward/pulls/20")
-        #expect(request.headerFields[.userAgent] == "swift-steward-tests")
+        #expect(request.headerFields[.userAgent] == "swift-steward")
         #expect(request.headerFields[HTTPField.Name("x-github-api-version")!] == "2022-11-28")
         #expect(request.headerFields[.authorization] == "Bearer probe-token")
         #expect(request.headerFields[.accept] == "application/vnd.github.full+json")

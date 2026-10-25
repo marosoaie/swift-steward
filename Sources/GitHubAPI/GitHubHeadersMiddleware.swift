@@ -9,10 +9,21 @@ import OpenAPIRuntime
 /// The token goes in here, not in the generated client's input, because a
 /// `ClientError` prints the request it was built from, every header included.
 struct GitHubHeadersMiddleware: ClientMiddleware {
-    let token: String?
+    /// The version `Specs/github/upstream.env` pins.
+    static let apiVersion = "2022-11-28"
+    // Never nil, since the name is a valid token: HTTPField.Name has only a
+    // failable initializer, and this target allows no force unwraps.
+    private static let apiVersionField = HTTPField.Name("x-github-api-version")
+
+    let credential: Credential?
     /// Replaces the generated `Accept: application/json`, to ask for one of
     /// GitHub's `+json` variants.
-    var accept: String?
+    let accept: String?
+
+    init(token: String?, accept: String? = nil) {
+        credential = token.map(Credential.init)
+        self.accept = accept
+    }
 
     @concurrent
     func intercept(
@@ -23,10 +34,12 @@ struct GitHubHeadersMiddleware: ClientMiddleware {
         next: @concurrent @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
         var request = request
-        request.headerFields[.userAgent] = "swift-steward-tests"
-        request.headerFields[HTTPField.Name("x-github-api-version")!] = "2022-11-28"
-        if let token {
-            request.headerFields[.authorization] = "Bearer \(token)"
+        request.headerFields[.userAgent] = "swift-steward"
+        if let field = Self.apiVersionField {
+            request.headerFields[field] = Self.apiVersion
+        }
+        if let credential {
+            request.headerFields[.authorization] = "Bearer \(credential.token)"
         }
         if let accept {
             request.headerFields[.accept] = accept
