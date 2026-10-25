@@ -1,0 +1,9 @@
+HTTP 401
+content-type: application/json; charset=utf-8
+x-github-media-type: github.v3; format=json
+
+{
+  "message": "Bad credentials",
+  "documentation_url": "https://docs.github.com/rest",
+  "status": "401"
+}
