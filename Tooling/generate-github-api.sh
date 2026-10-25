@@ -12,10 +12,18 @@
 # one against openapi.yaml to see exactly what the fixes change.
 set -eu
 
+# `filter` decodes vendor extensions (x-github) and examples into
+# dictionaries and writes their keys in hash order, which Swift seeds
+# randomly per process: without this, every run reorders about 450 lines of
+# openapi.yaml, and the drift guard would fail at random. With it, macOS and
+# Linux write the same bytes.
+export SWIFT_DETERMINISTIC_HASHING=1
+
 root=$(cd "$(dirname "$0")/.." && pwd)
 specs="$root/Specs/github"
 tooling="$root/Tooling"
 generated="$root/Sources/GitHubAPI/Generated"
+# shellcheck source=Specs/github/upstream.env
 . "$specs/upstream.env"
 
 sha256() {

@@ -20,7 +20,16 @@ dependency direction:
 `DiffDiagnostics` couples them. `StreamParsing` is an internal target
 (chunk-to-line splitting, shared via the `package` access level) — never
 expose it as a product. Libraries take no third-party dependencies;
-swift-argument-parser is allowed in the CLI target only.
+swift-argument-parser is allowed in the CLI target only, and Apple's
+swift-openapi-runtime and swift-openapi-urlsession in the `GitHubAPI`
+target only.
+
+`GitHubAPI` (not a product yet) is a GitHub REST client generated from
+GitHub's OpenAPI description and committed under `Generated/`. Never edit
+the generated code: change `Specs/github/` and regenerate. The generator
+lives in the nested `Tooling/` package, which the root manifest never
+depends on. See [docs/github-api.md](docs/github-api.md) for the pin, the
+spec fixes, and how to update them.
 
 `GitDiffKit` comes from the first-party git-diff-parser package, pinned to
 tagged versions (`from:`) only, never a branch or revision: SwiftPM rejects
@@ -40,6 +49,8 @@ GIT_DIFF_PARSER_SKIP_NETWORK_TESTS=1 swift test   # offline subset
 xcodebuild test -scheme swift-steward-Package -destination platform=macOS
 swift build -c release            # for benchmarks — never benchmark debug builds
 swiftlint lint --quiet            # must print nothing
+Tooling/generate-github-api.sh    # regenerate the GitHub client from Specs/github
+swift test --package-path Tooling # the spec-fix engine and the fix list
 ```
 
 SwiftLint's configuration (`.swiftlint.yml`, with a `Tests/.swiftlint.yml`

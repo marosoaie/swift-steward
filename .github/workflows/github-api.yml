@@ -1,0 +1,55 @@
+name: GitHub API client
+
+# Only when something that feeds the generated client changes. The drift
+# guard also catches hand edits, since Sources/GitHubAPI is on the list.
+on:
+  pull_request:
+    paths:
+      - Specs/github/**
+      - Sources/GitHubAPI/**
+      - Tests/GitHubAPITests/**
+      - Tooling/**
+      - .github/workflows/github-api.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-api-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Regenerates the client from the pinned spec and fails when the result
+  # differs from what's committed. Linux, because it regenerates the same
+  # bytes as macOS (see docs/github-api.md) on a cheaper runner.
+  drift-guard:
+    runs-on: ubuntu-latest
+    container: swift:6.2
+    timeout-minutes: 30
+    steps:
+      # Before checkout, so actions/checkout makes a real clone for git status.
+      - name: Install git and curl
+        run: |
+          if ! command -v git >/dev/null || ! command -v curl >/dev/null; then
+            apt-get update
+            apt-get install -y --no-install-recommends git curl ca-certificates
+          fi
+          swift --version
+
+      - uses: actions/checkout@v7
+
+      # Keyed on the pin, which names the file's SHA-256; the script checks
+      # the cached copy against it again anyway.
+      - uses: actions/cache@v6
+        with:
+          path: Tooling/.build/spec-cache/*.json
+          key: github-spec-${{ hashFiles('Specs/github/upstream.env') }}
+
+      - name: Test the spec-fix engine and the fix list
+        run: swift test --package-path Tooling
+
+      # The container runs as root on a checkout the runner owns.
+      - name: Regenerate and fail on drift
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          Tooling/check-github-api-drift.sh

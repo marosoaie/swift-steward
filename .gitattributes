@@ -1,0 +1,5 @@
+# Written by Tooling/generate-github-api.sh: collapsed in PR diffs and left
+# out of the language statistics. Review Specs/github/fixes.yaml and the pin
+# instead; the CI drift guard checks that these match them.
+Sources/GitHubAPI/Generated/** linguist-generated=true
+Specs/github/openapi.yaml linguist-generated=true
