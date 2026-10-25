@@ -5,6 +5,13 @@
 included:
   - Sources
   - Tests
+  - Tooling/Sources
+  - Tooling/Tests
+
+# Written by Tooling/generate-github-api.sh: the style is the generator's,
+# and hand edits would be overwritten (and fail the CI drift guard).
+excluded:
+  - Sources/GitHubAPI/Generated
 
 opt_in_rules:
   # Functional style (AGENTS.md: combinators over loops).

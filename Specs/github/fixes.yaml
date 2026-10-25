@@ -1,0 +1,73 @@
+# Reviewed fixes to GitHub's REST description. Tooling/generate-github-api.sh
+# applies them in order, after `swift-openapi-generator filter` and before
+# `generate`; the result is Specs/github/openapi.yaml.
+#
+# Each entry has:
+#   name     A unique identifier; a fix that no longer applies is named by it.
+#   why      What upstream gets wrong, or why the generator needs the change.
+#   fixture  For a correction of upstream: the recorded response in
+#            Tests/GitHubAPITests/Fixtures that decodes wrongly without the
+#            fix. A test in Tests/GitHubAPITests decodes it.
+#   edit     One change; Tooling/Sources/GitHubSpecFixes/SpecFix+Edit.swift
+#            lists the kinds.
+#
+# Every edit first checks that upstream still needs it. When regenerating
+# against a new pin fails and names a fix, upstream has caught up (drop the
+# entry) or moved what the fix edits (update it).
+
+- name: drop-x-webhooks
+  why: >-
+    Not a discrepancy. `filter` keeps root vendor extensions, and x-webhooks
+    is about 20,000 lines that the generator never reads; without it the
+    committed generator input is a quarter of the size.
+  edit:
+    remove:
+      path: [x-webhooks]
+
+- name: update-comment-404
+  why: >-
+    issues/update-comment answers 404 for a comment that has been deleted,
+    but declares only 200 and 422. Without the fix the client returns
+    .undocumented(statusCode: 404), so Steward can't tell a summary comment
+    someone deleted by hand from any other failure.
+  fixture: issues-update-comment.macos-update-deleted.http
+  edit:
+    addResponse:
+      path: /repos/{owner}/{repo}/issues/comments/{comment_id}
+      method: patch
+      status: '404'
+      response: not_found
+
+- name: delete-comment-404
+  why: >-
+    issues/delete-comment answers 404 for a comment that is already gone,
+    but declares only 204. Without the fix the client returns
+    .undocumented(statusCode: 404) where Steward wants "already deleted".
+  fixture: issues-delete-comment.macos-delete-deleted.http
+  edit:
+    addResponse:
+      path: /repos/{owner}/{repo}/issues/comments/{comment_id}
+      method: delete
+      status: '404'
+      response: not_found
+
+- name: repository-has-downloads-undeprecated
+  why: >-
+    Not a discrepancy. The generated memberwise initializer assigns the
+    deprecated Repository.hasDownloads, which warns, and the build must be
+    warning-free. The client only decodes repositories, so the marker buys
+    nothing.
+  edit:
+    undeprecate:
+      schema: [repository]
+      property: has_downloads
+
+- name: repository-squash-title-undeprecated
+  why: >-
+    Not a discrepancy. The generated memberwise initializer assigns the
+    deprecated Repository.useSquashPrTitleAsDefault, which warns, and the
+    build must be warning-free. The client only decodes repositories.
+  edit:
+    undeprecate:
+      schema: [repository]
+      property: use_squash_pr_title_as_default
