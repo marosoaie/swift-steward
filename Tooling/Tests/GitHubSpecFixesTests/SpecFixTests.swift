@@ -87,6 +87,20 @@ struct SpecFixTests {
         #expect(try failure(.addEnumValue(schema: ["item"], property: "state", value: "open")) != nil)
     }
 
+    // Regression (Codex review): a value built as an implicitly typed scalar
+    // serialized as a bool, a number or null, which a string enum rejects.
+    @Test("addEnumValue writes the value as a string, even one that reads as another type", arguments: [
+        "true", "1", "null", "2026-10-25", "merged",
+    ])
+    func addEnumValueKeepsStrings(value: String) throws {
+        let fixed = try apply(.addEnumValue(schema: ["item"], property: "state", value: value))
+        let reloaded = try #require(try Yams.load(yaml: Yams.serialize(node: fixed)) as? [String: Any])
+        let item = (reloaded["components"] as? [String: Any])?["schemas"] as? [String: Any]
+        let state = ((item?["item"] as? [String: Any])?["properties"] as? [String: Any])?["state"] as? [String: Any]
+        let values = try #require(state?["enum"] as? [Any])
+        #expect(values.last as? String == value, "\(String(describing: values.last))")
+    }
+
     @Test("undeprecate removes the marker, and refuses a property without one")
     func undeprecate() throws {
         let fixed = try apply(.undeprecate(schema: ["item"], property: "legacy"))

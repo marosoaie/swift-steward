@@ -41,7 +41,7 @@ spec="$cache/$SPEC_SHA256.json"
 mkdir -p "$cache"
 if [ ! -f "$spec" ]; then
     echo "Downloading $SPEC_REPO@$SPEC_COMMIT:$SPEC_PATH"
-    curl -sSfL -o "$spec.download" \
+    curl -sSfL --retry 3 -o "$spec.download" \
         "https://raw.githubusercontent.com/$SPEC_REPO/$SPEC_COMMIT/$SPEC_PATH"
     mv "$spec.download" "$spec"
 fi

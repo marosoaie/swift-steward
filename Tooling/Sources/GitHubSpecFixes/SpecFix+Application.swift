@@ -83,7 +83,7 @@ extension SpecFix.Edit {
         guard !listed.contains(where: { $0.string == value }) else {
             throw .redundant("upstream already lists \(value) for \(property)")
         }
-        return Node(listed + [Node(value)])
+        return Node(listed + [Node(value, Tag(.str), .singleQuoted)])
     }
 
     private static func undeprecating(_ name: String, in property: Node) throws(Refusal) -> Node {
