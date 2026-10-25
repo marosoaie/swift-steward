@@ -15,7 +15,7 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 | S3 | Line numbers | Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
-| S5 | Summary comment | The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, full text in the job summary; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
+| S5 | Summary comment | The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing | Always fail; fail on configuration errors only |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
 | S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; the Action in a separate `steward-action` repository (decision 3, still open) | `action.yml` at swift-steward's root with a moving `v1` tag |
@@ -369,11 +369,15 @@ at the edge:
   another job with another checkout.
 - When the built commit is the head, the mapping is the identity and
   nothing runs. Otherwise Steward runs `git diff -U0 -M <head> <built>`
-  over the pull request's files and turns its hunks into a monotonic map
-  from built-tree lines to head lines: a line outside every hunk shifts by
-  the hunks above it; a line inside one, one that the base changed or the
+  over the whole tree, keeps the files whose head-side path the pull
+  request touched, and turns their hunks into a monotonic map from
+  built-tree lines to head lines: a line outside every hunk shifts by the
+  hunks above it; a line inside one, one that the base changed or the
   merge rewrote, has no head counterpart. A path the base renamed maps
-  back through the rename.
+  back through the rename. The diff can't be limited to the pull
+  request's paths with a pathspec: git detects renames only among the
+  paths a pathspec selects, so a file the base renamed would show up as
+  deleted, and every diagnostic in it would be dropped.
 - The built-in rule (4.5) maps each diagnostic, drops the ones with no
   head counterpart (they can't be on the pull request's changes, which
   exist in the head), and matches the rest against `context.git` with
@@ -461,11 +465,14 @@ design commits to these rules now, while the format is new:
   weighed: simpler, but the trusted job would post attacker-chosen text
   verbatim, and the evaluating and posting sides could never differ in
   version.
-- **Where to post never comes from the report.** The poster takes the
-  repository and the pull request from the trusted `workflow_run`
-  payload and its head SHA, and refuses a report whose `repository` or
-  `head_commit` disagrees. Otherwise a fork could aim the bot at any pull
-  request.
+- **Where to post never comes from the report.** The poster finds the
+  pull request from the trusted `workflow_run` payload: the triggering
+  run's head repository and head SHA, looked up through the API, because
+  the payload's own `pull_requests` list can be empty for runs from forks
+  (actions/runner#3444). It accepts exactly one open pull request whose
+  head is that SHA in that repository, refuses a missing or ambiguous
+  match, and refuses a report whose `repository` or `head_commit`
+  disagrees. Otherwise a fork could aim the bot at any pull request.
 - **Size and content are bounded on the trusted side**: a cap on the
   number of findings and on each text before rendering, and the summary's
   own size limit (section 5).
@@ -553,9 +560,13 @@ body, marker included. No reading of "characters" counts more of them
 than there are bytes, so that budget is safe whatever the real unit is.
 Over budget, the renderer cuts from the end (markdown first, then
 messages, warnings, and failures, last rows first), truncates any single
-text that alone exceeds the budget, and ends with "…and 312 more findings;
-all of them are in the workflow run's summary". The full rendering always
-goes to `$GITHUB_STEP_SUMMARY`, which holds 1 MiB per step.
+text that alone exceeds the budget, and ends with "…and 312 more
+findings", pointing at where all of them are. The rendering also goes to
+`$GITHUB_STEP_SUMMARY`, cut the same way at 1 MiB: GitHub drops a larger
+step summary entirely instead of truncating it. The complete list is
+always in the report, which the Action writes with `--report` and
+uploads as an artifact, so the note points at the job summary when
+everything fit there and at the artifact otherwise.
 
 ### When there's nothing to report
 
@@ -634,8 +645,8 @@ Posting can fail for reasons that say nothing about the pull request:
 | `malformedResponse`, `unexpectedStatus` | GitHub answered something the client doesn't understand | Warns |
 
 "Warns" means a `::warning title=Steward::` annotation on the run that
-names the error, plus the full summary in the job summary, which
-always gets written. The question is the exit code.
+names the error; the job summary and the report artifact, written before
+posting, still hold the findings. The question is the exit code.
 
 | Option | A posting failure… |
 |---|---|
