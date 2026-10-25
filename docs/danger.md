@@ -154,7 +154,7 @@ struct PullRequestChecks: Dangerfile {
 `Dangerfile` declares `@RuleBuilder static var rules: [Rule] { get }`,
 so conformers get the builder without writing it. The builder is over one
 concrete type, so it stays cheap to type-check, and it accepts `if`,
-`for`, and arrays of rules (`Rule.swiftLint(…)` can return several). The
+`for`, and arrays of rules (a shared helper can add several at once). The
 two hand-written rules above, with this builder and stub types,
 type-check under Swift 6.4 in Swift 6 mode, implicit-member `.failure`
 inside `map` included.
@@ -719,7 +719,10 @@ swift-steward gains two library products:
 - **`StewardTesting`** (4.6): builds a `Context` from fixtures (a diff
   as text, which the full model parses exactly as in a real run; a
   `PullRequest` with defaults for every field; commits) and a fake
-  `PullRequestHost` that records what the runner would post. A rule test
+  `PullRequestHost` that records what the runner would post. A rule the
+  tests need by name is a static property (`static let changelog =
+  Rule("Changelog") { … }`, listed in `rules` as `changelog`), and the
+  test target reaches it with `@testable import Dangerfile`. A rule test
   is then one call:
 
   ```swift
