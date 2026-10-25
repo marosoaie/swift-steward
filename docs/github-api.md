@@ -56,7 +56,8 @@ commits. So the pin is a commit plus the checksum of one file.
    `upstream.env`, and run the script.
 3. If it fails naming a fix, upstream has changed what the fix edits:
    - "drop the fix": upstream now says what the fix said. Delete the
-     entry and its test in `SpecFixRegressionTests`. Keep the fixture: the
+     entry and its test, in `SpecFixRegressionTests` or, for an
+     adaptation, `SpecAdaptationTests`. Keep a correction's fixture: the
      response still has to decode, so move its test to
      `FixtureDecodingTests`.
    - "update the fix": the node the fix edits is gone or has moved. Find
@@ -87,6 +88,11 @@ fixes.
    fixture exists and that a regression test names the fix and replays
    the fixture.
 
+Before committing, drop the entry, regenerate, and watch the new test
+fail: a test that passes either way proves nothing. The Tooling tests
+can't run that check themselves, because it takes a regeneration per
+fix.
+
 The kinds of edit are `makeNullable`, `makeOptional`, `addEnumValue`,
 `undeprecate`, `remove`, and `addResponse`
 (`Tooling/Sources/GitHubSpecFixes/SpecFix+Edit.swift`). A new kind needs
@@ -96,7 +102,16 @@ Two kinds don't correct upstream and need no fixture: `remove` (the fix
 list uses it to drop the 20,000-line `x-webhooks` extension, which the
 generator never reads) and `undeprecate` (the generated initializers
 assign deprecated properties, which warns, and the build must be
-warning-free).
+warning-free). Such an adaptation still gets a test, named
+`"<fix name>: …"`, in
+`Tooling/Tests/GitHubSpecFixesTests/SpecAdaptationTests.swift`: it checks
+the committed `openapi.yaml` for the fix's effect, so it fails once the
+entry is dropped and the client regenerated (a removed node is back, a
+deprecation marker returns).
+
+The Tooling tests fail when a fix has no test named after it, and when a
+test is named after a fix that's no longer on the list, so a dropped fix
+can't leave a test that passes for no reason.
 
 ### Why a Swift transform, and why the list is YAML
 
