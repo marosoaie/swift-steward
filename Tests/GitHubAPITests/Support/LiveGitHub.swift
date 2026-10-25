@@ -41,4 +41,29 @@ struct LiveGitHub {
             middlewares: middlewares
         )
     }
+
+    /// A read-only host on the URLSession transport, recording to
+    /// `recordDirectory` when one is given, else to the environment's.
+    func host(
+        owner: String,
+        repository: String,
+        scenario: String,
+        token: String? = nil,
+        marker: SummaryMarker = .steward,
+        commentsPerPage: Int = 100,
+        recordDirectory: URL? = nil
+    ) -> GitHubHost {
+        GitHubHost(
+            owner: owner,
+            repository: repository,
+            token: token ?? self.token,
+            apiURL: URL(string: "https://api.github.com")!,
+            marker: marker,
+            commentsPerPage: commentsPerPage,
+            transport: URLSessionTransport(),
+            middlewares: [ReadOnlyMiddleware()] + ((recordDirectory ?? self.recordDirectory).map {
+                [RecordingMiddleware(directory: $0, scenario: "live-\(scenario)")]
+            } ?? [])
+        )
+    }
 }
