@@ -17,6 +17,7 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, full text in the job summary; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing | Always fail; fail on configuration errors only |
+| S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
 
 ## Context and constraints
 
@@ -649,3 +650,52 @@ unnoticed except through the warning annotation on every run, so the
 quickstart's workflow sets `permissions:` explicitly (new repositories
 default the token to read-only), and teams that want it loud set the
 flag. Open question 4 asks for the default.
+
+## 7. From danger-swift (S7)
+
+danger-swift 3.23.1 (the latest release, 2026-10-18) evaluates the
+Dangerfile, writes its results as JSON, and hands them to danger-js,
+which needs Node and does all the posting. Steward replaces both halves.
+The table maps every call a Dangerfile commonly makes, read from
+danger-swift's source at that tag; the migration guide (4.10) grows out
+of it. `context` is the rule closure's parameter.
+
+| danger-swift | Steward v1 | Notes |
+|---|---|---|
+| `let danger = Danger()` | `@main struct Checks: Dangerfile`, and each rule's `context` | No global; the runner builds the context once |
+| `warn("…")`, `danger.warn("…")` | `[.warning("…")]` returned from a rule | Same for `fail` → `.failure`, `message` → `.message`, `markdown` → `.markdown` |
+| `warn(message:file:line:)` (and `fail`, `message`, `markdown`) | `.warning("…", at: Location(path: file, line: line))` | Rendered as a link in the summary; inline review comments are in the backlog |
+| `suggestion(code:file:line:)` | – | Needs inline review comments (backlog) |
+| `danger.fails`, `.warnings`, `.messages`, `.markdowns` | – | A rule never sees other rules' findings; tests inspect what a rule returns (`StewardTesting`, 4.6) |
+| `danger.git.modifiedFiles`, `.createdFiles`, `.deletedFiles` | `context.git.modifiedFiles`, `.createdFiles`, `.deletedFiles` | `[String]` in both; plus `renamedFiles` (section 2) |
+| `danger.git.commits` | `context.git.commits` | Local `git log`; `subject` and `body` instead of `message`; `sha` isn't optional |
+| `danger.utils.diff(forFile:sourceBranch:)` | `context.git.file(at:)` | A `DiffFile` from the full model, parsed once, against the pull request's merge base, instead of one `git diff` per call |
+| `danger.utils.readFile(_:)`, `.lines(for:inFile:)` | Foundation | The working tree is the merge commit in a `pull_request` run (section 2) |
+| `danger.utils.exec(_:arguments:)`, `.spawn(_:arguments:)` | Foundation's `Process` | Rules are `async throws`, so a failing tool can throw |
+| `danger.utils.environment.NAME` | `ProcessInfo.processInfo.environment["NAME"]` | |
+| `danger.github.pullRequest.title`, `.body`, `.number`, `.htmlUrl` | `context.pullRequest.title`, `.body`, `.number`, `.webURL` | `body` is `""` rather than `nil` when empty |
+| `.pullRequest.user.login` | `context.pullRequest.author` | |
+| `.pullRequest.additions`, `.deletions`, `.changedFiles`, `.commitCount` | `.additions`, `.deletions`, `.changedFiles`, `.commits` | Non-optional |
+| `.pullRequest.draft`, `.state`, `.isMerged` | `.isDraft`, `.state` (`.open`, `.closed`, `.merged`) | |
+| `.pullRequest.base.ref`, `.sha`, `.repo` (and `head`) | `.base.name`, `.commit`, `.repository` (and `head`) | `repository` is `owner/name` |
+| `danger.github.issue.labels` | `context.pullRequest.labels` | Names only |
+| `danger.github.commits` | `context.git.commits` | From git, not the API |
+| `danger.github.reviews`, `.requestedReviewers` | – | Would need the API from rules; not in v1 |
+| `danger.github.api` (OctoKit) | – | The host isn't exposed to rules in v1 |
+| `danger.gitLab`, `.bitbucketCloud`, `.bitbucketServer` | – | GitHub only, behind the seam (backlog) |
+| `SwiftLint.lint(inline: true, …)` | `Rule.diagnosticsOnChangedLines(in: [.swiftLint("swiftlint.json")])` | Reads a report the workflow already produced instead of running SwiftLint, and keeps only changed lines (4.5); also xcodebuild, SwiftFormat, Sonar |
+| `// fileImport: Other.swift` | Another file in the `Dangerfile` target | It's an ordinary package |
+| `import X // package: <url>`, or a `DangerDeps` library product | `dependencies:` in `Dangerfile/Package.swift` | |
+| `danger-swift ci` | The composite Action (4.8), which runs `swift run` in `Dangerfile/` | |
+| `danger-swift local` | `swift run` in `Dangerfile/` outside Actions: a dry run (`--base`, `--pull-request`) | |
+| `danger-swift pr <url>` | – | Remote dry run is in the backlog |
+| `danger-swift edit` | Open `Dangerfile/Package.swift` in Xcode | |
+| `DANGER_GITHUB_API_TOKEN` | `GITHUB_TOKEN` | danger-js reads either |
+
+The deliberate departures, in one place: no global `danger` and no
+global result lists; findings returned, not reported; paths in
+`Location` rather than `file:`/`line:` arguments; pull request data from
+the event, not the API; nothing that needs inline comments or API access
+from rules. They follow from the plan's decisions (value types, no
+globals, one summary comment) rather than from taste, and the migration
+guide says so.
