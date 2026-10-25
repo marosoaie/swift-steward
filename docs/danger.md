@@ -1,12 +1,11 @@
 # Steward: a pure-Swift Danger
 
-**Status: in review (plan step 4.1).** No Phase 4 code exists yet;
+**Status: reviewed (plan step 4.1).** No Phase 4 code exists yet;
 steps 4.2–4.10 build on what this document settles. Each section ends with
-a recommendation and the alternatives weighed, and the
-[open questions](#open-questions) at the end are for the maintainer to
-answer. The maintainer answered questions 1–8 on 2026-10-26, each as
-recommended (7 with a documentation requirement added); questions 9 and
-10 are open. Claims about danger-swift, GitHub, and SwiftPM were checked
+a recommendation and the alternatives weighed. The maintainer answered
+all ten [questions](#answered-questions) on 2026-10-26, each as
+recommended (7 with a documentation requirement added), and the sections
+reflect the answers. Claims about danger-swift, GitHub, and SwiftPM were checked
 against their sources or by experiment; [Checks](#checks) lists how.
 
 ## Decisions at a glance
@@ -14,11 +13,11 @@ against their sources or by experiment; [Checks](#checks) lists how.
 | # | Topic | Recommendation | Alternatives considered |
 |---|---|---|---|
 | S1 | Rule shape | **Decided 2026-10-26.** `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
-| S2 | Context | One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; **decided 2026-10-26:** a placeholder pull request in a local dry run without `--pull-request` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
+| S2 | Context | **Paths and the dry-run placeholder decided 2026-10-26.** One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; a placeholder pull request in a local dry run without `--pull-request` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 | S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | **Clean case and markers decided 2026-10-26.** The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
-| S6 | Posting failures | **Decided 2026-10-26.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing | Always fail; fail on configuration errors only |
+| S6 | Posting failures | **Decided 2026-10-26.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
 | S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3) | `action.yml` at swift-steward's root with a moving `v1` tag |
 
@@ -99,7 +98,7 @@ functional style the repository asks for falls out of them (`filter` the
 files, `map` them to findings), and a rule can't read or drop another
 rule's findings because it never sees them.
 
-**Decided (A),** as recommended (open question 1, answered 2026-10-26):
+**Decided (A),** as recommended (question 1, answered 2026-10-26):
 
 ```swift
 /// One check over a pull request.
@@ -282,7 +281,8 @@ links, and the JSON report all need text, so the lists decode
 A rule that must tell two Latin-1 names apart uses `diff` and its
 `DiffPath`s. Making the lists `[DiffPath]` was weighed; it's exact, but
 every rule would convert, and two paths that decode to the same string
-are rare enough to document instead (open question 9).
+are rare enough to document instead. **Decided 2026-10-26 (question 9):**
+`String` in the conveniences and `Location`, `DiffPath` in `diff`.
 
 **Locally** (the dry run, 4.3), the git half works as in CI: the head
 is `HEAD`, and the base is `--base <ref>` (default: the remote's default
@@ -367,7 +367,7 @@ diagnostics.
 | C. Build the head instead | `base...head` | head coordinates; nothing to map | `blob/<head>` |
 | D. Two diffs | `base...head` | merge coordinates against `base-tip...merge`, findings mapped to the head afterwards | `blob/<head>` |
 
-**Decided (A),** as recommended (open question 3, answered 2026-10-26).
+**Decided (A),** as recommended (question 3, answered 2026-10-26).
 Everything a rule or a reader sees is in head coordinates, and the one tree that differs, the built one, is mapped once,
 at the edge:
 
@@ -616,7 +616,9 @@ will post. The skip is logged, not an error.
    standard output in a dry run.
 5. **Post** through `PullRequestHost`, unless this is a dry run or the
    pull request comes from a fork (v1 checks `PullRequest.isFromFork`
-   first, says why it won't post, and carries on; open question 10).
+   first, says why it won't post, and carries on, so fork contributors
+   still get a check status and the job summary; decided 2026-10-26,
+   question 10).
 6. **Exit.**
 
 Options are a handful of hand-parsed flags (`--base`, `--pull-request`,
@@ -808,11 +810,10 @@ tag.
 | 4.10 Docs | Section 7 (the mapping table, the start of the migration guide) and section 5 (several Dangerfiles per pull request are unsupported) |
 | Backlog: fork pull requests | Section 4 (the report and the rules for an untrusted one) |
 
-## Open questions
+## Answered questions
 
-For the maintainer. Each has a recommendation; none is decided until
-answered. Answers are recorded in place, so the numbers that the sections
-refer to stay stable.
+The maintainer answered all ten on 2026-10-26. The sections refer to them
+by number, and each section above already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -848,15 +849,14 @@ refer to stay stable.
 8. **Where the Action lives (S8, plan decision 3). Answered 2026-10-26:
    a separate repository** ("separate repo indeed"), `steward-action`,
    with its own moving `v1` tag.
-9. **Paths in the DSL (S2).** `String` in the file lists and `Location`,
-   decoded lossily from the model's `DiffPath` bytes, or `DiffPath`
-   throughout? *Recommended:* `String`, with `DiffPath` in `diff` for
-   rules that must be exact.
-10. **Fork pull requests in v1 (S6).** Evaluate the rules, skip posting
-    with a notice, and exit by the findings, or refuse to run (exit 2)?
-    *Recommended:* evaluate and skip posting, so fork contributors still
-    get a check status and the job summary until the fork flow (S4)
-    lands.
+9. **Paths in the DSL (S2). Answered 2026-10-26: `String`, as
+   recommended** ("recommended option"). The file lists and `Location`
+   use `String`, decoded lossily from the model's `DiffPath` bytes;
+   rules that must be exact use `DiffPath` in `diff`.
+10. **Fork pull requests in v1 (S6). Answered 2026-10-26: evaluate and
+    skip posting** ("evaluate and skip posting"). The rules run, posting
+    is skipped with a notice, and the exit code follows the findings,
+    until the fork flow (S4) lands.
 
 ## Checks
 
