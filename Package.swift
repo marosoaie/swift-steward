@@ -83,6 +83,8 @@ let package = Package(
             dependencies: [
                 "GitHubAPI",
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+                // The opt-in live tests' transport.
+                .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
             ],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings
