@@ -109,7 +109,12 @@ struct FixtureDangerfileTests {
             Pull request #\(pullRequest.number) in \(pullRequest.repository):\u{20}
             """))
         #expect(run.outcome.log.contains("::endgroup::\n::group::Rules\nSize: 1 finding\n"))
-        #expect(!run.outcome.log.contains("::error") && !run.outcome.log.contains("::warning"))
+        // Without a token, the process posts nothing to these real pull
+        // requests, and says so.
+        #expect(!run.outcome.log.contains("::error"))
+        let warnings = run.outcome.log.split(separator: "\n").filter { $0.hasPrefix("::warning") }
+        #expect(warnings.count == 1)
+        #expect(warnings.first?.hasPrefix("::warning title=Steward::GITHUB_TOKEN isn't set") == true)
     }
 
     @Test("a dry run on a checkout of the head prints the same findings, makes no request, and exits alike",

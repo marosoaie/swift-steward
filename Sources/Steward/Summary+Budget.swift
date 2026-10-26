@@ -10,6 +10,16 @@ extension Summary {
         case reportArtifact
         /// The workflow run's log, which always holds all of it.
         case log
+
+        /// The sentence that says where a run's findings are when the
+        /// summary comment doesn't hold them: the log, and this.
+        var findingsSentence: String {
+            switch self {
+            case .jobSummary: "The findings are in this run's log and job summary."
+            case .reportArtifact: "The findings are in this run's log and report."
+            case .log: "The findings are in this run's log."
+            }
+        }
     }
 
     /// The Markdown in at most `budget` UTF-8 bytes (docs/danger.md,

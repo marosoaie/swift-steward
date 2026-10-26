@@ -44,6 +44,12 @@ struct FixtureProcessTests {
         )
         #expect(report.hasFailures == asksToThrow)
         #expect(outcome.log.hasPrefix("::group::Context\nPull request #21 in marosoaie/swift-steward: "))
+        // No token: the process, whose host would go to GitHub, posts nothing.
+        #expect(outcome.log.hasSuffix("""
+            ::warning title=Steward::GITHUB_TOKEN isn't set, so Steward can't post the summary comment: give the \
+            step `env: GITHUB_TOKEN: ${{ github.token }}`. The findings are in this run's log and job summary.
+
+            """))
     }
 
     /// Ways a run can fail before it has a context.
@@ -85,7 +91,9 @@ struct FixtureProcessTests {
     /// A workflow run's environment on the fixture's pull request, with a
     /// payload titled `title` that adds 3 lines, and an empty job summary.
     static func environment(for fixture: PullRequestFixture, title: String) throws -> [String: String] {
-        let environment = try RunnerTests.environment(for: fixture)
+        var environment = try RunnerTests.environment(for: fixture)
+        // The process's host would send its requests to GitHub itself.
+        environment["GITHUB_TOKEN"] = nil
         try EventPayload.recorded("pull-request-event.opened")
             .setting(base: fixture.base, head: fixture.head, fields: ["title": title, "additions": 3])
             .write(to: fixture.repository.eventURL)

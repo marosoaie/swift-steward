@@ -15,6 +15,9 @@ struct Options: Sendable, Equatable {
     /// `--fail-on-post-error`: whether a failure to post the summary makes
     /// the run exit with status 2.
     var failsOnPostError = false
+    /// `--summary-author`: the login the token posts as, whose summary
+    /// comments are the run's to update.
+    var summaryAuthor = "github-actions[bot]"
     /// `--help` or `-h`.
     var showsHelp = false
 
@@ -36,6 +39,8 @@ struct Options: Sendable, Equatable {
                 reportPath = try Self.value(of: name, attached: attached, from: &remaining)
             case "--fail-on-post-error" where attached == nil:
                 failsOnPostError = true
+            case "--summary-author":
+                summaryAuthor = try Self.value(of: name, attached: attached, from: &remaining)
             case "--help" where attached == nil, "-h" where attached == nil:
                 showsHelp = true
             case _ where name.hasPrefix("-"):
@@ -72,12 +77,14 @@ struct Options: Sendable, Equatable {
     /// The help text, for a program called `program`.
     static func usage(program: String) -> String {
         """
-        USAGE: \(program) [--base <ref>] [--pull-request <number>] [--report <path>] [--fail-on-post-error]
+        USAGE: \(program) [--base <ref>] [--pull-request <number>] [--report <path>] \
+        [--fail-on-post-error] [--summary-author <login>]
 
         Checks a pull request with this Dangerfile's rules. In a GitHub Actions pull_request \
-        workflow (GITHUB_ACTIONS=true), the pull request comes from the event. Anywhere else \
-        it's a dry run over the git checkout around the current directory: it prints the \
-        summary and never posts.
+        workflow (GITHUB_ACTIONS=true), the pull request comes from the event, and the summary \
+        is posted as a comment with GITHUB_TOKEN, unless the pull request comes from a fork. \
+        Anywhere else it's a dry run over the git checkout around the current directory: it \
+        prints the summary and never posts.
 
         OPTIONS:
           --base <ref>             Dry run: the commit the pull request merges into. Default: \
@@ -87,12 +94,16 @@ struct Options: Sendable, Equatable {
         repository is GITHUB_REPOSITORY, or else the origin remote's.
           --report <path>          Also write the report there, as JSON.
           --fail-on-post-error     Exit with status 2 when posting the summary fails.
+          --summary-author <login> The account GITHUB_TOKEN posts as, whose summary comments \
+        this run updates. Default: github-actions[bot], a workflow token's account; for a \
+        personal access token or a GitHub App's token, that account's login.
           -h, --help               Show this help.
 
         EXIT STATUS:
           0  No failures.
           1  At least one failure, a rule that threw included.
-          2  Steward couldn't do its job, such as building the pull request's context.
+          2  Steward couldn't do its job, such as building the pull request's context, or, \
+        with --fail-on-post-error, posting the summary.
 
         """
     }

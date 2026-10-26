@@ -25,6 +25,12 @@ struct Log: Sendable {
         console.writeError("::stop-commands::\(token)\n\(Self.terminated(text))::\(token)::\n")
     }
 
+    /// A notice: an annotation on the run in CI, a `notice:` line in a dry
+    /// run.
+    func notice(_ text: String) {
+        annotate("notice", text)
+    }
+
     /// A warning: an annotation on the run in CI, a `warning:` line in a
     /// dry run.
     func warning(_ text: String) {

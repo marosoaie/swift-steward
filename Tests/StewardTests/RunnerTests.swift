@@ -14,6 +14,10 @@ struct RunnerTests {
         var log: String
         var jobSummary: String?
         var report: Report?
+        /// Every request GitHub's fake got, this run's and earlier ones'.
+        var requests: [String]
+        /// The pull request's comments on GitHub's fake, after the run.
+        var comments: [FakeGitHub.Comment]
     }
 
     static let rules = [
@@ -77,7 +81,7 @@ struct RunnerTests {
             ::group::Summary
             **1 failure
             """))
-        #expect(outcome.log.hasSuffix("</sub>\n::endgroup::\n"))
+        #expect(outcome.log.contains("</sub>\n::endgroup::\n::group::Summary comment\nPosted the summary comment: "))
     }
 
     @Test("a run without failures exits 0, and its summary follows what the step's summary already held")
@@ -144,6 +148,7 @@ struct RunnerTests {
         #expect(outcome.jobSummary?.isEmpty == true)
         #expect(outcome.report == nil)
         #expect(!outcome.log.contains("::group::Rules"))
+        #expect(outcome.requests.isEmpty)
     }
 
     @Test("a report that can't be written exits 2, after the summary is out")
@@ -211,6 +216,7 @@ struct RunnerTests {
         #expect(outcome.log.contains("::error title=Steward::The run was cancelled"))
         #expect(outcome.jobSummary?.isEmpty == true)
         #expect(outcome.report == nil)
+        #expect(outcome.requests.isEmpty)
     }
 
     /// The environment of a run on the fixture's pull request, its job
@@ -226,19 +232,32 @@ struct RunnerTests {
 
     /// Runs `rules` with `arguments` on the fixture, from the fixture's
     /// root directory, with an empty job summary file unless `jobSummary`
-    /// says what it holds.
+    /// says what it holds, and with `token` as GITHUB_TOKEN for `github`,
+    /// a fake whose pull request's head is the fixture's unless it's given.
     static func run(
         _ rules: [Rule],
         _ arguments: [String] = [],
         on fixture: PullRequestFixture,
         environment: [String: String]? = nil,
-        jobSummary: String = ""
+        jobSummary: String = "",
+        token: String? = FakeGitHub.token,
+        github: FakeGitHub? = nil,
+        sleep: (@Sendable (Duration) async throws -> Void)? = nil
     ) async throws -> Outcome {
-        let environment = try environment ?? Self.environment(for: fixture)
+        var environment = try environment ?? Self.environment(for: fixture)
+        environment["GITHUB_TOKEN"] = token
+        let github = github ?? FakeGitHub(head: fixture.head)
         let root = fixture.repository.root
         try Data(jobSummary.utf8).write(to: root.appendingPathComponent("summary.md"))
         let recording = RecordingConsole()
-        let runner = Runner.testing(arguments, environment: environment, directory: root.path, recording: recording)
+        var runner = Runner.testing(
+            arguments,
+            environment: environment,
+            directory: root.path,
+            recording: recording,
+            transport: github
+        )
+        runner.sleep = sleep ?? runner.sleep
         let status = await runner.run(rules)
         let (output, log) = await recording.finishStreams()
         let summaryURL = environment["GITHUB_STEP_SUMMARY"].map { URL(fileURLWithPath: $0) }
@@ -248,7 +267,9 @@ struct RunnerTests {
             output: output,
             log: log,
             jobSummary: try summaryURL.map { String(decoding: try Data(contentsOf: $0), as: UTF8.self) },
-            report: try reportData.map { try JSONDecoder().decode(Report.self, from: $0) }
+            report: try reportData.map { try JSONDecoder().decode(Report.self, from: $0) },
+            requests: await github.requests.map(\.description),
+            comments: await github.comments
         )
     }
 }

@@ -176,12 +176,8 @@ struct StickyComment: Sendable {
         default:
             nil
         }
-        let instead = switch elsewhere {
-        case .jobSummary: "The findings are in this run's log and job summary."
-        case .reportArtifact: "The findings are in this run's log and report."
-        case .log: "The findings are in this run's log."
-        }
-        return ["Couldn't post the summary comment: \(String(errorDescription: error)).", advice, instead]
+        let failure = "Couldn't post the summary comment: \(String(errorDescription: error))."
+        return [failure, advice, elsewhere.findingsSentence]
             .compactMap(\.self)
             .joined(separator: " ")
     }

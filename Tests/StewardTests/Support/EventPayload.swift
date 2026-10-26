@@ -53,6 +53,20 @@ struct EventPayload {
         return payload
     }
 
+    /// The payload with its pull request's head branch in `repository`, as
+    /// a fork's is.
+    func headRepository(_ repository: String) -> EventPayload {
+        var payload = self
+        var pullRequest = object["pull_request"] as? [String: Any] ?? [:]
+        var head = pullRequest["head"] as? [String: Any] ?? [:]
+        var repo = head["repo"] as? [String: Any] ?? [:]
+        repo["full_name"] = repository
+        head["repo"] = repo
+        pullRequest["head"] = head
+        payload.object["pull_request"] = pullRequest
+        return payload
+    }
+
     /// The pull request's field `key`, such as `merge_commit_sha`.
     func pullRequestField(_ key: String) -> Any? {
         (object["pull_request"] as? [String: Any])?[key]
