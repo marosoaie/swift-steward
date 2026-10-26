@@ -40,7 +40,8 @@ public struct PullRequestHostError: Error, Sendable, Hashable, CustomStringConve
     /// no usable response arrived.
     public var message: String?
     /// How long the host asked callers to wait before trying again, when it
-    /// said; nil when it didn't. Set for some `rateLimited` errors.
+    /// said; nil when it didn't. Set for some `rateLimited` and
+    /// `serverError` errors.
     public var retryAfter: Duration?
 
     /// Creates an error from what went wrong and what the host answered.

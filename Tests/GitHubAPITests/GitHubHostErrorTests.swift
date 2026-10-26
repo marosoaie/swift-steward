@@ -8,7 +8,7 @@ import Testing
 struct GitHubHostErrorTests {
     /// The error `call` threw, failing the test when it threw another or
     /// none.
-    func hostError(
+    static func hostError(
         _ responses: [RecordedResponse],
         _ call: (GitHubHost) async throws -> Void = { _ = try await $0.pullRequest(number: 20) }
     ) async -> PullRequestHostError? {
@@ -19,7 +19,7 @@ struct GitHubHostErrorTests {
 
     @Test("a recorded bad token, which no operation declares, fails as unauthorized with GitHub's message")
     func badToken() async throws {
-        let error = await hostError([try RecordedResponse(fixture: "pulls-get.macos-bad-token")])
+        let error = await Self.hostError([try RecordedResponse(fixture: "pulls-get.macos-bad-token")])
         #expect(error == PullRequestHostError(
             kind: .unauthorized,
             operation: "pulls/get",
@@ -30,7 +30,7 @@ struct GitHubHostErrorTests {
 
     @Test("a recorded missing pull request fails as not found")
     func missing() async throws {
-        let error = await hostError([try RecordedResponse(fixture: "pulls-get.macos-missing")]) {
+        let error = await Self.hostError([try RecordedResponse(fixture: "pulls-get.macos-missing")]) {
             _ = try await $0.pullRequest(number: 999_999)
         }
         #expect(error == PullRequestHostError(
@@ -43,7 +43,7 @@ struct GitHubHostErrorTests {
 
     @Test("a recorded success in an undeclared media type is malformed, naming the content type")
     func diffMediaType() async throws {
-        let error = await hostError([try RecordedResponse(fixture: "pulls-get.macos-diff")])
+        let error = await Self.hostError([try RecordedResponse(fixture: "pulls-get.macos-diff")])
         #expect(error?.kind == .malformedResponse)
         #expect(error?.status == 200)
         #expect(error?.message?.contains("application/vnd.github.diff") == true, "\(String(describing: error))")
@@ -95,7 +95,8 @@ struct GitHubHostErrorTests {
             "documentation_url": "https://docs.github.com/rest",
             "status": "\(answer.status)",
         ]
-        let error = await hostError([try RecordedResponse(status: answer.status, headers: answer.headers, json: body)])
+        let response = try RecordedResponse(status: answer.status, headers: answer.headers, json: body)
+        let error = await Self.hostError([response])
         #expect(error?.kind == answer.kind)
         #expect(error?.status == answer.status)
         // pulls/get declares 304 without a body.
@@ -109,7 +110,7 @@ struct GitHubHostErrorTests {
     ])
     func createForbidden(message: String, kind: PullRequestHostError.Kind) async throws {
         let response = try RecordedResponse(status: 403, json: ["message": message])
-        let error = await hostError([response]) {
+        let error = await Self.hostError([response]) {
             _ = try await $0.createSummaryComment(onPullRequest: 21, body: "x")
         }
         #expect(error == PullRequestHostError(
@@ -120,74 +121,10 @@ struct GitHubHostErrorTests {
         ))
     }
 
-    // Regression (Codex review): the generated 403 for create-comment drops
-    // its headers, so only RateLimitMiddleware can see the retry-after.
-    @Test("issues/create-comment's declared 403 with a retry-after is a rate limit, whatever its message")
-    func createThrottled() async throws {
-        let message = "You have triggered an abuse detection mechanism. Please wait a few minutes."
-        let response = try RecordedResponse(status: 403, headers: ["retry-after": "120"], json: ["message": message])
-        let error = await hostError([response]) {
-            _ = try await $0.createSummaryComment(onPullRequest: 21, body: "x")
-        }
-        #expect(error == PullRequestHostError(
-            kind: .rateLimited,
-            operation: "issues/create-comment",
-            status: 403,
-            message: message,
-            retryAfter: .seconds(120)
-        ))
-    }
-
-    /// A throttled answer's headers, and the wait they ask for.
-    struct Throttle: Sendable, CustomTestStringConvertible {
-        let headers: [String: String]
-        let wait: Duration?
-
-        var testDescription: String {
-            "\(headers.sorted { $0.key < $1.key }) → \(wait.map(String.init(describing:)) ?? "nil")"
-        }
-    }
-
-    static let now = Date(timeIntervalSince1970: 1_700_000_000.5)
-
-    @Test("a throttled answer asks for its retry-after, or else the time left until its limit resets", arguments: [
-        Throttle(headers: ["retry-after": "30"], wait: .seconds(30)),
-        Throttle(headers: ["retry-after": "0"], wait: .zero),
-        Throttle(
-            headers: ["retry-after": "30", "x-ratelimit-remaining": "0", "x-ratelimit-reset": "1"],
-            wait: .seconds(30)
-        ),
-        Throttle(headers: ["retry-after": "soon"], wait: nil),
-        Throttle(headers: ["retry-after": "-5"], wait: nil),
-        Throttle(headers: ["retry-after": "9999999999999"], wait: nil),
-        Throttle(headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "1700000090"], wait: .seconds(90)),
-        Throttle(headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "1700000001"], wait: .seconds(1)),
-        Throttle(headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "1699999000"], wait: .zero),
-        Throttle(headers: ["x-ratelimit-remaining": "0"], wait: nil),
-        Throttle(headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "later"], wait: nil),
-    ])
-    func retryAfter(_ throttle: Throttle) throws {
-        let fields = try throttle.headers.map { name, value in
-            HTTPField(name: try #require(HTTPField.Name(name)), value: value)
-        }
-        let response = HTTPResponse(status: .init(code: 403), headerFields: HTTPFields(fields))
-        #expect(RateLimitMiddleware.retryAfter(response, now: Self.now) == throttle.wait)
-    }
-
-    @Test("the host's error carries the wait a throttled answer asks for, and none when only the message says so")
-    func retryAfterThroughHost() async throws {
-        let throttled = try RecordedResponse(status: 429, headers: ["retry-after": "7"], json: ["message": "Slow"])
-        #expect(await hostError([throttled])?.retryAfter == .seconds(7))
-        let unsaid = try RecordedResponse(status: 403, json: ["message": "API rate limit exceeded for user ID 1."])
-        let error = await hostError([unsaid])
-        #expect(error?.kind == .rateLimited)
-        #expect(error?.retryAfter == nil)
-    }
-
     @Test("issues with comments turned off answer 410, which fails as not found")
     func gone() async throws {
         let response = try RecordedResponse(status: 410, json: ["message": "Issues are disabled for this repo"])
-        let error = await hostError([response]) { _ = try await $0.summaryComments(onPullRequest: 21) }
+        let error = await Self.hostError([response]) { _ = try await $0.summaryComments(onPullRequest: 21) }
         #expect(error?.kind == .notFound)
         #expect(error?.message == "Issues are disabled for this repo")
     }
@@ -204,7 +141,7 @@ struct GitHubHostErrorTests {
             ),
             body: Data("<html>proxy error</html>".utf8)
         )
-        let error = await hostError([html])
+        let error = await Self.hostError([html])
         #expect(error == PullRequestHostError(kind: kind, operation: "pulls/get", status: status))
     }
 
@@ -281,7 +218,7 @@ struct GitHubHostErrorTests {
         "pulls-get.macos-bad-token", "pulls-get.macos-diff", "pulls-get.macos-missing",
     ])
     func tokenNotInErrors(fixture: String) async throws {
-        let error = await hostError([try RecordedResponse(fixture: fixture)])
+        let error = await Self.hostError([try RecordedResponse(fixture: fixture)])
         var dumped = ""
         dump(error, to: &dumped)
         #expect(!dumped.contains(GitHubHost.probeToken))

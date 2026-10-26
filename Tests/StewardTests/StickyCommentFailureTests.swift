@@ -72,6 +72,21 @@ struct StickyCommentFailureTests {
             posts: false,
             warning: "pulls/get failed (serverError): HTTP 503: Unavailable."
         ),
+        FailureCase(
+            name: "server error with a retry-after",
+            operation: "issues/create-comment",
+            failures: [.status(503, message: "Unavailable", headers: ["retry-after": "5"])],
+            pauses: [.seconds(5)],
+            posts: true
+        ),
+        FailureCase(
+            name: "server error asking for too long",
+            operation: "issues/list-comments",
+            failures: [.status(503, message: "Unavailable", headers: ["retry-after": "120"])],
+            pauses: [],
+            posts: false,
+            warning: "(serverError): HTTP 503: Unavailable. GitHub asks to wait 120 seconds before trying again"
+        ),
         FailureCase(name: "network, once", operation: "issues/list-comments", failures: [.network],
                     pauses: [.seconds(2)], posts: true),
         FailureCase(

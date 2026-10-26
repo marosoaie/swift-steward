@@ -189,6 +189,7 @@ struct StickyComment: Sendable {
     /// `elsewhere`.
     static func warning(for error: any Error, elsewhere: Summary.Elsewhere) -> String {
         let hostError = error as? PullRequestHostError
+        let asksTooLong = hostError?.retryAfter.map { $0 > longestPause } == true
         let advice: String? = switch hostError?.kind {
         case .forbidden?:
             """
@@ -197,7 +198,7 @@ struct StickyComment: Sendable {
             """
         case .unauthorized?:
             "Check the token in GITHUB_TOKEN."
-        case .rateLimited? where hostError?.retryAfter.map({ $0 > longestPause }) == true:
+        case .rateLimited? where asksTooLong, .serverError? where asksTooLong:
             hostError?.retryAfter.map {
                 "GitHub asks to wait \(seconds($0)) before trying again, longer than Steward waits."
             }

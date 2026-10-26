@@ -195,22 +195,24 @@ The choices, made in step 3.5:
   | any other 403 | `forbidden` |
   | 404, or 410 (issues turned off) | `notFound` |
   | 422 | `rejected` |
-  | 5xx | `serverError` |
+  | 5xx, with or without a `retry-after` | `serverError` |
   | any other status, such as 304 or 406 | `unexpectedStatus` |
   | no response | `network` |
   | a success that doesn't decode, such as the diff media type | `malformedResponse` |
 
-  `RateLimitMiddleware` reads the rate-limit headers on every response,
-  because the generated client drops headers for declared statuses (such
-  as `issues/create-comment`'s 403). An error status whose body isn't
+  `RateLimitMiddleware` reads the rate-limit headers, and a server
+  error's `retry-after`, on every response, because the generated client
+  drops headers for declared statuses (such as `issues/create-comment`'s
+  403). An error status whose body isn't
   GitHub's JSON still maps by status.
   Updating a comment someone deleted fails as `notFound` (thanks to the
   `update-comment-404` fix), so 4.4 can post a new one. Deleting a
   comment that's already gone succeeds (the `delete-comment-404` fix).
   Nothing is retried here: whether a rate limit is worth waiting for is
-  the runner's call. A `rateLimited` error carries the wait GitHub asked
-  for as `retryAfter`: the `retry-after` seconds, or, once the primary
-  limit is spent, the time left until `x-ratelimit-reset`. Steward's
+  the runner's call. A `rateLimited` error, or a `serverError` whose
+  response has a `retry-after`, carries the wait GitHub asked for as
+  `retryAfter`: the `retry-after` seconds, or, once the primary limit is
+  spent, the time left until `x-ratelimit-reset`. Steward's
   sticky comment retries once (docs/danger.md, section 6).
 - **The token** lives in a `Credential` that prints as `<redacted>` in
   descriptions, debug output, and `dump`. It's added by a middleware, so

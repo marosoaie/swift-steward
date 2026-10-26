@@ -6,7 +6,9 @@ import PullRequestHosting
 /// Fails a request GitHub throttled as `.rateLimited`, before the client
 /// decodes the response: a 403 or 429 with `x-ratelimit-remaining: 0` (the
 /// primary limit) or a `retry-after` (secondary limits and abuse
-/// detection), whatever its message says.
+/// detection), whatever its message says. A server error with a
+/// `retry-after`, such as a 503 during maintenance, fails here too, as
+/// `.serverError`, so that its wait isn't lost.
 ///
 /// The error's `retryAfter` is what GitHub asks callers to wait: the
 /// `retry-after` seconds, or else, for the primary limit, the time left
@@ -27,6 +29,11 @@ struct RateLimitMiddleware: ClientMiddleware {
         let headers = response.headerFields
         return [403, 429].contains(response.status.code)
             && (remainingField.flatMap { headers[$0] } == "0" || retryAfterField.flatMap { headers[$0] } != nil)
+    }
+
+    /// Whether `response` is a server error that says when to try again.
+    static func isUnavailable(_ response: HTTPResponse) -> Bool {
+        response.status.kind == .serverError && retryAfterField.flatMap { response.headerFields[$0] } != nil
     }
 
     /// How long a throttled response asks callers to wait, or nil when it
@@ -63,11 +70,16 @@ struct RateLimitMiddleware: ClientMiddleware {
         next: @concurrent @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
     ) async throws -> (HTTPResponse, HTTPBody?) {
         let (response, responseBody) = try await next(request, body, baseURL)
-        guard Self.isThrottled(response) else {
-            return (response, responseBody)
+        let kind: PullRequestHostError.Kind? = if Self.isThrottled(response) {
+            .rateLimited
+        } else if Self.isUnavailable(response) {
+            .serverError
+        } else {
+            nil
         }
+        guard let kind else { return (response, responseBody) }
         throw await PullRequestHostError(
-            kind: .rateLimited,
+            kind: kind,
             operation: operationID,
             status: response.status.code,
             message: PullRequestHostError.message(in: responseBody),
