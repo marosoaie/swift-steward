@@ -5,9 +5,10 @@ step 4.3 the DSL, the runner, and the dry run; steps 4.4–4.10 build on
 what this document settles. Each section ends with
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
-recommended (7 with a documentation requirement added), and the four
-step 4.2 raised in swift-steward#27 the same day, each as recommended. The
-sections reflect the answers. Claims about danger-swift, GitHub, and
+recommended (7 with a documentation requirement added), the four
+step 4.2 raised in swift-steward#27 the same day, each as recommended, and
+the seven step 4.3 raised in swift-steward#28, also that day and as
+recommended. The sections reflect the answers. Claims about danger-swift, GitHub, and
 SwiftPM were checked against their sources or by experiment;
 [Checks](#checks) lists how.
 
@@ -18,11 +19,11 @@ SwiftPM were checked against their sources or by experiment;
 | S1 | Rule shape | **Decided 2026-10-26.** `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
 | S2 | Context | **Paths, the dry-run placeholder, `Run`'s fields, and the activity types decided 2026-10-26.** One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; a placeholder pull request in a local dry run without `--pull-request`; `Run` carries the line map and the API and server URLs; `ready_for_review` joins the accepted activity types | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 | S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default, or the head when only the head is checked out) to the head before matching; Steward leaves `safe.directory` to the workflow | Merge coordinates throughout; build the head instead; two diffs |
-| S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
-| S5 | Summary comment | **Clean case and markers decided 2026-10-26.** The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
+| S4 | Report | **Generator decided 2026-10-26:** `Steward <version>`, the version the CLI prints. A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
+| S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26.** The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | **Decided 2026-10-26.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
-| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3) | `action.yml` at swift-steward's root with a moving `v1` tag |
+| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting` | `action.yml` at swift-steward's root with a moving `v1` tag |
 
 ## Context and constraints
 
@@ -190,7 +191,10 @@ The details:
 array it builds up (`var findings: [Finding] = []`) or becomes several
 rules. The second is usually better anyway: each finding names its rule
 in the report. The maintainer chose this shape and this error and order
-behavior on 2026-10-26 (questions 1 and 2).
+behavior on 2026-10-26 (questions 1 and 2). **Decided 2026-10-26
+(question 20):** `markdown(_:at:)` takes a location like the other three
+factories, since section 7 maps danger-swift's `markdown(_:file:line:)`
+to it.
 
 ## 2. The context (S2)
 
@@ -468,6 +472,11 @@ public struct Report: Sendable, Hashable, Codable {
 }
 ```
 
+**Decided 2026-10-26 (question 18):** `generator` is `Steward <version>`,
+the version `steward --version` prints. Both read one constant,
+`Release.version` in the package's internal `StewardVersion` target, so a
+release still bumps the version in one place.
+
 The JSON keys are a wire contract, so they're fixed with `CodingKeys`
 rather than taken from property names: `schema_version`, `repository`,
 `pull_request`, `head_commit`, `findings`, `generator`, and in a finding
@@ -589,6 +598,9 @@ when non-empty, then the `markdown` findings as they are, then a footer:
   it (Markdown punctuation, and `@` so a compiler message can't ping
   anyone) before it becomes a finding.
 - **The headline counts everything**, even when the body is cut short.
+  `markdown` findings count as notes:
+  `**1 failure, 2 warnings, 1 message, 1 note**` (decided 2026-10-26,
+  question 17).
 
 ### Size
 
@@ -606,7 +618,9 @@ findings", pointing at where all of them are. The rendering also goes to
 step summary entirely instead of truncating it. The complete list is
 always in the report, which the Action writes with `--report` and
 uploads as an artifact, so the note points at the job summary when
-everything fit there and at the artifact otherwise.
+everything fit there and at the artifact otherwise. **Decided 2026-10-26
+(question 21):** the budget comes with the sticky comment in step 4.4;
+until then, the job summary isn't cut.
 
 ### When there's nothing to report
 
@@ -664,6 +678,16 @@ command, such as a finding's, is logged with commands paused
 (`::stop-commands::`). The library's damage reports go there too; an
 abandoned file (`.error`) becomes a `::warning::` annotation, since the
 rules then saw an incomplete diff.
+
+A dry run takes its repository, which the summary's links and
+`--pull-request` need, from `GITHUB_REPOSITORY`, or else from the `origin`
+remote when it's on `GITHUB_SERVER_URL`'s host, in any form git takes
+(`https://`, `ssh://`, or scp-style `git@host:o/r`). Without either, the
+summary shows paths without links, and `--pull-request` exits 2, asking
+for the repository. An SSH host alias (`github-work:o/r`, from
+`~/.ssh/config`) doesn't name the server's host, so it isn't recognized;
+setting `GITHUB_REPOSITORY=o/r` covers it. Decided 2026-10-26, question
+19.
 
 ### Exit codes
 
@@ -773,6 +797,13 @@ swift-steward gains two library products:
   (the full model, so library 0.2.0 and macOS 26), `BuildLogKit`,
   `DiffDiagnostics`, `PullRequestHosting`, and `GitHubAPI`. Generated
   types stay out of its public API, as they do out of the seam's.
+  **Decided 2026-10-26 (question 16):** it re-exports `GitDiffKit` and
+  `PullRequestHosting` with `@_exported import`, so a Dangerfile needs
+  only `import Steward`. Under `MemberImportVisibility`, a member such as
+  `context.pullRequest.title` is visible only in a file that imports its
+  module, Swift has no supported way to re-export one, and
+  `PullRequestHosting` isn't a product, so a Dangerfile couldn't import it
+  itself.
 - **`StewardTesting`** (4.6): builds a `Context` from fixtures (a diff
   as text, which the full model parses exactly as in a real run; a
   `PullRequest` with defaults for every field; commits) and a fake
@@ -793,6 +824,10 @@ swift-steward gains two library products:
       #expect(findings == [.warning("Add a CHANGELOG entry.")])
   }
   ```
+
+**Decided 2026-10-26 (question 15):** both products arrive in step 4.6,
+together; until then, `Steward` is a target the end-to-end tests' fixture
+Dangerfile builds against.
 
 A user's `Dangerfile/` is an ordinary package: an executable target that
 depends on `Steward`, a test target that depends on `StewardTesting`, and
@@ -847,10 +882,11 @@ tag.
 
 ## Answered questions
 
-The maintainer answered all ten on 2026-10-26, and the four that step
-4.2 raised in swift-steward#27 (numbered on from 11) the same day. The
-sections refer to them by number, and each section above already
-reflects its answer.
+The maintainer answered all ten on 2026-10-26, the four that step 4.2
+raised in swift-steward#27 (numbered on from 11) the same day, and the
+seven that step 4.3 raised in swift-steward#28 (numbered on from 15) that
+day too. The sections refer to them by number, and each section above
+already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -914,6 +950,33 @@ reflects its answer.
     Action (4.8) sets it for the workspace, and the quickstart (4.7) and
     the docs (4.10) cover workflows without the Action. `pr.yml`'s Linux
     job keeps setting it.
+15. **When `Steward` becomes a product (S8). Answered 2026-10-26: in 4.6,
+    with `StewardTesting`** ("as you recommended", for all seven of #28's
+    questions). Step 4.3 adds no product.
+16. **Re-exports (S8). Answered 2026-10-26: yes.** `Steward` re-exports
+    `GitDiffKit` and `PullRequestHosting` with `@_exported import`, so a
+    Dangerfile needs only `import Steward`, with `MemberImportVisibility`
+    on or off. Under that feature there's no supported alternative, and
+    `PullRequestHosting` isn't a product.
+17. **Markdown findings in the headline (S5). Answered 2026-10-26: notes,
+    as they are.** The headline counts them as notes:
+    `**1 failure, 2 warnings, 1 message, 1 note**`.
+18. **The generator's version (S4). Answered 2026-10-26: `Steward
+    <version>`.** `Report.generator` names the release `steward --version`
+    prints. Both read `Release.version` in the internal `StewardVersion`
+    target, so a release still bumps one constant, which AGENTS.md's
+    release note names.
+19. **Dry-run repository discovery (S6). Answered 2026-10-26: as it is.**
+    `GITHUB_REPOSITORY`, or else an `origin` remote on
+    `GITHUB_SERVER_URL`'s host. An SSH host alias isn't recognized, and
+    setting `GITHUB_REPOSITORY` covers it, as section 6 and the dry run's
+    declaration say.
+20. **A location for `markdown` (S1, S7). Answered 2026-10-26: accepted.**
+    `markdown(_:at:)` takes a location like the other three factories, as
+    section 7's mapping of danger-swift's `markdown(_:file:line:)` needs.
+21. **The size budget (S5). Answered 2026-10-26: step 4.4's.** The
+    65,536-byte cut comes with the sticky comment; until then, the job
+    summary isn't cut.
 
 ## Checks
 
