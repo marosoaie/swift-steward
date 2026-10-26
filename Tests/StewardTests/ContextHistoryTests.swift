@@ -4,8 +4,9 @@ import Testing
 
 @Suite("The history a context needs from the checkout")
 struct ContextHistoryTests {
-    @Test("a commit the checkout lacks is reported as history too shallow", arguments: [
-        ContextError.CommitRole.base, .head, .built,
+    // A missing built commit is BuiltCommitTests': the head can stand in.
+    @Test("a base or head commit the checkout lacks is reported as history too shallow", arguments: [
+        ContextError.CommitRole.base, .head,
     ])
     func missingCommit(role: ContextError.CommitRole) async throws {
         let (repository, commit) = try TestRepository.singleCommit()
@@ -14,7 +15,7 @@ struct ContextHistoryTests {
         let environment = try repository.actionsEnvironment(
             base: role == .base ? absent : commit,
             head: role == .head ? absent : commit,
-            built: role == .built ? absent : commit
+            built: commit
         )
         await #expect(throws: ContextError.missingCommit(role, sha: absent)) {
             try await Context.actions(environment: environment)

@@ -18,6 +18,11 @@ public struct Run: Sendable, Hashable {
     /// The SHA of the commit build logs refer to. In a `pull_request`
     /// workflow that's the merge commit Actions checks out (`GITHUB_SHA`),
     /// not the pull request's head.
+    ///
+    /// When the checkout lacks the merge commit and `HEAD` is the pull
+    /// request's head, as in a workflow that checks out `head.sha`, it's
+    /// the head, and `lineMap` is the identity. When `HEAD` is anything
+    /// else, building the context fails rather than guess.
     public var builtCommit: String
     /// Maps lines of `builtCommit` to the head commit's, so diagnostics
     /// from a build log can be matched against the pull request's changes.

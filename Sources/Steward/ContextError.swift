@@ -52,6 +52,13 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
             "The event payload at \(path) isn't a pull_request event's: \(reason)"
         case .invalidCommit(let role, let value):
             "The \(role.rawValue) commit \"\(value)\" isn't a full commit SHA."
+        case .missingCommit(.built, let sha):
+            """
+            Neither the merge commit nor the pull request's head is checked out: the built commit \
+            \(sha) (GITHUB_SHA) isn't in the checkout, and HEAD isn't the head commit, so Steward \
+            can't tell which tree the build logs refer to. Check out the merge commit, as \
+            actions/checkout does by default, or the head (`ref: ${{ github.event.pull_request.head.sha }}`).
+            """
         case .missingCommit(let role, let sha):
             """
             The \(role.rawValue) commit \(sha) isn't in the checkout: its history is too shallow. \

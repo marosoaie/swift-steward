@@ -12,10 +12,11 @@ extension Context {
     /// the pull request from the event payload, with no API call, and the
     /// git data from the checkout at `GITHUB_WORKSPACE`.
     ///
-    /// Needs the base and head commits from the payload, their merge
-    /// base, and the built commit, `GITHUB_SHA`, in the checkout; a
-    /// shallow one throws `ContextError.missingCommit` or
-    /// `ContextError.noMergeBase`.
+    /// Needs the base and head commits from the payload and their merge
+    /// base in the checkout; a shallow one throws
+    /// `ContextError.missingCommit` or `ContextError.noMergeBase`. The
+    /// built commit is `GITHUB_SHA`, or the head when the checkout lacks
+    /// `GITHUB_SHA` and `HEAD` is the head (see `builtCommit(_:head:in:)`).
     static func actions(environment: [String: String]) async throws -> Context {
         let variables = ActionsVariables(environment)
         let eventName = try variables.required("GITHUB_EVENT_NAME")
@@ -26,14 +27,14 @@ extension Context {
         let workspace = try variables.required("GITHUB_WORKSPACE")
         let base = try ActionsVariables.commit(event.pullRequest.base.commit, role: .base)
         let head = try ActionsVariables.commit(event.pullRequest.head.commit, role: .head)
-        let built = try ActionsVariables.commit(variables.required("GITHUB_SHA"), role: .built)
+        let gitHubSHA = try ActionsVariables.commit(variables.required("GITHUB_SHA"), role: .built)
         let apiURL = try variables.url("GITHUB_API_URL", default: "https://api.github.com")
         let serverURL = try variables.url("GITHUB_SERVER_URL", default: "https://github.com")
 
         let git = Git(directory: workspace)
         try await requireCommit(base, role: .base, in: git)
         try await requireCommit(head, role: .head, in: git)
-        try await requireCommit(built, role: .built, in: git)
+        let built = try await builtCommit(gitHubSHA, head: head, in: git)
         return Context(
             pullRequest: event.pullRequest,
             git: try await GitChanges(base: base, head: head, git: git),
@@ -49,7 +50,23 @@ extension Context {
     }
 
     private static func requireCommit(_ sha: String, role: ContextError.CommitRole, in git: Git) async throws {
-        guard try await git.hasCommit(sha) else { throw ContextError.missingCommit(role, sha: sha) }
+        guard try await git.commit(named: sha) != nil else { throw ContextError.missingCommit(role, sha: sha) }
+    }
+
+    /// The commit the build logs refer to: `GITHUB_SHA`, the merge commit
+    /// `actions/checkout` checks out by default, whenever the checkout has
+    /// it. A workflow that checks out the head instead has no merge commit,
+    /// so then the built commit is the head, but only when `HEAD` is the
+    /// head, and the line map is the identity. With neither, nothing says
+    /// which tree the logs came from, so this throws
+    /// `ContextError.missingCommit(.built, sha:)`, as it does for an unborn
+    /// `HEAD`.
+    private static func builtCommit(_ gitHubSHA: String, head: String, in git: Git) async throws -> String {
+        if try await git.commit(named: gitHubSHA) != nil { return gitHubSHA }
+        guard try await git.commit(named: "HEAD") == head else {
+            throw ContextError.missingCommit(.built, sha: gitHubSHA)
+        }
+        return head
     }
 }
 

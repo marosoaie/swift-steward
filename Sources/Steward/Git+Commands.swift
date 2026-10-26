@@ -22,15 +22,17 @@ extension Git {
         "-c", "core.quotePath=true", "-c", "diff.suppressBlankEmpty=false", "-c", "core.bigFileThreshold=512m",
     ]
 
-    /// Whether the repository has the commit `sha`.
-    func hasCommit(_ sha: String) async throws -> Bool {
-        let arguments = ["rev-parse", "--verify", "--quiet", "--end-of-options", "\(sha)^{commit}"]
-        let outcome = try await run(arguments, into: ()) { _, _ in }
-        // Status 1: no such commit. `cat-file -e` would exit with 128 for
-        // that too, the status of a directory that isn't a repository.
-        if outcome.status == 1 { return false }
+    /// The SHA of the commit `revision` names, such as a SHA or `HEAD`, or
+    /// nil when the repository has no such commit.
+    func commit(named revision: String) async throws -> String? {
+        let arguments = ["rev-parse", "--verify", "--quiet", "--end-of-options", "\(revision)^{commit}"]
+        let outcome = try await run(arguments, into: [UInt8]()) { $0.append(contentsOf: $1) }
+        // Status 1: no such commit, or an unborn HEAD. `cat-file -e` would
+        // exit with 128 for that too, the status of a directory that isn't
+        // a repository.
+        if outcome.status == 1 { return nil }
         try Self.requireSuccess(outcome, arguments)
-        return true
+        return String(decoding: outcome.output, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     /// Whether the repository is a shallow clone, whose history stops
