@@ -31,6 +31,8 @@ struct HostileConfigurationTests {
         ("diff.indentHeuristic", "false"),
         ("diff.orderFile", "order.txt"),
         ("diff.ignoreSubmodules", "all"),
+        ("diff.renameLimit", "1"),
+        ("core.bigFileThreshold", "1"),
     ]
 
     /// Variables git reads before any option: one reshapes the diff even
@@ -58,7 +60,10 @@ struct HostileConfigurationTests {
         try repository.commit("Add blank lines", at: PullRequestFixture.time + 240)
         try repository.write("one\n\nfour\n", to: "blank.txt")
         try repository.write("*.swift\n", to: "order.txt")
-        try repository.git(["add", "blank.txt", "order.txt"])
+        // An edited rename, among enough other files for diff.renameLimit.
+        try repository.git(["mv", "a.swift", "renamed.swift"])
+        try repository.write(try repository.git(["show", "HEAD:a.swift"]) + "\nadded\n", to: "renamed.swift")
+        try repository.git(["add", "blank.txt", "order.txt", "renamed.swift"])
         // Only in the index: adding the working tree would remove it.
         try repository.git(["update-index", "--add", "--cacheinfo", "160000,\(fixture.forkPoint),vendor/library"])
         let head = try repository.commitIndex("Add a submodule and blank lines", at: PullRequestFixture.time + 250)
@@ -74,6 +79,7 @@ struct HostileConfigurationTests {
         #expect(hostile.run.lineMap == plain.run.lineMap)
         #expect(hostile.git.diff.damage.isEmpty)
         #expect(hostile.git.createdFiles.contains("vendor/library"))
+        #expect(hostile.git.renamedFiles.contains(GitChanges.Rename(from: "a.swift", to: "renamed.swift")))
         #expect(hostile.git.commits.last?.subject == "Add a submodule and blank lines")
     }
 

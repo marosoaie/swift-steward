@@ -102,6 +102,37 @@ struct ContextHistoryTests {
         #expect(error?.description.contains("fetch-depth: 0") == true)
     }
 
+    @Test("a base on the shallow boundary would take in history it shares with the head, so it's refused")
+    func baseOnBoundary() async throws {
+        let repository = try TestRepository()
+        defer { repository.remove() }
+        let time = PullRequestFixture.time
+        try repository.write("start\n", to: "a.swift")
+        let root = try repository.commit("Start", at: time)
+        try repository.git(["switch", "--quiet", "--create", "feature"])
+        try repository.write("one\n", to: "b.swift")
+        try repository.commit("First", at: time + 10)
+        try repository.git(["switch", "--quiet", "main"])
+        try repository.write("main\n", to: "c.swift")
+        try repository.commit("Main", at: time + 20)
+        try repository.write("more\n", to: "c.swift")
+        let base = try repository.commit("More", at: time + 30)
+        try repository.git(["switch", "--quiet", "feature"])
+        try repository.merge("main", at: time + 40)
+        try repository.write("two\n", to: "b.swift")
+        let head = try repository.commit("Second", at: time + 50)
+        // As a depth-limited fetch of the base leaves it: More's parents
+        // are cut off, so Start no longer counts as the base's.
+        let clone = try TestRepository(cloning: repository)
+        defer { clone.remove() }
+        try clone.write("\(base)\n", to: ".git/shallow")
+        let environment = try clone.actionsEnvironment(base: base, head: head)
+        let error = await #expect(throws: ContextError.truncatedHistory(base: base, head: head, boundary: root)) {
+            try await Context.actions(environment: environment)
+        }
+        #expect(error?.description.contains("fetch-depth: 0") == true)
+    }
+
     @Test("a base and head with no common history are refused")
     func unrelatedHistories() async throws {
         let (repository, commit) = try TestRepository.singleCommit()

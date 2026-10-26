@@ -20,7 +20,8 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
     case missingCommit(CommitRole, sha: String)
     case noMergeBase(base: String, head: String, isShallow: Bool)
     /// The commits from the base to the head reach `boundary`, a commit
-    /// whose parents the shallow clone lacks, so some are missing.
+    /// with no parents in the shallow clone, so some are missing or some
+    /// are the base's.
     case truncatedHistory(base: String, head: String, boundary: String)
     case gitFailed(arguments: [String], status: Int32, message: String)
     case gitUnavailable(String)
@@ -63,9 +64,9 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
             """
         case .truncatedHistory(let base, let head, let boundary):
             """
-            The commits from the base \(base) to the head \(head) run past the start of the \
-            checkout's history at \(boundary), so some are missing: its history is too shallow. \
-            \(Self.historyRemedy)
+            The commits from the base \(base) to the head \(head) run into the start of the \
+            checkout's history at \(boundary), so they can't be told apart from the base's: \
+            its history is too shallow. \(Self.historyRemedy)
             """
         case .noMergeBase(let base, let head, isShallow: false):
             "The base commit \(base) and the head commit \(head) share no history."

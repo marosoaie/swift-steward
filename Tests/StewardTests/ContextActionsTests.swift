@@ -106,6 +106,43 @@ struct ContextActionsTests {
         #expect(context.git.mergeBase == commit)
     }
 
+    @Test("a file that becomes a symlink is a deletion and a creation, as git's patch has it")
+    func typeChange() async throws {
+        let repository = try TestRepository()
+        defer { repository.remove() }
+        let time = PullRequestFixture.time
+        try repository.write("target\n", to: "target.swift")
+        try repository.write("one\n", to: "file.swift")
+        try repository.write("two\n", to: "other.swift")
+        let base = try repository.commit("Start", at: time)
+        try repository.git(["switch", "--quiet", "--create", "feature"])
+        try FileManager.default.removeItem(at: repository.url.appendingPathComponent("file.swift"))
+        try FileManager.default.createSymbolicLink(
+            at: repository.url.appendingPathComponent("file.swift"),
+            withDestinationURL: URL(fileURLWithPath: "target.swift")
+        )
+        let head = try repository.commit("Link the file", at: time + 10)
+        // The built tree has a type change against the head too.
+        try repository.git(["switch", "--quiet", "--create", "merge", "main"])
+        try FileManager.default.removeItem(at: repository.url.appendingPathComponent("other.swift"))
+        try FileManager.default.createSymbolicLink(
+            at: repository.url.appendingPathComponent("other.swift"),
+            withDestinationURL: URL(fileURLWithPath: "target.swift")
+        )
+        try repository.commit("Link the other file", at: time + 20)
+        let built = try repository.merge("feature", at: time + 30)
+
+        let context = try await Context.actions(
+            environment: repository.actionsEnvironment(base: base, head: head, built: built)
+        )
+        #expect(context.git.createdFiles == ["file.swift"])
+        #expect(context.git.deletedFiles == ["file.swift"])
+        #expect(context.git.modifiedFiles.isEmpty)
+        let oracle = GitOracle(directory: repository.path)
+        try oracle.verify(context.git, base: base)
+        try oracle.verify(context.run.lineMap, head: head, built: built)
+    }
+
     @Test("SHAs in capitals read as git prints them")
     func uppercaseSHAs() async throws {
         let (repository, commit) = try TestRepository.singleCommit()

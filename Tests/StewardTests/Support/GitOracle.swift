@@ -36,15 +36,18 @@ struct GitOracle {
 
     private func verifyFileLists(of changes: GitChanges, sourceLocation: SourceLocation) throws {
         let entries = try nameStatus(from: changes.mergeBase, to: changes.head)
-        let created = entries.filter { $0.status == "A" }.map { $0.paths[0] }
-        let deleted = entries.filter { $0.status == "D" }.map { $0.paths[0] }
-        let modified = entries.filter { "MTR".contains($0.status) }.map { $0.paths[$0.paths.count - 1] }
+        // A type change (T: a file became a symlink, say) is one entry here
+        // but two patches, a deletion and a creation.
+        let created = entries.filter { "AT".contains($0.status) }.map { $0.paths[0] }
+        let deleted = entries.filter { "DT".contains($0.status) }.map { $0.paths[0] }
+        let modified = entries.filter { "MR".contains($0.status) }.map { $0.paths[$0.paths.count - 1] }
         let renamed = entries.filter { $0.status == "R" }.map { GitChanges.Rename(from: $0.paths[0], to: $0.paths[1]) }
+        let typeChanges = entries.count { $0.status == "T" }
         #expect(changes.createdFiles == created, sourceLocation: sourceLocation)
         #expect(changes.deletedFiles == deleted, sourceLocation: sourceLocation)
         #expect(changes.modifiedFiles == modified, sourceLocation: sourceLocation)
         #expect(changes.renamedFiles == renamed, sourceLocation: sourceLocation)
-        #expect(changes.diff.files.count == entries.count, sourceLocation: sourceLocation)
+        #expect(changes.diff.files.count == entries.count + typeChanges, sourceLocation: sourceLocation)
     }
 
     /// `git diff --name-status -z -M`: a status letter, then one path, or
