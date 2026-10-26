@@ -27,11 +27,17 @@ struct EventPayload {
         return object
     }
 
-    /// The payload with its action, or its pull request's base or head
-    /// commit, replaced.
-    func setting(action: String? = nil, base: String? = nil, head: String? = nil) -> EventPayload {
+    /// The payload with its action, its pull request's base or head
+    /// commit, or other fields of its pull request, such as
+    /// `changed_files`, replaced.
+    func setting(
+        action: String? = nil,
+        base: String? = nil,
+        head: String? = nil,
+        fields: [String: Any] = [:]
+    ) -> EventPayload {
         var payload = self
-        var pullRequest = object["pull_request"] as? [String: Any] ?? [:]
+        var pullRequest = (object["pull_request"] as? [String: Any] ?? [:]).merging(fields) { $1 }
         func set(_ sha: String?, on branch: String) {
             guard let sha else { return }
             var fields = pullRequest[branch] as? [String: Any] ?? [:]

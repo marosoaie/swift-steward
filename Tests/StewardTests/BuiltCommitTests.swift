@@ -29,15 +29,24 @@ struct BuiltCommitTests {
     }
 
     @Test("with neither the merge commit nor the head checked out, the built commit is refused", arguments: [
-        "the base", "an earlier commit of the pull request",
+        "the base", "an earlier commit of the pull request", "a later push to the branch",
     ])
     func otherCheckedOut(checkout: String) async throws {
         let fixture = try PullRequestFixture()
         defer { fixture.remove() }
         let clone = try Self.cloneWithoutMergeCommit(of: fixture)
         defer { clone.remove() }
-        let commit = checkout == "the base" ? fixture.base : fixture.commits[0]
-        try clone.git(["switch", "--quiet", "--detach", commit])
+        switch checkout {
+        case "the base":
+            try clone.git(["switch", "--quiet", "--detach", fixture.base])
+        case "an earlier commit of the pull request":
+            try clone.git(["switch", "--quiet", "--detach", fixture.commits[0]])
+        default:
+            // As `ref: ${{ github.head_ref }}` checks out the branch after a
+            // push the event predates.
+            try clone.write("later\n", to: "later.swift")
+            try clone.commit("Later", at: PullRequestFixture.time + 400)
+        }
 
         let environment = try clone.actionsEnvironment(base: fixture.base, head: fixture.head, built: fixture.built)
         let error = await #expect(throws: ContextError.missingCommit(.built, sha: fixture.built)) {

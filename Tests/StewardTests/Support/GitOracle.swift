@@ -110,11 +110,18 @@ struct GitOracle {
         var counts: [[Int?]] = []
         var index = 0
         while index < fields.count - 1 {
-            let columns = fields[index].split(separator: "\t", omittingEmptySubsequences: false)
+            let columns = Self.numstatColumns(fields[index])
             counts.append(columns.prefix(2).map { Int($0) })
             index += columns.count > 2 && columns[2].isEmpty ? 3 : 1
         }
         return counts
+    }
+
+    /// A `--numstat -z` record's added and deleted counts and its path,
+    /// empty for a rename, whose paths follow. Split twice only: with `-z`
+    /// git writes a path's tabs as they are.
+    private static func numstatColumns(_ record: String) -> [Substring] {
+        record.split(separator: "\t", maxSplits: 2, omittingEmptySubsequences: false)
     }
 
     /// What `git apply --summary` says of each file, without paths (the
@@ -185,9 +192,9 @@ struct GitOracle {
         #expect(commits == raw, sourceLocation: sourceLocation)
     }
 
-    /// A commit read from its raw object, `git cat-file commit`.
+    /// A commit read from its raw object, `git cat-file commit`, in UTF-8.
     func rawCommit(_ sha: String) throws -> Commit {
-        let raw = try String(decoding: output(["cat-file", "commit", sha]), as: UTF8.self)
+        let raw = try Self.utf8(commit: output(["cat-file", "commit", sha]))
         let parts = raw.split(separator: "\n\n", maxSplits: 1, omittingEmptySubsequences: false)
         // Continuation lines of a multi-line header such as `gpgsig` start
         // with a space.
@@ -207,6 +214,24 @@ struct GitOracle {
                 ? String(paragraphs[1].drop { $0.isNewline }.reversed().drop { $0.isNewline }.reversed())
                 : ""
         )
+    }
+
+    /// A raw commit in UTF-8, as `git log --encoding=UTF-8` reads it: one
+    /// whose `encoding` header names another goes through iconv, as git's
+    /// own conversion does, and stays as it is when iconv can't convert it.
+    private static func utf8(commit: Data) throws -> String {
+        let raw = String(decoding: commit, as: UTF8.self)
+        let headers = raw.split(separator: "\n\n", maxSplits: 1, omittingEmptySubsequences: false)[0]
+            .split(separator: "\n")
+        guard let encoding = headers.first(where: { $0.hasPrefix("encoding ") })?.dropFirst("encoding ".count),
+              !["utf-8", "utf8"].contains(encoding.lowercased())
+        else { return raw }
+        let file = FileManager.default.temporaryDirectory
+            .appendingPathComponent("steward-tests-\(UUID().uuidString).commit")
+        try commit.write(to: file)
+        defer { try? FileManager.default.removeItem(at: file) }
+        let converted = try? Subprocess.output(of: ["iconv", "-f", String(encoding), "-t", "UTF-8", file.path])
+        return converted.map { String(decoding: $0, as: UTF8.self) } ?? raw
     }
 
     /// `Name <email> 1700000000 +0000`.
@@ -261,7 +286,7 @@ struct GitOracle {
         var added: [String: Int] = [:]
         var index = 0
         while index < fields.count - 1 {
-            let columns = fields[index].split(separator: "\t", omittingEmptySubsequences: false)
+            let columns = Self.numstatColumns(fields[index])
             let isRename = columns.count > 2 && columns[2].isEmpty
             let path = isRename ? fields[index + 2] : String(columns.count > 2 ? columns[2] : "")
             added[path] = Int(columns[0])
