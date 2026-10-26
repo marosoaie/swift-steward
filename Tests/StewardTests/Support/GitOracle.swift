@@ -4,7 +4,7 @@ import GitDiffKit
 import Testing
 
 /// Checks a context's git data against what git itself says, through
-/// commands Steward doesn't use: `--name-status`, `git apply --numstat` and
+/// commands Steward doesn't use: `--raw`, `git apply --numstat` and
 /// `--summary` on the patch, `rev-list`, `cat-file`, and the blobs of both
 /// trees.
 ///
@@ -35,7 +35,7 @@ struct GitOracle {
     // MARK: - Files
 
     private func verifyFileLists(of changes: GitChanges, sourceLocation: SourceLocation) throws {
-        let entries = try nameStatus(from: changes.mergeBase, to: changes.head)
+        let entries = try rawStatus(from: changes.mergeBase, to: changes.head)
         // A type change (T: a file became a symlink, say) is one entry here
         // but two patches, a deletion and a creation.
         let created = entries.filter { "AT".contains($0.status) }.map { $0.paths[0] }
@@ -50,18 +50,32 @@ struct GitOracle {
         #expect(changes.diff.files.count == entries.count + typeChanges, sourceLocation: sourceLocation)
     }
 
-    /// `git diff --name-status -z -M`: a status letter, then one path, or
-    /// two for a rename or copy.
-    func nameStatus(from old: String, to new: String) throws -> [(status: Character, paths: [String])] {
-        let fields = try output(["diff", "--no-color", "--name-status", "-z", "-M", old, new, "--"])
+    /// A file in `git diff --raw` output.
+    struct RawEntry {
+        let status: Character
+        /// Six octal digits: `160000` for a submodule.
+        let newMode: String
+        /// One path, or the old and new for a rename or copy.
+        let paths: [String]
+    }
+
+    /// `git diff --raw -z -M`: both modes, both blobs, and a status letter,
+    /// then one path, or two for a rename or copy.
+    func rawStatus(from old: String, to new: String) throws -> [RawEntry] {
+        let fields = try output(["diff", "--no-color", "--raw", "-z", "-M", old, new, "--"])
             .split(separator: 0, omittingEmptySubsequences: false)
             .map { String(decoding: $0, as: UTF8.self) }
         // Imperative: how many paths follow depends on the status.
-        var entries: [(status: Character, paths: [String])] = []
+        var entries: [RawEntry] = []
         var index = 0
-        while index < fields.count - 1, let status = fields[index].first {
+        while index < fields.count - 1 {
+            // `:100644 100644 <blob> <blob> M`, the status with a score for
+            // a rename or copy.
+            let words = fields[index].split(separator: " ")
+            guard words.count == 5, let status = words[4].first else { break }
             let pathCount = "RC".contains(status) ? 2 : 1
-            entries.append((status, Array(fields[index + 1...index + pathCount])))
+            let paths = Array(fields[index + 1...index + pathCount])
+            entries.append(RawEntry(status: status, newMode: String(words[1]), paths: paths))
             index += 1 + pathCount
         }
         return entries
@@ -169,92 +183,27 @@ struct GitOracle {
         } ?? "?"
     }
 
-    // MARK: - Commits
-
-    private func verifyCommits(
-        _ commits: [Commit],
-        base: String,
-        head: String,
-        sourceLocation: SourceLocation
-    ) throws {
-        let shas = try text(["rev-list", "--reverse", "--topo-order", "\(base)..\(head)"])
-            .split(separator: "\n").map(String.init)
-        // Git's own order, and no commit before one of its parents.
-        #expect(Set(commits.map(\.sha)) == Set(shas), sourceLocation: sourceLocation)
-        let positions = Dictionary(uniqueKeysWithValues: commits.enumerated().map { ($1.sha, $0) })
-        #expect(
-            commits.enumerated().allSatisfy { index, commit in
-                commit.parents.allSatisfy { positions[$0].map { $0 < index } ?? true }
-            },
-            sourceLocation: sourceLocation
-        )
-        let raw = try commits.map { try rawCommit($0.sha) }
-        #expect(commits == raw, sourceLocation: sourceLocation)
-    }
-
-    /// A commit read from its raw object, `git cat-file commit`, in UTF-8.
-    func rawCommit(_ sha: String) throws -> Commit {
-        let raw = try Self.utf8(commit: output(["cat-file", "commit", sha]))
-        let parts = raw.split(separator: "\n\n", maxSplits: 1, omittingEmptySubsequences: false)
-        // Continuation lines of a multi-line header such as `gpgsig` start
-        // with a space.
-        let headers = parts[0].split(separator: "\n").filter { !$0.hasPrefix(" ") }
-        func values(_ name: String) -> [String] {
-            headers.filter { $0.hasPrefix("\(name) ") }.map { String($0.dropFirst(name.count + 1)) }
-        }
-        let message = parts.count > 1 ? String(parts[1]) : ""
-        let paragraphs = message.split(separator: "\n\n", maxSplits: 1, omittingEmptySubsequences: true)
-        return Commit(
-            sha: sha,
-            parents: values("parent"),
-            author: Self.signature(values("author").first ?? ""),
-            committer: Self.signature(values("committer").first ?? ""),
-            subject: paragraphs.first.map { $0.split(separator: "\n").joined(separator: " ") } ?? "",
-            body: paragraphs.count > 1
-                ? String(paragraphs[1].drop { $0.isNewline }.reversed().drop { $0.isNewline }.reversed())
-                : ""
-        )
-    }
-
-    /// A raw commit in UTF-8, as `git log --encoding=UTF-8` reads it: one
-    /// whose `encoding` header names another goes through iconv, as git's
-    /// own conversion does, and stays as it is when iconv can't convert it.
-    private static func utf8(commit: Data) throws -> String {
-        let raw = String(decoding: commit, as: UTF8.self)
-        let headers = raw.split(separator: "\n\n", maxSplits: 1, omittingEmptySubsequences: false)[0]
-            .split(separator: "\n")
-        guard let encoding = headers.first(where: { $0.hasPrefix("encoding ") })?.dropFirst("encoding ".count),
-              !["utf-8", "utf8"].contains(encoding.lowercased())
-        else { return raw }
-        let file = FileManager.default.temporaryDirectory
-            .appendingPathComponent("steward-tests-\(UUID().uuidString).commit")
-        try commit.write(to: file)
-        defer { try? FileManager.default.removeItem(at: file) }
-        let converted = try? Subprocess.output(of: ["iconv", "-f", String(encoding), "-t", "UTF-8", file.path])
-        return converted.map { String(decoding: $0, as: UTF8.self) } ?? raw
-    }
-
-    /// `Name <email> 1700000000 +0000`.
-    private static func signature(_ header: String) -> Commit.Signature {
-        let name = header.prefix { $0 != "<" }.trimmingCharacters(in: .whitespaces)
-        let email = header.drop { $0 != "<" }.dropFirst().prefix { $0 != ">" }
-        let time = header.split(separator: " ").dropLast().last.flatMap { Int64($0) } ?? 0
-        return Commit.Signature(name: name, email: String(email), date: Date(timeIntervalSince1970: TimeInterval(time)))
-    }
-
     // MARK: - Line map
 
     /// Records an issue for every line of the built commit that `map` sends
     /// to a head line with other content, and for every file whose count of
     /// mapped lines isn't its lines minus the ones the built commit added.
     func verify(_ map: LineMap, head: String, built: String, sourceLocation: SourceLocation = #_sourceLocation) throws {
-        let entries = try nameStatus(from: head, to: built).filter { $0.status != "D" }
-        let added = try addedLines(from: head, to: built)
+        // A gitlink names a commit of its submodule, which this repository
+        // needn't have.
+        let entries = try rawStatus(from: head, to: built).filter { $0.status != "D" && $0.newMode != "160000" }
+        let (added, binary) = try addedLines(from: head, to: built)
         try entries.forEach { entry in
             let builtPath = entry.paths[entry.paths.count - 1]
             guard let builtLines = try lines(of: builtPath, at: built) else { return }
             let mapped = builtLines.indices.compactMap { index in
                 map.headLocation(ofLine: index + 1, inFile: builtPath).map { (built: index, head: $0) }
+            }
+            // A file a `-diff` attribute marks binary has no NUL to tell by,
+            // and no line of a binary file maps.
+            guard !binary.contains(builtPath) else {
+                #expect(mapped.isEmpty, "\(builtPath): binary, but lines map", sourceLocation: sourceLocation)
+                return
             }
             #expect(
                 mapped.count == builtLines.count - (added[builtPath] ?? 0),
@@ -277,22 +226,28 @@ struct GitOracle {
         }
     }
 
-    /// Lines each built path adds, from `git diff --numstat -z -M`.
-    private func addedLines(from old: String, to new: String) throws -> [String: Int] {
+    /// Lines each built path adds, from `git diff --numstat -z -M`, and the
+    /// paths git diffs as binary, whose counts are `-`.
+    private func addedLines(from old: String, to new: String) throws -> (added: [String: Int], binary: Set<String>) {
         let fields = try output(["diff", "--no-color", "--numstat", "-z", "-M", old, new, "--"])
             .split(separator: 0, omittingEmptySubsequences: false)
             .map { String(decoding: $0, as: UTF8.self) }
         // Imperative: a rename's record spans three fields.
         var added: [String: Int] = [:]
+        var binary: Set<String> = []
         var index = 0
         while index < fields.count - 1 {
             let columns = Self.numstatColumns(fields[index])
             let isRename = columns.count > 2 && columns[2].isEmpty
             let path = isRename ? fields[index + 2] : String(columns.count > 2 ? columns[2] : "")
-            added[path] = Int(columns[0])
+            if let count = Int(columns[0]) {
+                added[path] = count
+            } else {
+                binary.insert(path)
+            }
             index += isRename ? 3 : 1
         }
-        return added
+        return (added, binary)
     }
 
     /// The lines of the file at `path` in `commit`, nil for a binary file or
