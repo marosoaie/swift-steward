@@ -3,3 +3,5 @@
 *.xcodeproj
 DerivedData/
 .claude/settings.local.json
+# What an instrumented binary run outside SwiftPM writes to its working directory.
+*.profraw
