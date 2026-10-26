@@ -1,7 +1,8 @@
 # Steward: a pure-Swift Danger
 
-**Status: reviewed (plan step 4.1).** Step 4.2 built the context;
-steps 4.3–4.10 build on what this document settles. Each section ends with
+**Status: reviewed (plan step 4.1).** Step 4.2 built the context, and
+step 4.3 the DSL, the runner, and the dry run; steps 4.4–4.10 build on
+what this document settles. Each section ends with
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
 recommended (7 with a documentation requirement added), and the four
@@ -642,8 +643,9 @@ will post. The skip is logged, not an error.
    event, a missing payload, or a git failure ends the run here.
 3. **Rules** (section 1), into a `Report` (section 4); `--report <path>`
    writes it out.
-4. **Render** the summary (section 5): to `$GITHUB_STEP_SUMMARY` in CI, to
-   standard output in a dry run.
+4. **Render** the summary (section 5): to the log and appended to
+   `$GITHUB_STEP_SUMMARY` in CI (a summary that can't be written only
+   warns), to standard output in a dry run.
 5. **Post** through `PullRequestHost`, unless this is a dry run or the
    pull request comes from a fork (v1 checks `PullRequest.isFromFork`
    first, says why it won't post, and carries on, so fork contributors
@@ -652,13 +654,16 @@ will post. The skip is logged, not an error.
 6. **Exit.**
 
 Options are a handful of hand-parsed flags (`--base`, `--pull-request`,
-`--report`, `--fail-on-post-error`) and environment variables
+`--report`, `--fail-on-post-error`, `--help`) and environment variables
 (`GITHUB_TOKEN` and the variables Actions sets), because `Steward` is a
-library and AGENTS.md keeps swift-argument-parser in the CLI target. The
-log goes to standard error, grouped with `::group::` in Actions. The
-library's damage reports go there too; an abandoned file (`.error`)
-becomes a `::warning::` annotation, since the rules then saw an
-incomplete diff.
+library and AGENTS.md keeps swift-argument-parser in the CLI target. A CI
+run ignores the dry run's `--base` and `--pull-request`, with a warning:
+there, the event names the pull request. The log goes to standard error,
+grouped with `::group::` in Actions; text that could pass for a workflow
+command, such as a finding's, is logged with commands paused
+(`::stop-commands::`). The library's damage reports go there too; an
+abandoned file (`.error`) becomes a `::warning::` annotation, since the
+rules then saw an incomplete diff.
 
 ### Exit codes
 
@@ -666,7 +671,7 @@ incomplete diff.
 |---|---|
 | 0 | No `failure` findings. Posting succeeded, was skipped, or failed without `--fail-on-post-error` |
 | 1 | At least one `failure` finding, including a rule that threw |
-| 2 | Steward couldn't do its job: the context couldn't be built, or posting failed with `--fail-on-post-error` |
+| 2 | Steward couldn't do its job: an unknown option, a context that couldn't be built, a `--report` that couldn't be written, a cancelled run, or posting that failed with `--fail-on-post-error` |
 
 Exit code 2 wins over 1, since a broken run says nothing reliable about
 the pull request. A dry run exits the same way, so it works as a local
