@@ -11,6 +11,7 @@ struct FindingTests {
         #expect(Finding.warning("w", at: location) == Finding(kind: .warning, text: "w", location: location))
         #expect(Finding.message("m", at: Location(path: "README.md")).location?.line == nil)
         #expect(Finding.markdown("| a |") == Finding(kind: .markdown, text: "| a |"))
+        #expect(Finding.markdown("d", at: location) == Finding(kind: .markdown, text: "d", location: location))
         #expect([Finding.failure("f"), .warning("w"), .message("m"), .markdown("d")].allSatisfy { $0.rule == nil })
     }
 

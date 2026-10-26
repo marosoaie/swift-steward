@@ -64,8 +64,10 @@ public struct Finding: Sendable, Hashable, Codable {
     }
 
     /// Free-form Markdown shown as it is, as danger-swift's `markdown`.
-    public static func markdown(_ text: String) -> Finding {
-        Finding(kind: .markdown, text: text)
+    ///
+    /// The summary shows a location's link on its own line below the text.
+    public static func markdown(_ text: String, at location: Location? = nil) -> Finding {
+        Finding(kind: .markdown, text: text, location: location)
     }
 
     /// The report's JSON keys, a wire contract (docs/danger.md, section 4).

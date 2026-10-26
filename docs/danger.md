@@ -124,7 +124,7 @@ public struct Finding: Sendable, Hashable, Codable {
     public static func failure(_ text: String, at location: Location? = nil) -> Finding
     public static func warning(_ text: String, at location: Location? = nil) -> Finding
     public static func message(_ text: String, at location: Location? = nil) -> Finding
-    public static func markdown(_ text: String) -> Finding
+    public static func markdown(_ text: String, at location: Location? = nil) -> Finding
 }
 ```
 

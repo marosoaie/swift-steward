@@ -154,8 +154,7 @@ struct SummaryTests {
 
     @Test("a markdown finding with a location gets its link below it, and an empty text only the link")
     func locatedNotes() {
-        var note = Finding.markdown("## Note")
-        note.location = Location(path: "a.swift", line: 4)
+        let note = Finding.markdown("## Note", at: Location(path: "a.swift", line: 4))
         let summary = Self.summary([note, .warning("", at: Location(path: "b.swift"))])
         #expect(summary.contains("## Note\n\n[`a.swift:4`](https://github.com/o/r/blob/\(Self.head)/a.swift#L4)\n\n"))
         #expect(summary.contains("| :warning: | [`b.swift`](https://github.com/o/r/blob/\(Self.head)/b.swift) |"))
