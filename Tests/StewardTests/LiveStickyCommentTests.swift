@@ -161,10 +161,12 @@ struct LiveStickyCommentTests {
         #expect(allClear.contains("**No findings** on \(sandbox.head.prefix(7))"))
     }
 
-    /// Deletes every comment that carries the run's marker.
+    /// Deletes every comment the test created, by the ids its fence
+    /// recorded, so that cleaning up relies on neither the listing nor the
+    /// author filter the test checks. Deleting one already gone succeeds.
     static func cleanUp(_ sandbox: Sandbox) async throws {
-        try await sandbox.host.summaryComments(onPullRequest: sandbox.live.number).asyncForEach {
-            try await sandbox.host.deleteSummaryComment($0.id)
+        try await sandbox.fence.created.ids.sorted().asyncForEach {
+            try await sandbox.host.deleteSummaryComment(SummaryComment.ID(rawValue: $0))
         }
     }
 }
