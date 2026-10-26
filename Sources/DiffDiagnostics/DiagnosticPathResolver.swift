@@ -9,7 +9,7 @@
 /// doesn't match `FooBar.swift`; so the root is rarely needed. Results are
 /// cached per log path, so a long log costs one scan of the known paths for
 /// each distinct path it names.
-public struct DiagnosticPathResolver: Sendable {
+package struct DiagnosticPathResolver: Sendable {
     private let paths: Set<String>
     /// `repoRoot` ending in `/`.
     private let root: String?
@@ -18,13 +18,13 @@ public struct DiagnosticPathResolver: Sendable {
     /// Creates a resolver that resolves log paths to `paths`, stripping
     /// `repoRoot`, such as the checkout's directory, from log paths that
     /// start with it.
-    public init(paths: some Sequence<String>, repoRoot: String? = nil) {
+    package init(paths: some Sequence<String>, repoRoot: String? = nil) {
         self.paths = Set(paths)
         root = repoRoot.map { $0.hasSuffix("/") ? $0 : $0 + "/" }
     }
 
     /// The known path `logPath` names, or nil when it names none of them.
-    public mutating func resolve(_ logPath: String) -> String? {
+    package mutating func resolve(_ logPath: String) -> String? {
         if let cached = resolved[logPath] { return cached }
         let path = resolvedUncached(logPath)
         resolved[logPath] = path
