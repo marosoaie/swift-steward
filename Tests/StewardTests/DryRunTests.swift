@@ -93,6 +93,25 @@ struct DryRunTests {
         #expect(!context.pullRequest.isFromFork)
     }
 
+    @Test("a checkout's path and the git user keep line breaks of their own, past the one git ends a line with")
+    func lineBreaks() async throws {
+        let fixture = try Self.checkedOutFixture()
+        defer { fixture.remove() }
+        try fixture.repository.git(["config", "user.name", "Grace Hopper\n"])
+        // Both file systems allow a line break at the end of a name.
+        let checkout = fixture.repository.root.appendingPathComponent("checkout\n", isDirectory: true)
+        try FileManager.default.moveItem(at: fixture.repository.url, to: checkout)
+        let context = try await Self.context(["--base", "main"], in: checkout)
+        let topLevel = try Subprocess.output(
+            of: ["git", "-C", checkout.path, "rev-parse", "--show-toplevel"],
+            environment: TestRepository.environment
+        )
+        #expect(context.run.workspace.hasSuffix("/checkout\n"))
+        #expect(Data("\(context.run.workspace)\n".utf8) == topLevel)
+        #expect(context.pullRequest.author == "Grace Hopper\n")
+        #expect(context.git.head == fixture.head)
+    }
+
     @Test("the base defaults to origin's default branch, and a detached head is named HEAD")
     func defaultBase() async throws {
         let fixture = try PullRequestFixture()
@@ -223,21 +242,6 @@ struct DryRunTests {
         guard case .unreadablePullRequest(404, _) = error else {
             Issue.record("\(String(describing: error)) isn't unreadablePullRequest(404)")
             return
-        }
-    }
-
-    /// Answers every request with 404 Not Found.
-    struct NotFoundTransport: ClientTransport {
-        @concurrent
-        func send(
-            _ request: HTTPRequest,
-            body: HTTPBody?,
-            baseURL: URL,
-            operationID: String
-        ) async throws -> (HTTPResponse, HTTPBody?) {
-            var fields = HTTPFields()
-            fields[.contentType] = "application/json; charset=utf-8"
-            return (HTTPResponse(status: .notFound, headerFields: fields), HTTPBody(#"{"message":"Not Found"}"#))
         }
     }
 

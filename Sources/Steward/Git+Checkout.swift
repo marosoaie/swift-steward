@@ -12,7 +12,7 @@ extension Git {
                 message: outcome.standardError.trimmingCharacters(in: .whitespacesAndNewlines)
             )
         }
-        return String(decoding: outcome.output, as: UTF8.self).trimmingCharacters(in: .newlines)
+        return Self.text(of: outcome.output)
     }
 
     /// The full name of the reference `revision` names, following symbolic
@@ -41,7 +41,13 @@ extension Git {
     /// anyway.
     private func value(of arguments: [String]) async throws -> String? {
         let outcome = try await run(arguments, into: [UInt8]()) { $0.append(contentsOf: $1) }
-        let value = String(decoding: outcome.output, as: UTF8.self).trimmingCharacters(in: .newlines)
+        let value = Self.text(of: outcome.output)
         return outcome.status == 0 && !value.isEmpty ? value : nil
+    }
+
+    /// The output without the line break git ends it with, and only that
+    /// one: a path or a setting can end in line breaks of its own.
+    private static func text(of output: [UInt8]) -> String {
+        String(decoding: output.last == UInt8(ascii: "\n") ? output.dropLast() : output[...], as: UTF8.self)
     }
 }
