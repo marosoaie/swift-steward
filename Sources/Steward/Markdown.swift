@@ -57,6 +57,15 @@ enum Markdown {
         return fence + padding + content + padding + fence
     }
 
+    /// `text` as a fenced code block, which shows it verbatim, line breaks
+    /// included: fenced by at least three backticks, and one more than its
+    /// longest run of them, so no line of `text` can close the block.
+    static func codeBlock(_ text: String) -> String {
+        let longestRun = text.unicodeScalars.split { $0 != "`" }.map(\.count).max() ?? 0
+        let fence = String(repeating: "`", count: max(3, longestRun + 1))
+        return "\(fence)\n\(text)\n\(fence)"
+    }
+
     /// `segment` with every byte that isn't an unreserved URL character
     /// (`A–Z a–z 0–9 - . _ ~`) percent-encoded, so it can sit between two
     /// `/` of a link's path.

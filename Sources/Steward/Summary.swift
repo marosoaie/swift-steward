@@ -37,29 +37,65 @@ struct Summary: Sendable {
     /// shown without a link, which would lead nowhere.
     var unlinkedPaths: Set<String> = []
 
-    /// The Markdown, ending with a line break.
+    /// The Markdown, ending with a line break, whatever its size.
     var text: String {
-        let tables = Self.tables.compactMap { table -> String? in
-            let rows = report.findings.filter { $0.kind == table.kind }.map { finding in
-                "| \(table.icon) | \(cell(for: finding)) |"
-            }
-            return rows.isEmpty ? nil : (["| | \(table.title) |", "|---|---|"] + rows).joined(separator: "\n")
-        }
-        let notes = report.findings.filter { $0.kind == .markdown }.map { finding in
-            ([finding.text] + [finding.location.map(link)].compactMap(\.self)).joined(separator: "\n\n")
-        }
-        return ([headline] + tables + notes + [footer]).joined(separator: "\n\n") + "\n"
+        rendered(shownFindings.map { part(for: $0) }, cutLine: nil)
     }
 
-    private struct Table {
+    /// One finding's share of the summary: a row of one of the tables, or
+    /// a note below them.
+    struct Part: Sendable, Hashable {
+        /// The index in `tables` of the table the row is in; nil for a
+        /// note.
+        var table: Int?
+        var text: String
+    }
+
+    /// The findings in the order the summary shows them: the failures',
+    /// warnings', and messages' tables, then the notes, each in rule
+    /// order.
+    var shownFindings: [Finding] {
+        (Self.tables.map(\.kind) + [.markdown]).flatMap { kind in report.findings.filter { $0.kind == kind } }
+    }
+
+    /// The headline, the tables and notes of `parts`, `cutLine` when the
+    /// summary is cut short, and the footer, ending with a line break.
+    func rendered(_ parts: [Part], cutLine: String?) -> String {
+        let tables = Self.tables.indices.compactMap { index -> String? in
+            let rows = parts.filter { $0.table == index }.map(\.text)
+            return rows.isEmpty ? nil : ([Self.tables[index].header] + rows).joined(separator: "\n")
+        }
+        let notes = parts.filter { $0.table == nil }.map(\.text)
+        return ([headline] + tables + notes + [cutLine].compactMap(\.self) + [footer]).joined(separator: "\n\n") + "\n"
+    }
+
+    /// The share of the summary `finding` gets. With `cutText`, that's
+    /// shown in place of the text, as code (see `text(fitting:elsewhere:)`).
+    func part(for finding: Finding, cutText: String? = nil) -> Part {
+        let location = finding.location.map(link)
+        guard let table = Self.tables.firstIndex(where: { $0.kind == finding.kind }) else {
+            let text = cutText.map { Markdown.codeBlock($0 + "…") } ?? finding.text
+            return Part(table: nil, text: ([text] + [location].compactMap(\.self)).joined(separator: "\n\n"))
+        }
+        // Each part on its own, so a backslash that ends the text stays one.
+        let text = cutText.map { Markdown.codeSpan($0 + "…") } ?? (finding.text.isEmpty ? nil : finding.text)
+        let cell = [text, location].compactMap(\.self).map(Markdown.tableCell).joined(separator: "<br>")
+        return Part(table: table, text: "| \(Self.tables[table].icon) | \(cell) |")
+    }
+
+    struct Table {
         var kind: Finding.Kind
         var title: String
         var icon: String
+
+        var header: String {
+            "| | \(title) |\n|---|---|"
+        }
     }
 
     /// As danger-js lays them out, so a team coming from danger-swift
     /// recognizes the comment.
-    private static let tables = [
+    static let tables = [
         Table(kind: .failure, title: "Failures", icon: ":no_entry_sign:"),
         Table(kind: .warning, title: "Warnings", icon: ":warning:"),
         Table(kind: .message, title: "Messages", icon: ":book:"),
@@ -78,7 +114,7 @@ struct Summary: Sendable {
         Noun(kind: .markdown, singular: "note", plural: "notes"),
     ]
 
-    private var headline: String {
+    var headline: String {
         let counts = Self.nouns.compactMap { noun -> String? in
             let count = report.findings.count { $0.kind == noun.kind }
             return count == 0 ? nil : "\(count) \(count == 1 ? noun.singular : noun.plural)"
@@ -87,7 +123,7 @@ struct Summary: Sendable {
         return "**\(what)** on \(shortCommit)"
     }
 
-    private var footer: String {
+    var footer: String {
         let run: String? = switch origin {
         case .workflowRun(let url?): "[workflow run](\(url.absoluteString))"
         case .workflowRun(nil): nil
@@ -100,14 +136,6 @@ struct Summary: Sendable {
 
     private var shortCommit: String {
         Markdown.escaped(String(report.headCommit.prefix(7)))
-    }
-
-    private func cell(for finding: Finding) -> String {
-        // Each part on its own, so a backslash that ends the text stays one.
-        [finding.text.isEmpty ? nil : finding.text, finding.location.map(link)]
-            .compactMap(\.self)
-            .map(Markdown.tableCell)
-            .joined(separator: "<br>")
     }
 
     /// The location as a code span, linked to the head commit's blob when
