@@ -69,6 +69,39 @@ struct ContextHistoryTests {
         #expect(cloned.run.lineMap == original.run.lineMap)
     }
 
+    @Test("a merge of the base reaches a merge base past a shallow cut, so the commits cut off are refused")
+    func truncatedHistory() async throws {
+        let repository = try TestRepository()
+        defer { repository.remove() }
+        let time = PullRequestFixture.time
+        try repository.write("start\n", to: "a.swift")
+        try repository.commit("Start", at: time)
+        try repository.git(["switch", "--quiet", "--create", "feature"])
+        try repository.write("one\n", to: "b.swift")
+        try repository.commit("First", at: time + 10)
+        try repository.write("two\n", to: "b.swift")
+        let second = try repository.commit("Second", at: time + 20)
+        try repository.git(["switch", "--quiet", "main"])
+        try repository.write("main\n", to: "c.swift")
+        let base = try repository.commit("Main", at: time + 30)
+        try repository.git(["switch", "--quiet", "feature"])
+        try repository.merge("main", at: time + 40)
+        try repository.write("three\n", to: "b.swift")
+        let head = try repository.commit("Third", at: time + 50)
+        let full = try await Context.actions(environment: repository.actionsEnvironment(base: base, head: head))
+        #expect(full.git.commits.map(\.subject) == ["First", "Second", "Merge branch 'main' into feature", "Third"])
+
+        // Third, the merge, then Second and Main with their parents cut
+        // off: the merge base is Main, and First is gone.
+        let clone = try TestRepository(cloning: repository, options: ["--depth=3", "--branch=feature"])
+        defer { clone.remove() }
+        let environment = try clone.actionsEnvironment(base: base, head: head)
+        let error = await #expect(throws: ContextError.truncatedHistory(base: base, head: head, boundary: second)) {
+            try await Context.actions(environment: environment)
+        }
+        #expect(error?.description.contains("fetch-depth: 0") == true)
+    }
+
     @Test("a base and head with no common history are refused")
     func unrelatedHistories() async throws {
         let (repository, commit) = try TestRepository.singleCommit()

@@ -16,6 +16,27 @@ struct Git: Sendable {
 
     /// The repository's working tree, or the repository itself when bare.
     let directory: String
+    /// What git runs with: the environment it was given, without the
+    /// variables that would reshape its output or point it at another
+    /// repository.
+    let environment: [String: String]
+
+    /// Variables no `-c` or option can override. `GIT_DIFF_OPTS` beats
+    /// even an explicit `--unified`; the others replace the repository
+    /// `-C` names.
+    static let ignoredVariables: Set<String> = [
+        "GIT_DIFF_OPTS", "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE",
+    ]
+
+    init(directory: String, environment: [String: String] = ProcessInfo.processInfo.environment) {
+        self.directory = directory
+        // A partial clone that fetches a missing object must fail, not
+        // wait for a password.
+        self.environment = environment
+            .filter { !Self.ignoredVariables.contains($0.key) }
+            .merging(["GIT_TERMINAL_PROMPT": "0"]) { $1 }
+    }
 
     /// Standard error past this many bytes is dropped: it only goes into
     /// an error message.
@@ -31,9 +52,7 @@ struct Git: Sendable {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
         process.arguments = ["git", "-C", directory, "--no-pager"] + arguments
-        // A partial clone that fetches a missing object must fail, not
-        // wait for a password.
-        process.environment = ProcessInfo.processInfo.environment.merging(["GIT_TERMINAL_PROMPT": "0"]) { $1 }
+        process.environment = environment
         let standardOutput = Pipe()
         let standardError = Pipe()
         process.standardInput = FileHandle.nullDevice

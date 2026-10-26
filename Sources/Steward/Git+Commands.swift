@@ -5,12 +5,12 @@ extension Git {
     /// Options that fix the shape of `git diff`'s output, so a user's
     /// configuration (`diff.noprefix`, `color.ui=always`, an external diff
     /// tool, `diff.submodule=log`, `diff.interHunkContext`, `diff.algorithm`,
-    /// …) can't break parsing, merge hunks, or move them. Callers add the
-    /// context lines they need.
+    /// `diff.ignoreSubmodules`, …) can't break parsing, merge hunks, move
+    /// them, or hide a file. Callers add the context lines they need.
     static let diffOptions = [
         "--no-color", "--no-ext-diff", "--no-textconv", "--no-relative",
-        "--src-prefix=a/", "--dst-prefix=b/", "-M", "--submodule=short", "--inter-hunk-context=0",
-        "--diff-algorithm=myers", "--indent-heuristic", "-O/dev/null",
+        "--src-prefix=a/", "--dst-prefix=b/", "-M", "--submodule=short", "--ignore-submodules=none",
+        "--inter-hunk-context=0", "--diff-algorithm=myers", "--indent-heuristic", "-O/dev/null",
     ]
 
     /// Settings with no command-line option that change `git diff`'s bytes,
@@ -34,6 +34,17 @@ extension Git {
     func isShallow() async throws -> Bool {
         let output = try await output(["rev-parse", "--is-shallow-repository"])
         return String(decoding: output, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines) == "true"
+    }
+
+    /// The commits whose parents a shallow clone cut off: none in a full
+    /// clone.
+    func shallowBoundary() async throws -> Set<String> {
+        guard try await isShallow() else { return [] }
+        let path = try await output(["rev-parse", "--path-format=absolute", "--git-path", "shallow"])
+        let file = URL(fileURLWithPath: String(decoding: path, as: UTF8.self).trimmingCharacters(in: .newlines))
+        // git just read this file to answer that the clone is shallow.
+        let contents = (try? Data(contentsOf: file)) ?? Data()
+        return Set(String(decoding: contents, as: UTF8.self).split(separator: "\n").map(String.init))
     }
 
     /// The best common ancestor of two commits, or nil when the history

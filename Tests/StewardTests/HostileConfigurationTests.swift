@@ -30,6 +30,20 @@ struct HostileConfigurationTests {
         ("diff.algorithm", "patience"),
         ("diff.indentHeuristic", "false"),
         ("diff.orderFile", "order.txt"),
+        ("diff.ignoreSubmodules", "all"),
+    ]
+
+    /// Variables git reads before any option: one reshapes the diff even
+    /// against an explicit `--unified`, the others point it elsewhere.
+    static let variables = [
+        "GIT_DIFF_OPTS": "--unified=5",
+        "GIT_DIR": "/nonexistent",
+        "GIT_WORK_TREE": "/",
+        "GIT_COMMON_DIR": "/nonexistent",
+        "GIT_INDEX_FILE": "/nonexistent/index",
+        "GIT_OBJECT_DIRECTORY": "/nonexistent",
+        "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/nonexistent",
+        "GIT_NAMESPACE": "elsewhere",
     ]
 
     @Test("the context with every hostile setting is the context without them")
@@ -61,6 +75,22 @@ struct HostileConfigurationTests {
         #expect(hostile.git.diff.damage.isEmpty)
         #expect(hostile.git.createdFiles.contains("vendor/library"))
         #expect(hostile.git.commits.last?.subject == "Add a submodule and blank lines")
+    }
+
+    @Test("git's environment can't reshape the diffs or point git at another repository")
+    func hostileEnvironment() async throws {
+        let fixture = try PullRequestFixture()
+        defer { fixture.remove() }
+        let plain = Git(directory: fixture.repository.path)
+        let hostile = Git(
+            directory: fixture.repository.path,
+            environment: ProcessInfo.processInfo.environment.merging(Self.variables) { $1 }
+        )
+
+        let changes = try await GitChanges(base: fixture.base, head: fixture.head, git: hostile)
+        let map = try await LineMap(built: fixture.built, head: fixture.head, git: hostile)
+        #expect(changes == (try await GitChanges(base: fixture.base, head: fixture.head, git: plain)))
+        #expect(map == (try await LineMap(built: fixture.built, head: fixture.head, git: plain)))
     }
 
     @Test("diff.interHunkContext can't merge the line map's hunks, so lines between them still map")

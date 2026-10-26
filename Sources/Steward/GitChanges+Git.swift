@@ -7,7 +7,9 @@ extension GitChanges {
     ///
     /// `base` and `head` are full commit SHAs that the repository has.
     /// Throws `ContextError.noMergeBase` when the history the repository
-    /// has doesn't reach a common ancestor.
+    /// has doesn't reach a common ancestor, and
+    /// `ContextError.truncatedHistory` when it does but a shallow clone
+    /// cut off some of the pull request's commits on the way.
     init(base: String, head: String, git: Git) async throws {
         guard let mergeBase = try await git.mergeBase(of: base, and: head) else {
             throw ContextError.noMergeBase(base: base, head: head, isShallow: try await git.isShallow())
@@ -25,6 +27,14 @@ extension GitChanges {
             "log", "--no-color", "--no-show-signature", "--encoding=UTF-8", "--date-order", "--reverse",
             "-z", "--format=\(Commit.logFormat)", "\(base)..\(head)", "--",
         ])
-        self.init(diff: diff, commits: Commit.commits(fromLog: log), mergeBase: mergeBase, head: head)
+        let commits = Commit.commits(fromLog: log)
+        // A merge of the base into the branch can reach a merge base while
+        // the branch's own older commits lie past the shallow boundary;
+        // `git log` then silently stops at it.
+        let boundary = try await git.shallowBoundary()
+        if let cut = commits.first(where: { boundary.contains($0.sha) }) {
+            throw ContextError.truncatedHistory(base: base, head: head, boundary: cut.sha)
+        }
+        self.init(diff: diff, commits: commits, mergeBase: mergeBase, head: head)
     }
 }
