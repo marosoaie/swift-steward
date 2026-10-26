@@ -19,11 +19,24 @@ public struct Rule: Sendable {
     ///
     /// A thrown error doesn't stop the run: the runner records a failure
     /// of this rule that quotes the error, and runs the next rule.
-    public var evaluate: @Sendable (Context) async throws -> [Finding]
+    public var evaluate: @Sendable (Context) async throws -> [Finding] {
+        get { { [check] context in try await check(context, .discarding) } }
+        set { check = { context, _ in try await newValue(context) } }
+    }
+
+    /// The check, given the run's log, where a built-in rule says what it
+    /// read and skipped, which the summary has no room for.
+    var check: @Sendable (Context, Log) async throws -> [Finding]
 
     /// Creates a rule from its name and its check.
     public init(_ name: String, evaluate: @escaping @Sendable (Context) async throws -> [Finding]) {
         self.name = name
-        self.evaluate = evaluate
+        check = { context, _ in try await evaluate(context) }
+    }
+
+    /// Creates a rule whose check writes to the run's log.
+    init(_ name: String, check: @escaping @Sendable (Context, Log) async throws -> [Finding]) {
+        self.name = name
+        self.check = check
     }
 }

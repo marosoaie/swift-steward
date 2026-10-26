@@ -1,4 +1,3 @@
-import Dispatch
 import Foundation
 
 /// Runs git in one repository.
@@ -74,10 +73,10 @@ struct Git: Sendable {
         }
         // Both at once: while one pipe is read, a full other one would
         // block git.
-        async let output = Self.offPool {
+        async let output = Blocking.run {
             try Self.read(standardOutput.fileHandleForReading, into: initial, consume: consume)
         }
-        async let errors = Self.offPool {
+        async let errors = Blocking.run {
             try Self.read(standardError.fileHandleForReading, into: [UInt8]()) { errors, chunk in
                 errors.append(contentsOf: chunk.prefix(max(0, Self.maximumErrorLength - errors.count)))
             }
@@ -130,28 +129,9 @@ struct Git: Sendable {
     }
 
     private static func nextChunk(of handle: FileHandle) throws -> ArraySlice<UInt8>? {
-        // A pool per read, or on Darwin every autoreleased chunk stays alive
-        // until the read loop ends, and streaming holds the whole output.
-        try withAutoreleasePool {
+        try Blocking.withAutoreleasePool {
             guard let data = try handle.read(upToCount: 1 << 16), !data.isEmpty else { return nil }
             return ArraySlice(data)
-        }
-    }
-
-    private static func withAutoreleasePool<Value>(_ body: () throws -> Value) rethrows -> Value {
-        #if canImport(Darwin)
-        try autoreleasepool(invoking: body)
-        #else
-        // swift-corelibs-foundation has no autorelease pools to drain.
-        try body()
-        #endif
-    }
-
-    private static func offPool<Value: Sendable>(_ work: @escaping @Sendable () throws -> Value) async throws -> Value {
-        try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global().async {
-                continuation.resume(with: Result { try work() })
-            }
         }
     }
 }

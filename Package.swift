@@ -98,14 +98,17 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         // Steward, the pure-Swift Danger (docs/danger.md). Not a product
-        // yet: so far it has the DSL, the context rules see, and the runner,
-        // which checks a pull request in CI or locally but doesn't post. It
-        // re-exports GitDiffKit and PullRequestHosting, so a Dangerfile
-        // imports only Steward.
+        // yet: so far it has the DSL, the context rules see, the runner,
+        // which checks a pull request in CI or locally but doesn't post, and
+        // the built-in rule that reports build and lint diagnostics on
+        // changed lines. It re-exports GitDiffKit and PullRequestHosting, so
+        // a Dangerfile imports only Steward.
         .target(
             name: "Steward",
             dependencies: [
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "BuildLogKit",
+                "DiffDiagnostics",
                 "PullRequestHosting",
                 "GitHubAPI",
                 "StewardVersion",
@@ -130,6 +133,8 @@ let package = Package(
                 "DangerfileFixture",
                 "StewardVersion",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "BuildLogKit",
+                "DiffDiagnostics",
                 "PullRequestHosting",
                 // Hosts on fixture transports, so a run's requests are
                 // checked, and a dry run is shown to make none.
@@ -158,6 +163,9 @@ let package = Package(
                 "BuildLogKit",
                 "DiffDiagnostics",
                 "StewardVersion",
+                // Steward's diagnostics rule, checked against `steward
+                // filter` on the real logs here.
+                "Steward",
             ],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings
