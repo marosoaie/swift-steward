@@ -134,6 +134,71 @@ struct ContextHistoryTests {
         #expect(error?.description.contains("fetch-depth: 0") == true)
     }
 
+    @Test("a cut on the base's side the head reaches past is refused, though every commit in the range has parents")
+    func cutUnderSharedHistory() async throws {
+        let repository = try TestRepository()
+        defer { repository.remove() }
+        let (base, head) = try Self.commitHistorySharedThroughFix(in: repository)
+        let full = try await Context.actions(environment: repository.actionsEnvironment(base: base, head: head))
+        #expect(full.git.commits.map(\.subject) == ["Second", "Merge branch 'main' into feature", "Third"])
+
+        // As a depth-limited fetch of the base can leave it: with Fix's
+        // parent cut off, First stops counting as the base's, and the range
+        // takes it in down to Main, which the base still reaches.
+        let fix = try repository.git(["rev-parse", "\(base)^2"])
+        let clone = try TestRepository(cloning: repository)
+        defer { clone.remove() }
+        try clone.write("\(fix)\n", to: ".git/shallow")
+        let environment = try clone.actionsEnvironment(base: base, head: head)
+        await #expect(throws: ContextError.truncatedHistory(base: base, head: head, boundary: fix)) {
+            try await Context.actions(environment: environment)
+        }
+    }
+
+    @Test("a cut on the base's side below every commit the range starts from leaves the range whole")
+    func cutBelowRange() async throws {
+        let repository = try TestRepository()
+        defer { repository.remove() }
+        let (base, head) = try Self.commitHistorySharedThroughFix(in: repository)
+        let full = try await Context.actions(environment: repository.actionsEnvironment(base: base, head: head))
+
+        let main = try repository.git(["rev-parse", "\(base)^1"])
+        let clone = try TestRepository(cloning: repository)
+        defer { clone.remove() }
+        try clone.write("\(main)\n", to: ".git/shallow")
+        let cloned = try await Context.actions(environment: clone.actionsEnvironment(base: base, head: head))
+        #expect(cloned.git == full.git)
+    }
+
+    /// Commits Start and Main on main, First on a feature branch, and Fix
+    /// on top of First, merged into main as the base; then the feature's
+    /// Second, a merge of main, and Third, the head. The base reaches First
+    /// only through Fix, and the head directly too.
+    private static func commitHistorySharedThroughFix(
+        in repository: TestRepository
+    ) throws -> (base: String, head: String) {
+        let time = PullRequestFixture.time
+        try repository.write("start\n", to: "a.swift")
+        try repository.commit("Start", at: time)
+        try repository.write("main\n", to: "a.swift")
+        try repository.commit("Main", at: time + 10)
+        try repository.git(["switch", "--quiet", "--create", "feature"])
+        try repository.write("one\n", to: "b.swift")
+        try repository.commit("First", at: time + 20)
+        try repository.git(["switch", "--quiet", "--create", "fix"])
+        try repository.write("fix\n", to: "c.swift")
+        try repository.commit("Fix", at: time + 30)
+        try repository.git(["switch", "--quiet", "main"])
+        let base = try repository.merge("fix", at: time + 40)
+        try repository.git(["switch", "--quiet", "feature"])
+        try repository.write("two\n", to: "b.swift")
+        try repository.commit("Second", at: time + 50)
+        try repository.merge("main", at: time + 60)
+        try repository.write("three\n", to: "b.swift")
+        let head = try repository.commit("Third", at: time + 70)
+        return (base, head)
+    }
+
     @Test("a base and head with no common history are refused")
     func unrelatedHistories() async throws {
         let (repository, commit) = try TestRepository.singleCommit()

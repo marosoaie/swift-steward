@@ -427,7 +427,12 @@ Constraints this puts on the workflow:
   `actions/checkout`'s default depth of 1 has only the merge commit. The
   quickstart can say `fetch-depth: 0`; the composite Action (4.8) should
   fetch just what it needs (the two SHAs, with history back to their
-  merge base) so large repositories don't pay for a full clone.
+  merge base) so large repositories don't pay for a full clone. Back to
+  the merge base on every path, that is: a shallow cut the base reaches
+  above a commit the pull request's commits start from can move shared
+  history into `base..head`, so Steward refuses a clone with one. For a
+  branch that merged the base, that means back past the branch's fork
+  point, not only the last merge.
 - **Conflicts.** A pull request with conflicts has no test merge commit,
   so there's no merge tree to map from; GitHub doesn't run `pull_request`
   workflows for it then (see [Checks](#checks)).

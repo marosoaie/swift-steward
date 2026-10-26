@@ -42,6 +42,17 @@ extension Git {
         return String(decoding: output, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines) == "true"
     }
 
+    /// The newest commit that `commit` reaches and `other` doesn't, and that
+    /// has no parents in the repository: a root, or a shallow clone's cut.
+    func parentlessCommit(reachableFrom commit: String, notFrom other: String) async throws -> String? {
+        let output = try await output(["rev-list", "--parents", commit, "^\(other)", "--"])
+        // A line per commit: its SHA, then its parents'.
+        return String(decoding: output, as: UTF8.self)
+            .split(separator: "\n")
+            .first { !$0.contains(" ") }
+            .map(String.init)
+    }
+
     /// The best common ancestor of two commits, or nil when the history
     /// the repository has holds none.
     func mergeBase(of first: String, and second: String) async throws -> String? {

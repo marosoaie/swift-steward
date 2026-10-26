@@ -71,17 +71,21 @@ struct RealPullRequestTests {
         context.expectCountsMatchGitHub()
     }
 
-    @Test("git-diff-parser#5 with its base on the shallow boundary is refused, not read as 37 commits")
-    func shallowBase() async throws {
+    // git log would read 37 commits with the cut at the base, and 25 with
+    // it at the base's second parent, which no commit of the range is.
+    @Test("git-diff-parser#5 with a shallow cut on its base's side is refused, not read as more than 16 commits",
+          arguments: ["the base", "its second parent"])
+    func shallowBase(cutAt position: String) async throws {
         let payload = try EventPayload.pullRequest("git-diff-parser-5")
         let base = try payload.sha(of: "base")
         let head = try payload.sha(of: "head")
         let mirror = try RepositoryMirror.local("git-diff-parser", having: [base, head])
         let clone = try TestRepository(cloning: mirror.path, options: ["--bare", "--shared"])
         defer { clone.remove() }
-        // As a depth-limited fetch of the base leaves it; bare, so the
+        let cut = position == "the base" ? base : try clone.git(["rev-parse", "\(base)^2"])
+        // As a depth-limited fetch of the base can leave it; bare, so the
         // repository's own folder.
-        try clone.write("\(base)\n", to: "shallow")
+        try clone.write("\(cut)\n", to: "shallow")
         try payload.write(to: clone.eventURL)
         let full = try await Context.actions(environment: [
             "GITHUB_EVENT_NAME": "pull_request",
