@@ -1,20 +1,22 @@
 # Steward: a pure-Swift Danger
 
-**Status: reviewed (plan step 4.1).** No Phase 4 code exists yet;
-steps 4.2–4.10 build on what this document settles. Each section ends with
+**Status: reviewed (plan step 4.1).** Step 4.2 built the context;
+steps 4.3–4.10 build on what this document settles. Each section ends with
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
-recommended (7 with a documentation requirement added), and the sections
-reflect the answers. Claims about danger-swift, GitHub, and SwiftPM were checked
-against their sources or by experiment; [Checks](#checks) lists how.
+recommended (7 with a documentation requirement added), and the four
+step 4.2 raised in swift-steward#27 the same day, each as recommended. The
+sections reflect the answers. Claims about danger-swift, GitHub, and
+SwiftPM were checked against their sources or by experiment;
+[Checks](#checks) lists how.
 
 ## Decisions at a glance
 
 | # | Topic | Recommendation | Alternatives considered |
 |---|---|---|---|
 | S1 | Rule shape | **Decided 2026-10-26.** `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
-| S2 | Context | **Paths and the dry-run placeholder decided 2026-10-26.** One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; a placeholder pull request in a local dry run without `--pull-request` | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
-| S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default) to the head before matching | Merge coordinates throughout; build the head instead; two diffs |
+| S2 | Context | **Paths, the dry-run placeholder, `Run`'s fields, and the activity types decided 2026-10-26.** One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; a placeholder pull request in a local dry run without `--pull-request`; `Run` carries the line map and the API and server URLs; `ready_for_review` joins the accepted activity types | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
+| S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default, or the head when only the head is checked out) to the head before matching; Steward leaves `safe.directory` to the workflow | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | **Clean case and markers decided 2026-10-26.** The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | **Decided 2026-10-26.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped | Always fail; fail on configuration errors only; refusing to run on forks |
@@ -227,6 +229,9 @@ public struct Run: Sendable {
     public var mode: Mode                 // .actions, or .dryRun outside Actions
     public var workspace: String          // the checkout's root
     public var builtCommit: String        // the tree build logs refer to (section 3)
+    public var lineMap: LineMap           // built-tree lines to head lines (section 3)
+    public var apiURL: URL                // GITHUB_API_URL, for GitHub Enterprise
+    public var serverURL: URL             // GITHUB_SERVER_URL, for links
 }
 
 public struct Location: Sendable, Hashable, Codable {
@@ -244,11 +249,14 @@ Where each part comes from (step 4.2):
   API call, so a rule can't burn rate limit or fail on the network just
   by reading the title. The payload is a snapshot from when the event
   fired: labels added since then aren't in it. v1 accepts `pull_request`
-  events only (`opened`, `synchronize`, `reopened`, plus `edited` if the
-  workflow lists it for title and body rules) and refuses any other event
-  with a clear message. That includes `pull_request_target`, which runs
+  events only (`opened`, `synchronize`, `reopened`, plus `edited` and
+  `ready_for_review` if the workflow lists them, for title and body rules
+  and for draft rules) and refuses any other event or activity type with
+  a clear message. That includes `pull_request_target`, which runs
   in the context of the default branch, so its checkout isn't the pull
-  request at all.
+  request at all. **Decided 2026-10-26 (question 12):** `ready_for_review`
+  joins the list; `labeled` and the other activity types stay refused
+  until someone needs them.
 - **`git`** from the local checkout: `git diff` from the merge base to
   the head commit, parsed by the library's full-model entry point (64 MiB
   line cap), and `git log` over the same range. Both run once, eagerly;
@@ -264,7 +272,8 @@ Where each part comes from (step 4.2):
   and `GITHUB_SHA` (the commit the workflow checked out, which for
   `pull_request` is the merge commit; see section 3). `GITHUB_API_URL` and
   `GITHUB_SERVER_URL` point the host and the summary's links at GitHub
-  Enterprise without configuration.
+  Enterprise without configuration. **Decided 2026-10-26 (question 11):**
+  `Run` carries the line map and both URLs, as step 4.2 built it.
 
 The file lists follow the diff model: `createdFiles` are `.added`,
 `deletedFiles` `.deleted`, `renamedFiles` `.renamed` (old and new path),
@@ -374,7 +383,15 @@ at the edge:
 - `Run.builtCommit` names the commit the logs came from: `GITHUB_SHA` by
   default, or the head itself, or whatever a log source declares
   (`.xcodebuild("build.log", builtAt: sha)`) when the build ran in
-  another job with another checkout.
+  another job with another checkout. **Decided 2026-10-26 (question
+  13):** a workflow that checks out `head.sha` has no merge commit, so
+  when the checkout lacks `GITHUB_SHA` and `HEAD` is the pull request's
+  head commit, the built commit is the head, and the map is the
+  identity. With `HEAD` anywhere else, or unborn, Steward can't tell
+  which tree the logs came from, so it fails, saying that neither the
+  merge commit nor the head is checked out. A checkout that has
+  `GITHUB_SHA` keeps it as the built commit whatever `HEAD` is: the
+  fallback is only for a missing one.
 - When the built commit is the head, the mapping is the identity and
   nothing runs. Otherwise Steward runs `git diff -U0 -M <head> <built>`
   over the whole tree, keeps the files whose head-side path the pull
@@ -416,6 +433,14 @@ Constraints this puts on the workflow:
   workflows for it then (see [Checks](#checks)).
 - **Deleted files.** A finding on a deleted file has a path but no head
   line; the summary shows the path without a link.
+- **Ownership.** In a container job the checkout belongs to the runner's
+  user, not the container's, and git refuses to read it ("dubious
+  ownership"). **Decided 2026-10-26 (question 14):** Steward doesn't
+  trust the directory itself, because that's git's safety check to keep.
+  It fails with git's error and names the fix to run before it,
+  `git config --global --add safe.directory "$GITHUB_WORKSPACE"`. The
+  Action (4.8) sets it for the workspace, and the quickstart (4.7) and
+  the docs (4.10) cover workflows without the Action.
 
 ## 4. The report (S4)
 
@@ -804,16 +829,18 @@ tag.
 | 4.4 Sticky comment | Section 5 (marker and author, duplicates, format, size, the clean case, stale runs) and section 6 (posting failures) |
 | 4.5 Built-in rule | Section 3 (mapping log lines to the head, dropping unmapped ones) and section 5 (escaping tool output) |
 | 4.6 `StewardTesting` | Section 8 (fixtures, the fake host) and section 1 (rules as values) |
-| 4.7 Template and quickstart | Section 8 (the package's layout), section 2 (the merge-tree caveat, `edited` events), section 6 (`permissions:`), section 5 (several Dangerfiles per pull request are unsupported) |
-| 4.8 Action | Section 8 (decision 3: a separate `steward-action` repository), section 3 (fetching history), section 5 (the `concurrency` group) |
+| 4.7 Template and quickstart | Section 8 (the package's layout), section 2 (the merge-tree caveat, `edited` and `ready_for_review` events), section 6 (`permissions:`), section 5 (several Dangerfiles per pull request are unsupported), section 3 (`safe.directory` in container jobs without the Action) |
+| 4.8 Action | Section 8 (decision 3: a separate `steward-action` repository), section 3 (fetching history, `safe.directory` for the workspace), section 5 (the `concurrency` group) |
 | 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step works in merge coordinates) |
-| 4.10 Docs | Section 7 (the mapping table, the start of the migration guide) and section 5 (several Dangerfiles per pull request are unsupported) |
+| 4.10 Docs | Section 7 (the mapping table, the start of the migration guide), section 5 (several Dangerfiles per pull request are unsupported), and section 3 (`safe.directory` in container jobs without the Action) |
 | Backlog: fork pull requests | Section 4 (the report and the rules for an untrusted one) |
 
 ## Answered questions
 
-The maintainer answered all ten on 2026-10-26. The sections refer to them
-by number, and each section above already reflects its answer.
+The maintainer answered all ten on 2026-10-26, and the four that step
+4.2 raised in swift-steward#27 (numbered on from 11) the same day. The
+sections refer to them by number, and each section above already
+reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -857,6 +884,26 @@ by number, and each section above already reflects its answer.
     skip posting** ("evaluate and skip posting"). The rules run, posting
     is skipped with a notice, and the exit code follows the findings,
     until the fork flow (S4) lands.
+11. **`Run`'s extra fields (S2). Answered 2026-10-26: keep them** ("as
+    you recommended", for all four of #27's questions). `Run` carries
+    `lineMap`, `apiURL`, and `serverURL` beside the three fields this
+    document first sketched.
+12. **Activity types (S2). Answered 2026-10-26: add `ready_for_review`.**
+    It joins `opened`, `synchronize`, `reopened`, and `edited`; `labeled`
+    and the others stay refused until someone needs them.
+13. **A checkout without the merge commit (S3). Answered 2026-10-26: fall
+    back to `HEAD`, only when it's the head.** When the checkout lacks
+    `GITHUB_SHA` and `HEAD` is the pull request's head commit, the head is
+    the built commit and the line map is the identity. Otherwise the
+    context fails with `missingCommit(.built)`, whose message says that
+    neither the merge commit nor the head is checked out.
+14. **Container jobs (S3). Answered 2026-10-26: Steward doesn't set
+    `safe.directory`.** It's a git safety check. The `gitFailed` error
+    names the fix,
+    `git config --global --add safe.directory "$GITHUB_WORKSPACE"`; the
+    Action (4.8) sets it for the workspace, and the quickstart (4.7) and
+    the docs (4.10) cover workflows without the Action. `pr.yml`'s Linux
+    job keeps setting it.
 
 ## Checks
 
