@@ -90,7 +90,8 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         // Steward, the pure-Swift Danger (docs/danger.md). Not a product
-        // yet: so far it has the context rules see; the runner comes next.
+        // yet: so far it has the DSL, the context rules see, and the runner,
+        // which checks a pull request in CI or locally but doesn't post.
         .target(
             name: "Steward",
             dependencies: [
@@ -106,6 +107,10 @@ let package = Package(
                 "Steward",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "PullRequestHosting",
+                // Hosts on fixture transports, so a run's requests are
+                // checked, and a dry run is shown to make none.
+                "GitHubAPI",
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
             ],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings

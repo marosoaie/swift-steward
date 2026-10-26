@@ -1,3 +1,5 @@
+import Foundation
+
 /// A Dangerfile: the rules a repository checks its pull requests with.
 ///
 /// Conform one type in a package's executable target and mark it `@main`;
@@ -34,4 +36,12 @@
 public protocol Dangerfile {
     /// The rules, in the order they run and their findings are shown.
     @RuleBuilder static var rules: [Rule] { get }
+}
+
+extension Dangerfile {
+    /// Runs the rules over the pull request, as `Dangerfile` describes, and
+    /// exits with the run's status.
+    public static func main() async {
+        exit(await Runner.standard().run(rules).rawValue)
+    }
 }

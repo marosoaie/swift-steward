@@ -25,6 +25,19 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
     case truncatedHistory(base: String, head: String, boundary: String)
     case gitFailed(arguments: [String], status: Int32, message: String)
     case gitUnavailable(String)
+    /// A dry run's directory isn't in a git working tree.
+    case notACheckout(directory: String, message: String)
+    case unbornHead
+    /// `--base` names no commit.
+    case unknownBase(String)
+    /// No `--base`, and the `origin` remote has no default branch.
+    case noDefaultBase
+    /// `GITHUB_REPOSITORY` isn't `owner/name`.
+    case invalidRepository(String)
+    /// `--pull-request` without `GITHUB_REPOSITORY` or an `origin` remote
+    /// on the server's host.
+    case unknownRepository(host: String)
+    case unreadablePullRequest(number: Int, reason: String)
 
     /// What a person reading the run's log needs to know to fix it.
     var description: String {
@@ -92,6 +105,27 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
             "git \(arguments.joined(separator: " ")) exited with status \(status): \(message)"
         case .gitUnavailable(let reason):
             "Couldn't run git: \(reason)"
+        case .notACheckout(let directory, let message):
+            "A dry run checks the git checkout it runs in, and \(directory) isn't in one: \(message)"
+        case .unbornHead:
+            "HEAD has no commits yet, so a dry run has nothing to check."
+        case .unknownBase(let reference):
+            "--base \(reference) doesn't name a commit in this checkout."
+        case .noDefaultBase:
+            """
+            The origin remote has no default branch (\(Context.defaultBase)), so a dry run can't \
+            tell what the pull request merges into. Pass --base <ref>, or set the default with \
+            `git remote set-head origin --auto`.
+            """
+        case .invalidRepository(let value):
+            "GITHUB_REPOSITORY is \"\(value)\", which isn't owner/name."
+        case .unknownRepository(let host):
+            """
+            --pull-request needs the repository: set GITHUB_REPOSITORY to owner/name, or give the \
+            checkout an origin remote on \(host).
+            """
+        case .unreadablePullRequest(let number, let reason):
+            "Couldn't read pull request #\(number): \(reason)"
         }
     }
 

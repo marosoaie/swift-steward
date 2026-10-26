@@ -63,8 +63,8 @@ struct OptionsTests {
 
     @Test("the worse exit status wins: broken over failures over clean")
     func exitStatus() {
-        #expect([ExitStatus.clean, .broken, .failures].max() == .broken)
-        #expect(max(ExitStatus.clean, .failures) == .failures)
-        #expect([ExitStatus.clean, .failures, .broken].map(\.rawValue) == [0, 1, 2])
+        #expect([Steward.ExitStatus.clean, .broken, .failures].max() == .broken)
+        #expect(max(Steward.ExitStatus.clean, .failures) == .failures)
+        #expect([Steward.ExitStatus.clean, .failures, .broken].map(\.rawValue) == [0, 1, 2])
     }
 }
