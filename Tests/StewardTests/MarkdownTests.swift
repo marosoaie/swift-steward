@@ -6,7 +6,8 @@ struct MarkdownTests {
     @Test("plain text has its inline punctuation escaped and can't mention anyone")
     func escaping() {
         #expect(Markdown.escaped(#"a*b_c`d[e](f) <g> & ~h~ \i"#) == #"a\*b\_c\`d\[e\](f) \<g\> \& \~h\~ \\i"#)
-        #expect(Markdown.escaped("ping @ada, mail ada@example.com") == "ping @\u{200B}ada, mail ada@\u{200B}example.com")
+        #expect(Markdown.escaped("ping @ada, mail ada@example.com")
+            == "ping @\u{200B}ada, mail ada@\u{200B}example.com")
         #expect(Markdown.escaped("Plain text, 1.0: done!") == "Plain text, 1.0: done!")
     }
 
