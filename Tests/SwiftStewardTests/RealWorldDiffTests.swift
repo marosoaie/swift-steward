@@ -76,7 +76,7 @@ struct RealWorldDiffTests {
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
         while let chunk = try readChunk(from: handle), !chunk.isEmpty {
-            parser.consume(chunk)
+            parser.consume([UInt8](chunk))
         }
         return parser.finalize()
     }

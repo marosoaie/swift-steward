@@ -35,7 +35,7 @@ Prebuilt arm64 binaries ship with each
 checksums attached. They are not yet notarized, so fetch them with `curl`/`gh
 release download` (browser downloads get quarantined by Gatekeeper).
 
-Or build from source (Swift 6.2+, on macOS 14+ or Linux):
+Or build from source (Swift 6.2+, on macOS 26+ or Linux):
 
 ```sh
 swift build -c release
@@ -168,7 +168,7 @@ needs:
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.1.0"),
+.package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.2.0"),
 .package(url: "https://github.com/marosoaie/swift-steward.git", branch: "main"),
 // target dependencies (pick what you need):
 .product(name: "GitDiffKit", package: "git-diff-parser"),
@@ -187,7 +187,7 @@ import GitDiffKit
 // Whole-string convenience — or stream chunks into a DiffParser for
 // inputs that shouldn't be held in memory:
 var parser = DiffParser()
-while let chunk = nextChunk() { parser.consume(chunk) }   // Data, [UInt8], or String
+while let chunk = nextChunk() { parser.consume(chunk) }   // [UInt8], ArraySlice<UInt8>, or String
 let changes = parser.finalize()                           // == ChangedLines(diff: wholeText)
 
 changes.contains(line: 42, in: "Sources/App/Foo.swift")   // binary search
