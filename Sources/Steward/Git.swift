@@ -32,10 +32,11 @@ struct Git: Sendable {
     init(directory: String, environment: [String: String] = ProcessInfo.processInfo.environment) {
         self.directory = directory
         // A partial clone that fetches a missing object must fail, not
-        // wait for a password.
+        // wait for a password. The system's attributes file has no `-c` to
+        // shut it out, as the user's has (`diffConfiguration`).
         self.environment = environment
             .filter { !Self.ignoredVariables.contains($0.key) }
-            .merging(["GIT_TERMINAL_PROMPT": "0"]) { $1 }
+            .merging(["GIT_TERMINAL_PROMPT": "0", "GIT_ATTR_NOSYSTEM": "1"]) { $1 }
     }
 
     /// Standard error past this many bytes is dropped: it only goes into

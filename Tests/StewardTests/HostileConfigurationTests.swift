@@ -99,6 +99,45 @@ struct HostileConfigurationTests {
         #expect(map == (try await LineMap(built: fixture.built, head: fixture.head, git: plain)))
     }
 
+    @Test("an attributes file outside the repository can't make its files binary", arguments: [
+        "core.attributesFile", "XDG_CONFIG_HOME",
+    ])
+    func userAttributes(source: String) async throws {
+        let fixture = try PullRequestFixture()
+        defer { fixture.remove() }
+        let attributes = fixture.repository.root.appendingPathComponent("git/attributes")
+        try FileManager.default.createDirectory(
+            at: attributes.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try "* -diff\n".write(to: attributes, atomically: true, encoding: .utf8)
+        let configuration = fixture.repository.root.appendingPathComponent("gitconfig")
+        try "[core]\n\tattributesFile = \(attributes.path)\n"
+            .write(to: configuration, atomically: true, encoding: .utf8)
+        // Git reads `$XDG_CONFIG_HOME/git/attributes` when no configuration
+        // names a file.
+        let variables = source == "XDG_CONFIG_HOME"
+            ? ["GIT_CONFIG_GLOBAL": "/dev/null", "XDG_CONFIG_HOME": fixture.repository.root.path]
+            : ["GIT_CONFIG_GLOBAL": configuration.path]
+        let plain = Git(directory: fixture.repository.path)
+        let hostile = Git(
+            directory: fixture.repository.path,
+            environment: ProcessInfo.processInfo.environment.merging(variables) { $1 }
+        )
+
+        let changes = try await GitChanges(base: fixture.base, head: fixture.head, git: hostile)
+        let map = try await LineMap(built: fixture.built, head: fixture.head, git: hostile)
+        #expect(changes == (try await GitChanges(base: fixture.base, head: fixture.head, git: plain)))
+        #expect(map == (try await LineMap(built: fixture.built, head: fixture.head, git: plain)))
+        #expect(changes.diff.files.count { $0.header.isBinary } == 1)
+    }
+
+    @Test("git never reads the system's attributes file, which no test can write")
+    func systemAttributes() {
+        let git = Git(directory: "/", environment: ["GIT_ATTR_NOSYSTEM": "0"])
+        #expect(git.environment["GIT_ATTR_NOSYSTEM"] == "1")
+    }
+
     @Test("diff.interHunkContext can't merge the line map's hunks, so lines between them still map")
     func interHunkContext() async throws {
         let repository = try TestRepository()

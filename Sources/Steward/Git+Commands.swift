@@ -17,9 +17,13 @@ extension Git {
     /// Settings with no command-line option that change `git diff`'s bytes,
     /// set back to git's defaults: `core.quotePath=false` writes paths raw,
     /// `diff.suppressBlankEmpty` drops the space of a blank context line,
-    /// and git diffs a file over `core.bigFileThreshold` as binary.
+    /// and git diffs a file over `core.bigFileThreshold` as binary. An
+    /// attributes file outside the repository, `core.attributesFile` or by
+    /// default `~/.config/git/attributes`, could mark files `-diff`: only
+    /// the repository's own attributes count.
     static let diffConfiguration = [
         "-c", "core.quotePath=true", "-c", "diff.suppressBlankEmpty=false", "-c", "core.bigFileThreshold=512m",
+        "-c", "core.attributesFile=/dev/null",
     ]
 
     /// The SHA of the commit `revision` names, such as a SHA or `HEAD`, or
