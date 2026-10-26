@@ -95,7 +95,11 @@ struct ActionsRunTests {
             unlinkedPaths: expectation.unlinkedPaths
         )
         #expect(String(decoding: try Data(contentsOf: summaryURL), as: UTF8.self) == summary.text)
-        #expect(outcome.log.contains("::warning title=Steward::GITHUB_TOKEN isn't set"))
+        // A fork's pull request is skipped before the token is looked at.
+        let isFromFork = payload.repository(of: "head") != payload.repository(of: "base")
+        #expect(outcome.log.contains(isFromFork
+            ? "::notice title=Steward::The pull request comes from \(payload.repository(of: "head") ?? ""), a fork"
+            : "::warning title=Steward::GITHUB_TOKEN isn't set"))
     }
 
     @Test("a depth-1 checkout is refused with the history it lacks", .enabled(if: isShallow))

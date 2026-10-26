@@ -69,6 +69,12 @@ struct EventPayload {
         return payload
     }
 
+    /// The `owner/name` of the repository the pull request's `base` or
+    /// `head` branch is in.
+    func repository(of branch: String) -> String? {
+        ((pullRequestField(branch) as? [String: Any])?["repo"] as? [String: Any])?["full_name"] as? String
+    }
+
     /// The pull request's field `key`, such as `merge_commit_sha`.
     func pullRequestField(_ key: String) -> Any? {
         (object["pull_request"] as? [String: Any])?[key]
