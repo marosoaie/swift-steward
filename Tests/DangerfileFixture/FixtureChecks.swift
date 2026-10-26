@@ -2,7 +2,8 @@ import Steward
 
 /// The Dangerfile the end-to-end tests run on real pull requests: every
 /// kind of finding, with a location and without, a failure past a size,
-/// and a rule that throws when the title asks it to.
+/// a rule that throws when the title asks it to, and the built-in
+/// diagnostics rule when the environment names reports for it.
 @main
 struct FixtureChecks: Dangerfile {
     /// A title with this in it makes the "Fixture marker" rule throw.
@@ -42,6 +43,9 @@ struct FixtureChecks: Dangerfile {
         Rule("Fixture marker") { context in
             guard context.pullRequest.title.contains(throwMarker) else { return [] }
             throw MarkerError()
+        }
+        if let diagnosticSources {
+            Rule.diagnosticsOnChangedLines(in: diagnosticSources)
         }
     }
 }

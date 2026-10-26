@@ -131,6 +131,8 @@ let package = Package(
             dependencies: [
                 "Steward",
                 "DangerfileFixture",
+                // `steward filter`, the oracle for the diagnostics rule.
+                "StewardCLI",
                 "StewardVersion",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",
