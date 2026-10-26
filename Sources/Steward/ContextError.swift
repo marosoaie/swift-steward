@@ -43,8 +43,8 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
         case .unsupportedAction(let action):
             """
             Steward runs on pull_request events whose activity type is opened, synchronize, \
-            reopened, or edited, not \(action). Leave the workflow's `types:` at its default, \
-            or list only those.
+            reopened, edited, or ready_for_review, not \(action). Leave the workflow's `types:` \
+            at its default, or list only those.
             """
         case .unreadableEventPayload(let path, let reason):
             "Couldn't read the event payload at \(path): \(reason)"

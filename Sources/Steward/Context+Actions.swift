@@ -4,8 +4,9 @@ import PullRequestHosting
 
 extension Context {
     /// The `pull_request` activity types Steward runs on (docs/danger.md,
-    /// section 2): `edited` for rules about the title and description.
-    static let supportedActions: Set<String> = ["opened", "synchronize", "reopened", "edited"]
+    /// section 2): the default three, `edited` for rules about the title
+    /// and description, and `ready_for_review` for rules about drafts.
+    static let supportedActions: Set<String> = ["opened", "synchronize", "reopened", "edited", "ready_for_review"]
 
     /// Builds the context of a GitHub Actions run from its environment:
     /// the pull request from the event payload, with no API call, and the

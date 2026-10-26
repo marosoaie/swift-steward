@@ -18,7 +18,7 @@ struct ContextEventTests {
     }
 
     @Test("every activity type Steward runs on builds a context", arguments: [
-        "opened", "synchronize", "reopened", "edited",
+        "opened", "synchronize", "reopened", "edited", "ready_for_review",
     ])
     func supportedAction(action: String) async throws {
         let (repository, commit) = try TestRepository.singleCommit()
@@ -29,7 +29,7 @@ struct ContextEventTests {
     }
 
     @Test("any other activity type is refused", arguments: [
-        "closed", "labeled", "ready_for_review", "converted_to_draft",
+        "closed", "labeled", "converted_to_draft", "review_requested",
     ])
     func unsupportedAction(action: String) async throws {
         let (repository, commit) = try TestRepository.singleCommit()
@@ -38,6 +38,14 @@ struct ContextEventTests {
         await #expect(throws: ContextError.unsupportedAction(action)) {
             try await Context.actions(environment: environment)
         }
+    }
+
+    @Test("the refusal of an activity type names every one Steward runs on")
+    func unsupportedActionMessage() {
+        let description = ContextError.unsupportedAction("labeled").description
+        // With the space, so "reopened" can't stand in for "opened".
+        let missing = Context.supportedActions.filter { !description.contains(" \($0)") }
+        #expect(missing.isEmpty, "\(description)")
     }
 
     @Test("any event but pull_request is refused", arguments: [
