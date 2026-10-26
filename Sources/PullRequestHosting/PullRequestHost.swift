@@ -7,6 +7,11 @@
 /// host fails or refuses, and `CancellationError` when the task is
 /// cancelled.
 public protocol PullRequestHost: Sendable {
+    /// The most UTF-8 bytes a summary comment's text may have, whatever
+    /// the host adds to it (such as its marker) already taken off. Longer
+    /// text fails as `.rejected`.
+    var maximumSummarySize: Int { get }
+
     /// The pull request with the given number.
     func pullRequest(number: Int) async throws -> PullRequest
 

@@ -133,8 +133,55 @@ struct GitHubHostErrorTests {
             kind: .rateLimited,
             operation: "issues/create-comment",
             status: 403,
-            message: message
+            message: message,
+            retryAfter: .seconds(120)
         ))
+    }
+
+    /// A throttled answer's headers, and the wait they ask for.
+    struct Throttle: Sendable, CustomTestStringConvertible {
+        let headers: [String: String]
+        let wait: Duration?
+
+        var testDescription: String {
+            "\(headers.sorted { $0.key < $1.key }) → \(wait.map(String.init(describing:)) ?? "nil")"
+        }
+    }
+
+    static let now = Date(timeIntervalSince1970: 1_700_000_000.5)
+
+    @Test("a throttled answer asks for its retry-after, or else the time left until its limit resets", arguments: [
+        Throttle(headers: ["retry-after": "30"], wait: .seconds(30)),
+        Throttle(headers: ["retry-after": "0"], wait: .zero),
+        Throttle(
+            headers: ["retry-after": "30", "x-ratelimit-remaining": "0", "x-ratelimit-reset": "1"],
+            wait: .seconds(30)
+        ),
+        Throttle(headers: ["retry-after": "soon"], wait: nil),
+        Throttle(headers: ["retry-after": "-5"], wait: nil),
+        Throttle(headers: ["retry-after": "9999999999999"], wait: nil),
+        Throttle(headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "1700000090"], wait: .seconds(90)),
+        Throttle(headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "1700000001"], wait: .seconds(1)),
+        Throttle(headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "1699999000"], wait: .zero),
+        Throttle(headers: ["x-ratelimit-remaining": "0"], wait: nil),
+        Throttle(headers: ["x-ratelimit-remaining": "0", "x-ratelimit-reset": "later"], wait: nil),
+    ])
+    func retryAfter(_ throttle: Throttle) throws {
+        let fields = try throttle.headers.map { name, value in
+            HTTPField(name: try #require(HTTPField.Name(name)), value: value)
+        }
+        let response = HTTPResponse(status: .init(code: 403), headerFields: HTTPFields(fields))
+        #expect(RateLimitMiddleware.retryAfter(response, now: Self.now) == throttle.wait)
+    }
+
+    @Test("the host's error carries the wait a throttled answer asks for, and none when only the message says so")
+    func retryAfterThroughHost() async throws {
+        let throttled = try RecordedResponse(status: 429, headers: ["retry-after": "7"], json: ["message": "Slow"])
+        #expect(await hostError([throttled])?.retryAfter == .seconds(7))
+        let unsaid = try RecordedResponse(status: 403, json: ["message": "API rate limit exceeded for user ID 1."])
+        let error = await hostError([unsaid])
+        #expect(error?.kind == .rateLimited)
+        #expect(error?.retryAfter == nil)
     }
 
     @Test("issues with comments turned off answer 410, which fails as not found")

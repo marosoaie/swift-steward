@@ -202,6 +202,20 @@ struct GitHubHostCommentTests {
         #expect(configuration.requestCachePolicy == .reloadIgnoringLocalCacheData)
     }
 
+    @Test("the summary's size limit leaves room for the marker: text of that size posts as 65,536 bytes",
+          arguments: [SummaryMarker.steward, SummaryMarker(line: "<!-- steward-live-test ü -->")])
+    func maximumSummarySize(marker: SummaryMarker) async throws {
+        let transport = ScriptedTransport([
+            try RecordedResponse(status: 201, json: try RecordedResponse.comment(id: 7, body: "posted")),
+        ])
+        let host = GitHubHost.stubbed(transport, marker: marker)
+        _ = try await host.createSummaryComment(
+            onPullRequest: 21,
+            body: String(repeating: "a", count: host.maximumSummarySize)
+        )
+        #expect(try #require(await transport.sent.first?.commentText).utf8.count == 65_536)
+    }
+
     @Test("a created comment whose text lost its marker keeps the text whole")
     func createdWithoutMarker() async throws {
         let response = try RecordedResponse(status: 201, json: try RecordedResponse.comment(id: 7, body: "bare"))
