@@ -67,33 +67,9 @@ public enum DiagnosticMatcher {
         repoRoot: String? = nil,
         tolerance: Int = 0
     ) -> [MatchedDiagnostic] {
-        let normalizedRoot = repoRoot.map { $0.hasSuffix("/") ? $0 : $0 + "/" }
-        var resolved: [String: String?] = [:]
-
-        func resolve(_ logPath: String) -> String? {
-            if let cached = resolved[logPath] { return cached }
-            let result = resolveUncached(logPath)
-            resolved[logPath] = result
-            return result
-        }
-
-        func resolveUncached(_ logPath: String) -> String? {
-            var path = logPath
-            if let root = normalizedRoot, path.hasPrefix(root) {
-                path = String(path.dropFirst(root.count))
-            }
-            if changes.files[path] != nil { return path }
-            // The log path is usually absolute while diff paths are
-            // repo-relative: match on the longest diff path the log path
-            // ends with (component-aligned, to avoid `Bar.swift` matching
-            // `FooBar.swift`).
-            return changes.files.keys
-                .filter { path == $0 || path.hasSuffix("/" + $0) }
-                .max { $0.count < $1.count }
-        }
-
+        var resolver = DiagnosticPathResolver(paths: changes.files.keys, repoRoot: repoRoot)
         return diagnostics.compactMap { diagnostic -> MatchedDiagnostic? in
-            guard let path = resolve(diagnostic.path),
+            guard let path = resolver.resolve(diagnostic.path),
                   changes.contains(line: diagnostic.line, in: path, tolerance: tolerance)
             else { return nil }
             return MatchedDiagnostic(
