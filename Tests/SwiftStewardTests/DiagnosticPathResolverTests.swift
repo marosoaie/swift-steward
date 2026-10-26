@@ -35,6 +35,18 @@ struct DiagnosticPathResolverTests {
         #expect(withSlash.resolve("/elsewhere/Sources/App/Bar.swift") == "Sources/App/Bar.swift")
     }
 
+    @Test("a path naming a file in the checkout resolves exactly, never to a suffix, and the rest still by suffix")
+    func checkedOutPaths() {
+        let checkout: Set = ["Foo.swift", "Other/Foo.swift", "Sources/App/Foo.swift"]
+        var resolver = DiagnosticPathResolver(paths: Self.paths, repoRoot: "/ci") { checkout.contains($0) }
+        #expect(resolver.resolve("/ci/Other/Foo.swift") == nil)
+        #expect(resolver.resolve("/ci/Foo.swift") == "Foo.swift")
+        #expect(resolver.resolve("/ci/Sources/App/Foo.swift") == "Sources/App/Foo.swift")
+        // No file there, so the suffix match stands.
+        #expect(resolver.resolve("/ci/Gone/Foo.swift") == "Foo.swift")
+        #expect(resolver.resolve("/elsewhere/Other/Foo.swift") == "Foo.swift")
+    }
+
     @Test("resolving the same path again gives the same answer, found or not")
     func cachedAnswers() {
         var resolver = DiagnosticPathResolver(paths: Self.paths, repoRoot: "/ci")

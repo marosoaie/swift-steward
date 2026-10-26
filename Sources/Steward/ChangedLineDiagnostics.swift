@@ -1,5 +1,6 @@
 import BuildLogKit
 import DiffDiagnostics
+import Foundation
 import GitDiffKit
 
 /// The work behind `Rule.diagnosticsOnChangedLines(in:)` (docs/danger.md,
@@ -105,9 +106,11 @@ enum ChangedLineDiagnostics {
     /// because the head commit doesn't have their lines: the base or the
     /// merge changed them, or their file is new in the built commit.
     ///
-    /// Log paths resolve as `steward filter --repo-root <workspace>` resolves
-    /// them, against the pull request's paths and every path the line map
-    /// knows, so a file the base renamed is found under its built path.
+    /// Log paths resolve against the pull request's paths and every path
+    /// the line map knows, so a file the base renamed is found under its
+    /// built path. Once `workspace` is stripped, a path naming a file in the
+    /// checkout is that file; any other resolves as `steward filter
+    /// --repo-root <workspace>` resolves it, by its longest known suffix.
     static func matched(
         _ diagnostics: [Diagnostic],
         lineMap: LineMap,
@@ -116,7 +119,8 @@ enum ChangedLineDiagnostics {
     ) -> (matched: [MatchedDiagnostic], dropped: Int) {
         var resolver = DiagnosticPathResolver(
             paths: Set(changes.files.keys).union(lineMap.files.keys),
-            repoRoot: workspace
+            repoRoot: workspace,
+            existsInCheckout: existsInCheckout(at: workspace)
         )
         // A diagnostic whose path resolves to none of these is in a file
         // that neither side changed: its lines are the head's, and none of
@@ -136,6 +140,20 @@ enum ChangedLineDiagnostics {
             return mapped
         }
         return (DiagnosticMatcher.match(mapped, against: changes), located.count { $0.1 == nil })
+    }
+
+    /// Whether a path, once the workspace is stripped, names a file in the
+    /// checkout at `workspace`. Only a path in plain form is checked: one
+    /// that is absolute, or has an empty, `.` or `..` component, isn't the
+    /// spelling of a known path even when it names one (`./Foo.swift`), so
+    /// it's left to the suffix match.
+    private static func existsInCheckout(at workspace: String) -> @Sendable (String) -> Bool {
+        let root = URL(fileURLWithPath: workspace, isDirectory: true)
+        return { path in
+            let components = path.split(separator: "/", omittingEmptySubsequences: false)
+            guard !components.contains(where: { $0.isEmpty || $0 == "." || $0 == ".." }) else { return false }
+            return FileManager.default.fileExists(atPath: root.appendingPathComponent(path).path)
+        }
     }
 
     /// A finding at the diagnostic's head location: a failure for an error,

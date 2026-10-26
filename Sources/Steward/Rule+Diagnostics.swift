@@ -11,7 +11,11 @@ extension Rule {
     /// to the head commit, `Run.lineMap`: one on a line the base branch or
     /// the merge changed has no place in the head and is dropped. The rest
     /// match the lines the pull request adds, at their head locations, as
-    /// `steward filter --repo-root <workspace>` matches them. An error is a
+    /// `steward filter --repo-root <workspace>` matches them, except that a
+    /// path naming a file in the checkout is that file: a diagnostic in an
+    /// untouched `Other/Foo.swift` never lands on a changed `Foo.swift`. A
+    /// path the checkout has no file at resolves by its longest suffix among
+    /// the pull request's paths, as `filter` resolves it. An error is a
     /// failure, a warning a warning, and a note a message; each finding's
     /// text is the tool's message, escaped so it renders as written, with
     /// its rule, if any, as a code span. The log says, for each report, how
