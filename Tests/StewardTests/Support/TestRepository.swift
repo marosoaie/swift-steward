@@ -33,12 +33,17 @@ struct TestRepository {
 
     /// A clone of `source`, with `options` such as `--depth=1`.
     init(cloning source: TestRepository, options: [String] = []) throws {
-        let root = try Self.temporaryRoot()
-        let destination = root.appendingPathComponent("repository").path
         // A file:// URL, so `--depth` makes a real shallow clone rather than
         // hard-linking every object.
+        try self.init(cloning: source.url.absoluteString, options: options)
+    }
+
+    /// A clone of the repository at `source`, a path or URL.
+    init(cloning source: String, options: [String] = []) throws {
+        let root = try Self.temporaryRoot()
+        let destination = root.appendingPathComponent("repository").path
         _ = try Subprocess.output(
-            of: ["git", "clone", "--quiet"] + options + [source.url.absoluteString, destination],
+            of: ["git", "clone", "--quiet"] + options + [source, destination],
             environment: Self.environment
         )
         try self.init(creatingIn: root)

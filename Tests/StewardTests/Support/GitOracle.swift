@@ -233,8 +233,12 @@ struct GitOracle {
                 "\(builtPath): \(mapped.count) of \(builtLines.count) lines map",
                 sourceLocation: sourceLocation
             )
-            try mapped.forEach { pair in
-                let headLines = try lines(of: pair.head.path, at: head) ?? []
+            // One read per head file, not per line: a subprocess each.
+            let headFiles = try Dictionary(
+                uniqueKeysWithValues: Set(mapped.map(\.head.path)).map { ($0, try lines(of: $0, at: head) ?? []) }
+            )
+            mapped.forEach { pair in
+                let headLines = headFiles[pair.head.path] ?? []
                 let headLine = pair.head.line.flatMap { headLines.indices.contains($0 - 1) ? headLines[$0 - 1] : nil }
                 #expect(
                     headLine == builtLines[pair.built],

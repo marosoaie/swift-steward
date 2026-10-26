@@ -52,7 +52,23 @@ struct EventPayload {
         (object["pull_request"] as? [String: Any])?[key]
     }
 
+    /// The commit of the pull request's `base` or `head`.
+    func sha(of branch: String) throws -> String {
+        guard let sha = (pullRequestField(branch) as? [String: Any])?["sha"] as? String else {
+            throw FixtureError("the payload has no pull_request.\(branch).sha")
+        }
+        return sha
+    }
+
     func write(to url: URL) throws {
         try JSONSerialization.data(withJSONObject: object).write(to: url)
+    }
+
+    /// Writes the payload to a new temporary file, for the caller to remove.
+    func writeTemporary() throws -> URL {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("steward-tests-\(UUID().uuidString).json")
+        try write(to: url)
+        return url
     }
 }
