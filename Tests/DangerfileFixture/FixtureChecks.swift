@@ -1,5 +1,3 @@
-import GitDiffKit
-import PullRequestHosting
 import Steward
 
 /// The Dangerfile the end-to-end tests run on real pull requests: every

@@ -91,7 +91,9 @@ let package = Package(
         ),
         // Steward, the pure-Swift Danger (docs/danger.md). Not a product
         // yet: so far it has the DSL, the context rules see, and the runner,
-        // which checks a pull request in CI or locally but doesn't post.
+        // which checks a pull request in CI or locally but doesn't post. It
+        // re-exports GitDiffKit and PullRequestHosting, so a Dangerfile
+        // imports only Steward.
         .target(
             name: "Steward",
             dependencies: [
@@ -104,14 +106,11 @@ let package = Package(
         // A Dangerfile as a repository would write one, built for the
         // end-to-end tests, which run it as its own process and import its
         // rules. Not a product, so packages that depend on this one never
-        // build it.
+        // build it. It depends on Steward alone, as a Dangerfile would, so it
+        // only builds while Steward re-exports what a rule reads.
         .executableTarget(
             name: "DangerfileFixture",
-            dependencies: [
-                "Steward",
-                .product(name: "GitDiffKit", package: "git-diff-parser"),
-                "PullRequestHosting",
-            ],
+            dependencies: ["Steward"],
             path: "Tests/DangerfileFixture",
             swiftSettings: swiftSettings
         ),
