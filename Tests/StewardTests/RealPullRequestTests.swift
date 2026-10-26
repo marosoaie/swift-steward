@@ -43,7 +43,7 @@ struct RealPullRequestTests {
         try oracle.verify(context.git, base: base)
         try oracle.verify(context.run.lineMap, head: head, built: merge)
         #expect(context.git.commits.map(\.sha) == (try Self.recordedCommits(name)))
-        Self.expectGitHubCounts(of: context)
+        context.expectCountsMatchGitHub()
     }
 
     @Test("the payloads Actions wrote for swift-steward#21 build its context", arguments: [
@@ -68,7 +68,7 @@ struct RealPullRequestTests {
         #expect(context.pullRequest.number == 21)
         #expect(context.pullRequest.isDraft)
         #expect(context.run.lineMap == .identity)
-        Self.expectGitHubCounts(of: context)
+        context.expectCountsMatchGitHub()
     }
 
     /// docs/danger.md, section 3: had git-diff-parser#2 landed before #1,
@@ -124,23 +124,5 @@ struct RealPullRequestTests {
             throw FixtureError("no fixture Fixtures/pulls/\(name).commits")
         }
         return try String(contentsOf: url, encoding: .utf8).split(separator: "\n").map(String.init)
-    }
-
-    /// GitHub's own sizes, from the payload, against the diff and log.
-    private static func expectGitHubCounts(
-        of context: Context,
-        sourceLocation: SourceLocation = #_sourceLocation
-    ) {
-        let lines = context.git.diff.files.flatMap { $0.lines }
-        #expect(context.git.commits.count == context.pullRequest.commits, sourceLocation: sourceLocation)
-        #expect(context.git.diff.files.count == context.pullRequest.changedFiles, sourceLocation: sourceLocation)
-        #expect(
-            lines.count { $0.info.kind == .addition } == context.pullRequest.additions,
-            sourceLocation: sourceLocation
-        )
-        #expect(
-            lines.count { $0.info.kind == .deletion } == context.pullRequest.deletions,
-            sourceLocation: sourceLocation
-        )
     }
 }
