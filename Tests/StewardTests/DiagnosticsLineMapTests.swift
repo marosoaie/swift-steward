@@ -84,9 +84,12 @@ struct DiagnosticsLineMapTests {
     @Test("a finding's text is the escaped message and the rule as a code span, either alone if the other is empty")
     func findingText() {
         let finding = { (message: String, rule: String?) in
-            ChangedLineDiagnostics.finding(for: MatchedDiagnostic(
-                path: "a.swift", line: 1, column: 2, severity: .note, message: message, rule: rule
-            )).text
+            ChangedLineDiagnostics.finding(
+                for: MatchedDiagnostic(
+                    path: "a.swift", line: 1, column: 2, severity: .note, message: message, rule: rule
+                ),
+                failingOn: .error
+            ).text
         }
         #expect(finding("a *b*", "r`s") == "a \\*b\\* (``r`s``)")
         #expect(finding("", "r") == "`r`")

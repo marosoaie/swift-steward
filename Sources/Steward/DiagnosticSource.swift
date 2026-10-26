@@ -1,5 +1,5 @@
 /// A build log or a linter's report that the workflow already wrote, for
-/// `Rule.diagnosticsOnChangedLines(in:)` to read.
+/// `Rule.diagnosticsOnChangedLines(in:failingOn:)` to read.
 ///
 /// ```swift
 /// Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log"), .swiftLint("swiftlint.log")])

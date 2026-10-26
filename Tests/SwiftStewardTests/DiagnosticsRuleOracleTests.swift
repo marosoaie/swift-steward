@@ -30,29 +30,50 @@ struct DiagnosticsRuleOracleTests {
     )
     func matchesFilter(tool: String, workspace: String) async throws {
         let diff = try await RealWorldFixtureStore.localDiffURL(for: .swiftArgumentParser)
-        let fixtures = try #require(Bundle.module.url(forResource: "Fixtures", withExtension: nil))
-        let log = fixtures.appendingPathComponent("swift-argument-parser-1.5.0/\(try #require(Self.logs[tool]))").path
+        let log = try Self.log(for: tool)
         let output = try CommandLineTool.run(arguments: [
             "filter", log, "--diff", diff.path, "--tool", tool, "--format", "json", "--repo-root", workspace,
         ])
         let matched = try JSONDecoder().decode([MatchedDiagnostic].self, from: output)
 
-        let source: DiagnosticSource = switch tool {
-        case "xcodebuild": .xcodebuild(log)
-        case "swiftlint": .swiftLint(log)
-        case "swiftformat": .swiftFormat(log)
-        default: .sonar(log)
-        }
-        let rule = Rule.diagnosticsOnChangedLines(in: [source])
+        let rule = Rule.diagnosticsOnChangedLines(in: [Self.source(tool, log)])
         let context = try Self.context(diff: diff, workspace: workspace)
         let findings = try await [rule].findings(in: context, log: .discarding)
 
         #expect(!matched.isEmpty)
         #expect(findings == matched.map { diagnostic in
-            var finding = ChangedLineDiagnostics.finding(for: diagnostic)
+            var finding = ChangedLineDiagnostics.finding(for: diagnostic, failingOn: .error)
             finding.rule = rule.name
             return finding
         })
+    }
+
+    @Test(
+        "failing on a severity, the rule fails exactly when filter --fail-on does, on the diagnostics at or above it",
+        arguments: ["xcodebuild", "swiftlint", "swiftformat", "sonar"],
+        [DiagnosticSeverity.note, .warning, .error]
+    )
+    func failsOn(tool: String, severity: DiagnosticSeverity) async throws {
+        let diff = try await RealWorldFixtureStore.localDiffURL(for: .swiftArgumentParser)
+        let log = try Self.log(for: tool)
+        let workspace = "/ci/swift-argument-parser"
+        let rule = Rule.diagnosticsOnChangedLines(in: [Self.source(tool, log)], failingOn: severity)
+        let context = try Self.context(diff: diff, workspace: workspace)
+        let findings = try await [rule].findings(in: context, log: .discarding)
+        let failures = findings.filter { $0.kind == .failure }
+
+        // `run` throws unless filter exits as the rule's failures say it should.
+        let output = try CommandLineTool.run(
+            arguments: [
+                "filter", log, "--diff", diff.path, "--tool", tool, "--format", "json", "--repo-root", workspace,
+                "--fail-on", "\(severity)",
+            ],
+            exitCode: failures.isEmpty ? 0 : 1
+        )
+        let matched = try JSONDecoder().decode([MatchedDiagnostic].self, from: output)
+        #expect(failures.map(\.location) == matched
+            .filter { DiagnosticSeverity($0.severity) >= severity }
+            .map { Location(path: $0.path, line: $0.line) })
     }
 
     @Test(
@@ -63,6 +84,21 @@ struct DiagnosticsRuleOracleTests {
         let bytes = [UInt8](try Data(contentsOf: try await RealWorldFixtureStore.localDiffURL(for: fixture)))
         let changes = GitChanges(diff: Diff(diff: bytes), commits: [], mergeBase: "a", head: "b")
         #expect(changes.addedLines == ChangedLines(diff: String(decoding: bytes, as: UTF8.self)))
+    }
+
+    /// The real swift-argument-parser report `tool` reads.
+    private static func log(for tool: String) throws -> String {
+        let fixtures = try #require(Bundle.module.url(forResource: "Fixtures", withExtension: nil))
+        return fixtures.appendingPathComponent("swift-argument-parser-1.5.0/\(try #require(logs[tool]))").path
+    }
+
+    private static func source(_ tool: String, _ log: String) -> DiagnosticSource {
+        switch tool {
+        case "xcodebuild": .xcodebuild(log)
+        case "swiftlint": .swiftLint(log)
+        case "swiftformat": .swiftFormat(log)
+        default: .sonar(log)
+        }
     }
 
     /// A pull request whose changes are the diff at `diff`, built at its

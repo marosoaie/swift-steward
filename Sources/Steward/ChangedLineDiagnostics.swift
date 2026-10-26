@@ -3,43 +3,63 @@ import DiffDiagnostics
 import Foundation
 import GitDiffKit
 
-/// The work behind `Rule.diagnosticsOnChangedLines(in:)` (docs/danger.md,
-/// section 3): each source's diagnostics, mapped from the tree it was built
-/// from to the head commit, and matched against the lines the pull request
-/// adds.
+/// The work behind `Rule.diagnosticsOnChangedLines(in:failingOn:)`
+/// (docs/danger.md, section 3): each source's diagnostics, mapped from the
+/// tree it was built from to the head commit, and matched against the
+/// lines the pull request adds.
 enum ChangedLineDiagnostics {
-    /// The findings of every source, in the sources' order, with what
-    /// became of each source's diagnostics logged.
-    static func findings(for sources: [DiagnosticSource], in context: Context, log: Log) async throws -> [Finding] {
+    /// The findings of every source, in the sources' order, failures at or
+    /// above `threshold`, with what became of each source's diagnostics
+    /// logged.
+    static func findings(
+        for sources: [DiagnosticSource],
+        failingOn threshold: DiagnosticSeverity,
+        in context: Context,
+        log: Log
+    ) async throws -> [Finding] {
         let changes = context.git.addedLines
         let lineMaps = await lineMaps(for: sources, in: context)
         var findings: [Finding] = []
         // Imperative: each source awaits its read, which `reduce` can't.
         for source in sources {
             try Task.checkCancellation()
-            findings += await self.findings(for: source, in: context, changes: changes, lineMaps: lineMaps, log: log)
+            let result = await diagnosticsOnChangedLines(
+                of: source,
+                in: context,
+                changes: changes,
+                lineMaps: lineMaps,
+                log: log
+            )
+            switch result {
+            case .success(let matched): findings += matched.map { finding(for: $0, failingOn: threshold) }
+            case .failure(let unreadable): findings.append(.failure(unreadable.text))
+            }
         }
         return findings
     }
 
-    private static func findings(
-        for source: DiagnosticSource,
+    /// The source's diagnostics on lines the pull request adds, at their
+    /// head locations, or why the source couldn't be read.
+    private static func diagnosticsOnChangedLines(
+        of source: DiagnosticSource,
         in context: Context,
         changes: ChangedLines,
         lineMaps: [String: Result<LineMap, LineMapError>],
         log: Log
-    ) async -> [Finding] {
+    ) async -> Result<[MatchedDiagnostic], UnreadableSource> {
         let lineMap: LineMap
         switch source.builtCommit.flatMap({ lineMaps[$0] }) ?? .success(context.run.lineMap) {
         case .success(let map): lineMap = map
-        case .failure(let error): return [.failure(error.text(for: source))]
+        case .failure(let error): return .failure(UnreadableSource(text: error.text(for: source)))
         }
         let diagnostics: [Diagnostic]
         do {
             diagnostics = try await source.diagnostics(relativeTo: context.run.workspace)
         } catch {
             let reason = Markdown.escaped(String(errorDescription: error))
-            return [.failure("Couldn't read the \(source.kind) \(Markdown.codeSpan(source.path)): \(reason)")]
+            return .failure(UnreadableSource(
+                text: "Couldn't read the \(source.kind) \(Markdown.codeSpan(source.path)): \(reason)"
+            ))
         }
         let (matched, dropped) = Self.matched(
             diagnostics,
@@ -51,7 +71,12 @@ enum ChangedLineDiagnostics {
             \(source.kind) \(source.path): \(count(diagnostics.count, "diagnostic")), \
             \(matched.count) on changed lines, \(dropped) dropped for lines the head commit doesn't have
             """)
-        return matched.map(finding(for:))
+        return .success(matched)
+    }
+
+    /// A source that gave no diagnostics, with its failure finding's text.
+    private struct UnreadableSource: Error {
+        let text: String
     }
 
     /// Why a source's commit has no line map.
@@ -156,15 +181,17 @@ enum ChangedLineDiagnostics {
         }
     }
 
-    /// A finding at the diagnostic's head location: a failure for an error,
-    /// a warning for a warning, and a message for a note. Its text is the
-    /// tool's message, escaped, so nothing in a log renders as Markdown or
-    /// HTML, or mentions anyone; and the rule, if any, as a code span.
-    static func finding(for diagnostic: MatchedDiagnostic) -> Finding {
-        let kind: Finding.Kind = switch diagnostic.severity {
-        case .error: .failure
-        case .warning: .warning
-        case .note: .message
+    /// A finding at the diagnostic's head location: a failure at or above
+    /// `threshold`, and below it a warning for a warning and a message for
+    /// a note. Its text is the tool's message, escaped, so nothing in a log
+    /// renders as Markdown or HTML, mentions anyone, or links an issue; and
+    /// the rule, if any, as a code span.
+    static func finding(for diagnostic: MatchedDiagnostic, failingOn threshold: DiagnosticSeverity) -> Finding {
+        let severity = DiagnosticSeverity(diagnostic.severity)
+        let kind: Finding.Kind = if severity >= threshold {
+            .failure
+        } else {
+            severity == .warning ? .warning : .message
         }
         let message = Markdown.escaped(diagnostic.message)
         let text = switch (message.isEmpty, diagnostic.rule.map(Markdown.codeSpan)) {

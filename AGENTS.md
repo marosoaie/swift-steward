@@ -43,9 +43,9 @@ spec fixes, and how to update them.
 So far it has the DSL (`Rule`, `Finding`, the `Dangerfile` protocol), the
 `Context` it builds from the GitHub Actions variables, the event payload
 and the local checkout, the runner, and the built-in rule
-`Rule.diagnosticsOnChangedLines(in:)`, which maps a build's diagnostics
-to the head and keeps the ones on changed lines, as `steward filter`
-does. In CI the runner writes the report and the job summary, and
+`Rule.diagnosticsOnChangedLines(in:failingOn:)`, which maps a build's
+diagnostics to the head and keeps the ones on changed lines, as
+`steward filter` does. In CI the runner writes the report and the job summary, and
 anywhere else it's a dry run that prints the summary. It doesn't post
 yet. It runs
 git with every output-shaping option pinned, so a user's configuration

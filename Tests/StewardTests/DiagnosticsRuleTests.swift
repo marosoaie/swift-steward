@@ -54,13 +54,16 @@ struct DiagnosticsRuleTests {
         }
     }
 
-    /// The rule's findings and what it logged, run as the runner runs it.
+    /// The rule's findings and what it logged, run as the runner runs it,
+    /// failing on `severity`, or by default when that's nil.
     private func run(
         _ sources: [DiagnosticSource],
+        failingOn severity: DiagnosticSeverity? = nil,
         in context: Context = .stub(diff: diff)
     ) async throws -> (findings: [Finding], log: [String]) {
         let console = RecordingConsole()
-        let rule = Rule.diagnosticsOnChangedLines(in: sources)
+        let rule = severity.map { Rule.diagnosticsOnChangedLines(in: sources, failingOn: $0) }
+            ?? Rule.diagnosticsOnChangedLines(in: sources)
         let findings = try await [rule].findings(in: context, log: Log(mode: .dryRun, console: console.console))
         let log = await console.finish().map { entry in
             switch entry {
@@ -106,21 +109,43 @@ struct DiagnosticsRuleTests {
         ])
     }
 
+    /// An error, a warning, and a note, each on an added line.
+    private static let severitiesLog = """
+        Sources/A.swift:2:1: error: cannot find 'x' in scope
+        Sources/A.swift:4:1: warning: unused variable 'y' [-Wunused-variable]
+        Sources/B.swift:1:1: note: did you mean 'z'?
+
+        """
+
     @Test("an error fails the check, a warning warns, and a note informs")
     func severities() async throws {
         let reports = try Reports()
         defer { reports.remove() }
-        let path = try reports.write("""
-            Sources/A.swift:2:1: error: cannot find 'x' in scope
-            Sources/A.swift:4:1: warning: unused variable 'y' [-Wunused-variable]
-            Sources/B.swift:1:1: note: did you mean 'z'?
-
-            """, to: "build.log")
+        let path = try reports.write(Self.severitiesLog, to: "build.log")
 
         let (findings, _) = try await run([.xcodebuild(path)])
         #expect(findings.map(\.kind) == [.failure, .warning, .message])
         #expect(findings.map(\.text) == [
             "cannot find 'x' in scope", "unused variable 'y' (`-Wunused-variable`)", "did you mean 'z'?",
+        ])
+    }
+
+    @Test("failing on a severity fails on it and every severity above it, as filter --fail-on does", arguments: [
+        (DiagnosticSeverity.error, [Finding.Kind.failure, .warning, .message]),
+        (.warning, [.failure, .failure, .message]),
+        (.note, [.failure, .failure, .failure]),
+    ])
+    func failingOn(severity: DiagnosticSeverity, kinds: [Finding.Kind]) async throws {
+        let reports = try Reports()
+        defer { reports.remove() }
+        let path = try reports.write(Self.severitiesLog, to: "build.log")
+
+        let (findings, _) = try await run([.xcodebuild(path)], failingOn: severity)
+        #expect(findings.map(\.kind) == kinds)
+        #expect(findings.map(\.location) == [
+            Location(path: "Sources/A.swift", line: 2),
+            Location(path: "Sources/A.swift", line: 4),
+            Location(path: "Sources/B.swift", line: 1),
         ])
     }
 

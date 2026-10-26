@@ -105,7 +105,7 @@ struct DiagnosticsRuleEndToEndTests {
             "--tool", "swiftlint", "--format", "json", "--repo-root", scenario.repository.path,
         ])
         return try JSONDecoder().decode([MatchedDiagnostic].self, from: output).map { diagnostic in
-            var finding = ChangedLineDiagnostics.finding(for: diagnostic)
+            var finding = ChangedLineDiagnostics.finding(for: diagnostic, failingOn: .error)
             finding.rule = rule
             return finding
         }
