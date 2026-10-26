@@ -19,7 +19,9 @@ dependency direction:
 `GitDiffKit` and `BuildLogKit` must never import each other; only
 `DiffDiagnostics` couples them. `StreamParsing` is an internal target
 (chunk-to-line splitting, shared via the `package` access level) — never
-expose it as a product. Libraries take no third-party dependencies;
+expose it as a product. `StewardVersion` is another: the release version,
+one constant that `steward --version` and `Steward`'s reports both read.
+Libraries take no third-party dependencies;
 swift-argument-parser is allowed in the CLI target only, and Apple's
 swift-openapi-runtime and swift-openapi-urlsession in the `GitHubAPI`
 target only.
@@ -37,10 +39,17 @@ spec fixes, and how to update them.
 
 `Steward` (not a product yet) is the pure-Swift Danger replacement that
 [docs/danger.md](docs/danger.md) designs, on top of `GitDiffKit`,
-`PullRequestHosting` and `GitHubAPI`. So far it builds a run's `Context`
-from the GitHub Actions variables, the event payload and the local
-checkout, with no API call. It runs git with every output-shaping option
-pinned, so a user's configuration can't change what it parses.
+`PullRequestHosting` and `GitHubAPI`. So far it has the DSL (`Rule`,
+`Finding`, the `Dangerfile` protocol), the `Context` it builds from the
+GitHub Actions variables, the event payload and the local checkout, and
+the runner: in CI it writes the report and the job summary, and anywhere
+else it's a dry run that prints the summary. It doesn't post yet. It runs
+git with every output-shaping option pinned, so a user's configuration
+can't change what it parses. It re-exports `GitDiffKit` and
+`PullRequestHosting`, so a Dangerfile imports only `Steward`.
+`DangerfileFixture`, under `Tests/`, is a test-only executable target: a
+Dangerfile the end-to-end tests run as a process, and which depends on
+`Steward` alone, as a user's would.
 
 `GitDiffKit` comes from the first-party git-diff-parser package, pinned to
 tagged versions (`from:`) only, never a branch or revision: SwiftPM rejects
@@ -173,10 +182,11 @@ iteration), never narration of the next line.
   clone this repo, and LFS breaks checkouts on machines with missing or
   misconfigured `git-lfs`. Big test fixtures are downloaded and cached at
   test time instead.
-- Releases: bump `CommandConfiguration.version` via PR, then run the
-  "Release" workflow (Actions tab) with the matching semver number and
-  branch. It tests, packages the arm64 binary, tags `vX.Y.Z`, publishes a
-  GitHub release with generated notes, and pins the Homebrew formula in
-  marosoaie/homebrew-tap to the new tag (via the `TAP_DEPLOY_KEY` secret).
+- Releases: bump `Release.version` (in `Sources/StewardVersion`) via PR,
+  then run the "Release" workflow (Actions tab) with the matching semver
+  number and branch. It tests, packages the arm64 binary, tags `vX.Y.Z`,
+  publishes a GitHub release with generated notes, and pins the Homebrew
+  formula in marosoaie/homebrew-tap to the new tag (via the
+  `TAP_DEPLOY_KEY` secret).
   The maintainer drives version numbers — never change the version outside
   this procedure.

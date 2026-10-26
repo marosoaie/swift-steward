@@ -38,6 +38,13 @@ let package = Package(
             name: "StreamParsing",
             swiftSettings: swiftSettings
         ),
+        // The release version, in one place: `steward --version` prints it
+        // and Steward's reports name it, so a release bumps it once. Internal
+        // to the package (not a product), like StreamParsing.
+        .target(
+            name: "StewardVersion",
+            swiftSettings: swiftSettings
+        ),
         // Build/lint logs → diagnostics, with tool-specific parsers for
         // xcodebuild, SwiftLint, and SwiftFormat.
         .target(
@@ -63,6 +70,7 @@ let package = Package(
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",
                 "DiffDiagnostics",
+                "StewardVersion",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
             swiftSettings: swiftSettings
@@ -90,22 +98,43 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         // Steward, the pure-Swift Danger (docs/danger.md). Not a product
-        // yet: so far it has the context rules see; the runner comes next.
+        // yet: so far it has the DSL, the context rules see, and the runner,
+        // which checks a pull request in CI or locally but doesn't post. It
+        // re-exports GitDiffKit and PullRequestHosting, so a Dangerfile
+        // imports only Steward.
         .target(
             name: "Steward",
             dependencies: [
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "PullRequestHosting",
                 "GitHubAPI",
+                "StewardVersion",
             ],
+            swiftSettings: swiftSettings
+        ),
+        // A Dangerfile as a repository would write one, built for the
+        // end-to-end tests, which run it as its own process and import its
+        // rules. Not a product, so packages that depend on this one never
+        // build it. It depends on Steward alone, as a Dangerfile would, so it
+        // only builds while Steward re-exports what a rule reads.
+        .executableTarget(
+            name: "DangerfileFixture",
+            dependencies: ["Steward"],
+            path: "Tests/DangerfileFixture",
             swiftSettings: swiftSettings
         ),
         .testTarget(
             name: "StewardTests",
             dependencies: [
                 "Steward",
+                "DangerfileFixture",
+                "StewardVersion",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "PullRequestHosting",
+                // Hosts on fixture transports, so a run's requests are
+                // checked, and a dry run is shown to make none.
+                "GitHubAPI",
+                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
             ],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings
@@ -128,6 +157,7 @@ let package = Package(
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",
                 "DiffDiagnostics",
+                "StewardVersion",
             ],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings

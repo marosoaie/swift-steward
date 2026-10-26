@@ -1,3 +1,4 @@
+@testable import DangerfileFixture
 import Foundation
 import PullRequestHosting
 @testable import Steward
@@ -7,8 +8,9 @@ import Testing
 /// environment, payload and checkout Actions set up for real.
 ///
 /// Runs only in a `pull_request` workflow run. The macOS job checks out
-/// with `fetch-depth: 0`, so its context is checked against git; the Linux
-/// job's checkout has depth 1, so the context must refuse it.
+/// with `fetch-depth: 0`, so its context, and what the fixture Dangerfile
+/// run as a process reports, are checked against git; the Linux job's
+/// checkout has depth 1, so the context and the run must refuse it.
 @Suite(
     "This pull request's own Actions run",
     .enabled(if: ProcessInfo.processInfo.environment["GITHUB_ACTIONS"] == "true"),
@@ -41,6 +43,58 @@ struct ActionsRunTests {
         context.expectCountsMatchGitHub()
     }
 
+    @Test("the fixture Dangerfile, run here as a workflow runs it, reports what git finds", .enabled(if: !isShallow))
+    func fixtureDangerfile() throws {
+        let path = try #require(Self.environment["GITHUB_EVENT_PATH"])
+        let object = try JSONSerialization.jsonObject(with: Data(contentsOf: URL(fileURLWithPath: path)))
+        let payload = EventPayload(object: try #require(object as? [String: Any]))
+        let base = try payload.sha(of: "base")
+        let head = try payload.sha(of: "head")
+        let oracle = GitOracle(directory: try #require(Self.environment["GITHUB_WORKSPACE"]))
+        // GitHub's order, which RealPullRequestTests holds Steward to.
+        let commits = try oracle.text(["rev-list", "--reverse", "--date-order", "\(base)..\(head)"])
+            .split(separator: "\n").map(String.init)
+        let title = try #require(payload.pullRequestField("title") as? String)
+        let expectation = try FixtureExpectation(
+            oracle: oracle,
+            base: base,
+            head: head,
+            counts: FixtureExpectation.Counts(payload: payload),
+            commits: commits,
+            asksToThrow: title.contains(FixtureChecks.throwMarker)
+        )
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("steward-tests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let summaryURL = directory.appendingPathComponent("summary.md")
+        try Data().write(to: summaryURL)
+        // Not the job's own summary, which would show the fixture's
+        // findings, failures included, on a green run.
+        var environment = Self.environment
+        environment["GITHUB_STEP_SUMMARY"] = summaryURL.path
+        let outcome = try FixtureDangerfile.run(["--report", "report.json"], environment: environment, in: directory)
+
+        let repository = try #require(Self.environment["GITHUB_REPOSITORY"])
+        let number = try #require(payload.pullRequestField("number") as? Int)
+        let expected = expectation.report(repository: repository, pullRequest: number, head: head)
+        #expect(outcome.status == expectation.status, "\(outcome.log)")
+        let report = try JSONDecoder().decode(
+            Report.self,
+            from: Data(contentsOf: directory.appendingPathComponent("report.json"))
+        )
+        #expect(report == expected)
+        let serverURL = try #require(URL(string: Self.environment["GITHUB_SERVER_URL"] ?? ""))
+        let runID = try #require(Self.environment["GITHUB_RUN_ID"])
+        let summary = Summary(
+            report: expected,
+            serverURL: serverURL,
+            origin: .workflowRun(serverURL.appendingPathComponent("\(repository)/actions/runs/\(runID)")),
+            unlinkedPaths: expectation.unlinkedPaths
+        )
+        #expect(String(decoding: try Data(contentsOf: summaryURL), as: UTF8.self) == summary.text)
+    }
+
     @Test("a depth-1 checkout is refused with the history it lacks", .enabled(if: isShallow))
     func shallowHistory() async throws {
         let error = await #expect(throws: ContextError.self) {
@@ -52,5 +106,19 @@ struct ActionsRunTests {
         }
         #expect(isHistoryError, "\(error.map(String.init(describing:)) ?? "no error")")
         #expect(error?.description.contains("fetch-depth: 0") == true)
+    }
+
+    @Test("the fixture Dangerfile, run here on a depth-1 checkout, exits 2 with the fix", .enabled(if: isShallow))
+    func shallowFixtureDangerfile() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("steward-tests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        var environment = Self.environment
+        environment["GITHUB_STEP_SUMMARY"] = directory.appendingPathComponent("summary.md").path
+        let outcome = try FixtureDangerfile.run([], environment: environment, in: directory)
+        #expect(outcome.status == 2)
+        #expect(outcome.log.contains("::error title=Steward::"))
+        #expect(outcome.log.contains("fetch-depth: 0"))
     }
 }

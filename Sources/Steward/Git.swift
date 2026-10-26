@@ -85,6 +85,12 @@ struct Git: Sendable {
         let (collected, message) = try await (output, errors)
         // Never nil: the handler yields before it finishes the stream.
         let status = await exits.first { _ in true } ?? -1
+        #if !canImport(Darwin)
+        // Returns at once, as git has exited, and is what lets
+        // swift-corelibs-foundation free the Process: until it runs, the
+        // Process and its run loop source retain each other.
+        process.waitUntilExit()
+        #endif
         return Outcome(output: collected, status: status, standardError: String(decoding: message, as: UTF8.self))
     }
 
@@ -111,6 +117,10 @@ struct Git: Sendable {
         into initial: Output,
         consume: (inout Output, ArraySlice<UInt8>) -> Void
     ) throws -> Output {
+        // Now, not when the pipe is freed: on Linux a leaked Process keeps
+        // its pipes, and `Process.run()` crashes once about 1,360
+        // descriptors are open.
+        defer { try? handle.close() }
         var output = initial
         // Imperative: each read decides whether there is another.
         while let chunk = try nextChunk(of: handle) {
