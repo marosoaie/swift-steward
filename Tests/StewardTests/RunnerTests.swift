@@ -266,7 +266,7 @@ struct RunnerTests {
             status: status,
             output: output,
             log: log,
-            jobSummary: try summaryURL.map { String(decoding: try Data(contentsOf: $0), as: UTF8.self) },
+            jobSummary: summaryURL.flatMap { try? Data(contentsOf: $0) }.map { String(decoding: $0, as: UTF8.self) },
             report: try reportData.map { try JSONDecoder().decode(Report.self, from: $0) },
             requests: await github.requests.map(\.description),
             comments: await github.comments

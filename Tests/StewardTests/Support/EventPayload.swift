@@ -53,16 +53,18 @@ struct EventPayload {
         return payload
     }
 
-    /// The payload with its pull request's head branch in `repository`, as
-    /// a fork's is.
-    func headRepository(_ repository: String) -> EventPayload {
+    /// The payload with its pull request's `base` or `head` branch, or
+    /// both, in `repository`: a fork's head is in another one.
+    func repository(_ repository: String, of branches: String...) -> EventPayload {
         var payload = self
         var pullRequest = object["pull_request"] as? [String: Any] ?? [:]
-        var head = pullRequest["head"] as? [String: Any] ?? [:]
-        var repo = head["repo"] as? [String: Any] ?? [:]
-        repo["full_name"] = repository
-        head["repo"] = repo
-        pullRequest["head"] = head
+        branches.forEach { branch in
+            var fields = pullRequest[branch] as? [String: Any] ?? [:]
+            var repo = fields["repo"] as? [String: Any] ?? [:]
+            repo["full_name"] = repository
+            fields["repo"] = repo
+            pullRequest[branch] = fields
+        }
         payload.object["pull_request"] = pullRequest
         return payload
     }

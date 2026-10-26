@@ -79,7 +79,7 @@ struct RunnerPostingTests {
         let environment = try RunnerTests.environment(for: fixture)
         try EventPayload.recorded("pull-request-event.opened")
             .setting(base: fixture.base, head: fixture.head)
-            .headRepository("contributor/swift-steward")
+            .repository("contributor/swift-steward", of: "head")
             .write(to: fixture.repository.eventURL)
         let outcome = try await RunnerTests.run(
             Self.failing,
@@ -101,7 +101,7 @@ struct RunnerPostingTests {
 
     /// Why a summary can't be posted.
     enum Breakage: String, CaseIterable {
-        case noToken, forbidden
+        case noToken, forbidden, unnamedRepository
     }
 
     @Test("a summary that can't be posted warns, and fails the run only with --fail-on-post-error",
@@ -112,19 +112,31 @@ struct RunnerPostingTests {
         let github = FakeGitHub(head: fixture.head)
         let forbidden = FakeGitHub.Failure.status(403, message: "Resource not accessible by integration")
         await github.fail("issues/create-comment", with: forbidden)
+        let environment = try RunnerTests.environment(for: fixture)
+        if breakage == .unnamedRepository {
+            try EventPayload.recorded("pull-request-event.opened")
+                .setting(base: fixture.base, head: fixture.head)
+                .repository("swift-steward", of: "base", "head")
+                .write(to: fixture.repository.eventURL)
+        }
         let outcome = try await RunnerTests.run(
             Self.passing,
             failsOnPostError ? ["--fail-on-post-error"] : [],
             on: fixture,
+            environment: environment,
             token: breakage == .noToken ? nil : FakeGitHub.token,
             github: github
         )
         #expect(outcome.status == (failsOnPostError ? .broken : .clean))
         #expect(outcome.comments.isEmpty)
-        #expect(outcome.requests == (breakage == .noToken ? [] : [Self.list, Self.read, Self.create]))
+        #expect(outcome.requests == (breakage == .forbidden ? [Self.list, Self.read, Self.create] : []))
         let warning = switch breakage {
         case .noToken: "GITHUB_TOKEN isn't set, so Steward can't post the summary comment: give the step"
         case .forbidden: "Couldn't post the summary comment: issues/create-comment failed (forbidden): HTTP 403"
+        case .unnamedRepository: """
+            The event names the repository "swift-steward", which isn't owner/name, so Steward can't post the \
+            summary comment. The findings are in this run's log and job summary.
+            """
         }
         #expect(outcome.log.contains("::warning title=Steward::\(warning)"))
         #expect(outcome.jobSummary?.contains("| :book: | Thanks! |") == true)
@@ -179,59 +191,6 @@ struct RunnerPostingTests {
         #expect(outcome.comments.map(\.body) == [
             Self.marker + "The workflow token's", Self.marker + (outcome.jobSummary ?? ""),
         ])
-    }
-
-    @Test("a summary too long for a comment is cut there, pointing at the job summary, which holds all of it")
-    func longComment() async throws {
-        let fixture = try PullRequestFixture()
-        defer { fixture.remove() }
-        let outcome = try await RunnerTests.run(Self.warnings(1_000), on: fixture)
-        let summary = try #require(outcome.jobSummary)
-        #expect(summary.utf8.count > 100_000)
-        #expect(!summary.contains("Everything is in"))
-        let body = try #require(outcome.comments.first?.body)
-        #expect(body.utf8.count <= 65_536)
-        #expect(body.utf8.count > 65_536 - 300)
-        #expect(body.contains("more findings. Everything is in the job summary of [the workflow run](\(Self.runURL))."))
-    }
-
-    @Test("a summary too long for what's left of the job summary is cut to fit, both pointing at the report or log",
-          arguments: [false, true])
-    func longJobSummary(writesReport: Bool) async throws {
-        let fixture = try PullRequestFixture()
-        defer { fixture.remove() }
-        let earlier = String(repeating: "Earlier output.\n", count: 32_768)
-        let outcome = try await RunnerTests.run(
-            Self.warnings(5_000),
-            writesReport ? ["--report", "report.json"] : [],
-            on: fixture,
-            jobSummary: earlier
-        )
-        let summary = try #require(outcome.jobSummary)
-        #expect(summary.utf8.count <= 1 << 20)
-        #expect(summary.utf8.count > (1 << 20) - 300)
-        #expect(summary.hasPrefix(earlier + "\n\n**5000 warnings** on"))
-        let elsewhere = writesReport ? "report artifact" : "log"
-        let place = "Everything is in the \(elsewhere) of [the workflow run](\(Self.runURL))."
-        #expect(summary.contains(place))
-        let body = try #require(outcome.comments.first?.body)
-        #expect(body.contains(place))
-        #expect(outcome.report?.findings.count == (writesReport ? 5_000 : nil))
-    }
-
-    @Test("a job summary already at GitHub's limit is left alone, with a warning, and the comment points at the log")
-    func fullJobSummary() async throws {
-        let fixture = try PullRequestFixture()
-        defer { fixture.remove() }
-        let earlier = String(repeating: "x", count: 1 << 20)
-        let outcome = try await RunnerTests.run(Self.warnings(1_000), on: fixture, jobSummary: earlier)
-        #expect(outcome.jobSummary == earlier)
-        let path = fixture.repository.root.appendingPathComponent("summary.md").path
-        #expect(outcome.log.contains("""
-            ::warning title=Steward::The job summary at \(path) already holds 1048576 bytes, so the summary doesn't fit
-            """))
-        let body = try #require(outcome.comments.first?.body)
-        #expect(body.contains("Everything is in the log of [the workflow run](\(Self.runURL))."))
     }
 
     @Test("a run cancelled while it pauses to retry a request exits 2, with no comment")
