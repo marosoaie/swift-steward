@@ -163,5 +163,28 @@ struct ContextHistoryTests {
         }
         #expect(status == 128)
         #expect(message.contains("not a git repository"))
+        #expect(error?.description.contains("safe.directory") == false)
+    }
+
+    @Test("a checkout another user owns is a git failure that names the safe.directory fix")
+    func dubiousOwnership() async throws {
+        let (repository, _) = try TestRepository.singleCommit()
+        defer { repository.remove() }
+        // As root in a container sees the runner's checkout. Without global
+        // or system configuration, so no safe.directory there trusts it.
+        let git = Git(directory: repository.path, environment: ProcessInfo.processInfo.environment.merging([
+            "GIT_TEST_ASSUME_DIFFERENT_OWNER": "1", "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1",
+        ]) { $1 })
+        let error = await #expect(throws: ContextError.self) {
+            try await git.commit(named: "HEAD")
+        }
+        guard case .gitFailed(_, let status, let message) = error else {
+            Issue.record("expected gitFailed, got \(String(describing: error))")
+            return
+        }
+        #expect(status == 128)
+        #expect(message.contains("dubious ownership"))
+        let remedy = #"git config --global --add safe.directory "$GITHUB_WORKSPACE""#
+        #expect(error?.description.contains(remedy) == true, "\(error?.description ?? "")")
     }
 }

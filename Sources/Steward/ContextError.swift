@@ -77,6 +77,17 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
             """
         case .noMergeBase(let base, let head, isShallow: false):
             "The base commit \(base) and the head commit \(head) share no history."
+        // Matched on the setting's name, which git's own hint spells out in
+        // every language.
+        case .gitFailed(let arguments, let status, let message) where message.contains("safe.directory"):
+            """
+            git \(arguments.joined(separator: " ")) exited with status \(status): \(message)
+
+            The checkout belongs to a different user from the one running Steward, as in a \
+            container job, and git won't read it until it's trusted. That's a git safety \
+            check, so Steward leaves it to the workflow: run \
+            `git config --global --add safe.directory "$GITHUB_WORKSPACE"` before Steward.
+            """
         case .gitFailed(let arguments, let status, let message):
             "git \(arguments.joined(separator: " ")) exited with status \(status): \(message)"
         case .gitUnavailable(let reason):
