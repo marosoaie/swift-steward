@@ -71,6 +71,40 @@ struct RealPullRequestTests {
         context.expectCountsMatchGitHub()
     }
 
+    @Test("git-diff-parser#5 with its base on the shallow boundary is refused, not read as 37 commits")
+    func shallowBase() async throws {
+        let payload = try EventPayload.pullRequest("git-diff-parser-5")
+        let base = try payload.sha(of: "base")
+        let head = try payload.sha(of: "head")
+        let mirror = try RepositoryMirror.local("git-diff-parser", having: [base, head])
+        let clone = try TestRepository(cloning: mirror.path, options: ["--bare", "--shared"])
+        defer { clone.remove() }
+        // As a depth-limited fetch of the base leaves it; bare, so the
+        // repository's own folder.
+        try clone.write("\(base)\n", to: "shallow")
+        try payload.write(to: clone.eventURL)
+        let full = try await Context.actions(environment: [
+            "GITHUB_EVENT_NAME": "pull_request",
+            "GITHUB_EVENT_PATH": clone.eventURL.path,
+            "GITHUB_WORKSPACE": mirror.path,
+            "GITHUB_SHA": head,
+        ])
+        #expect(full.git.commits.count == 16)
+
+        let error = await #expect(throws: ContextError.self) {
+            try await Context.actions(environment: [
+                "GITHUB_EVENT_NAME": "pull_request",
+                "GITHUB_EVENT_PATH": clone.eventURL.path,
+                "GITHUB_WORKSPACE": clone.path,
+                "GITHUB_SHA": head,
+            ])
+        }
+        guard case .truncatedHistory(base, head, _)? = error else {
+            Issue.record("expected truncatedHistory, got \(String(describing: error))")
+            return
+        }
+    }
+
     /// docs/danger.md, section 3: had git-diff-parser#2 landed before #1,
     /// the merge tree CI built would have shifted #1's AGENTS.md lines by
     /// five.
