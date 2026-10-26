@@ -169,9 +169,9 @@ struct DiagnosticsRuleTests {
         ])
     }
 
-    @Test("a tool's text can't render as Markdown or HTML, or mention anyone", arguments: [
+    @Test("a tool's text can't render as Markdown or HTML, mention anyone, or link an issue", arguments: [
         "<img src=x onerror=alert(1)>", "**bold** _it_ ~gone~", "[click](https://example.com)", "cc @octocat",
-        "`code` & <!-- comment -->", "| a | b |",
+        "`code` & <!-- comment -->", "| a | b |", "fixes #12, GH-3 and owner/repo#4",
     ])
     func hostileText(message: String) async throws {
         let reports = try Reports()
