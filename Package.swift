@@ -11,6 +11,8 @@ let swiftSettings: [SwiftSetting] = [
 
 let package = Package(
     name: "swift-steward",
+    // GitDiffKit 0.2 needs the 26 releases, whose standard library has
+    // `Span`; Linux has no floor.
     platforms: [.macOS(.v26)],
     products: [
         .library(name: "BuildLogKit", targets: ["BuildLogKit"]),
