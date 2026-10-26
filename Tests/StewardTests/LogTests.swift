@@ -36,6 +36,7 @@ struct LogTests {
         "one\r::error::two",
         "\u{00A0}::warning::non-breaking space",
         "a ##[error]legacy syntax anywhere",
+        "##[\u{301}error]: [ and a combining mark are one Character",
     ])
     func pausedCommands(text: String) async {
         let recording = RecordingConsole()

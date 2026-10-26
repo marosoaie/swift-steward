@@ -151,6 +151,28 @@ struct RealPullRequestTests {
         try oracle.verify(context.run.lineMap, head: firstHead, built: built)
     }
 
+    // Another suite's tests can ask for a mirror at the same time; the
+    // race itself can't be produced on demand, so this runs the path.
+    @Test("mirror refreshes asked for in parallel take turns, each fetch finishing on its own")
+    func parallelRefreshes() async {
+        let absent = String(repeating: "0", count: 39) + "1"
+        let errors = await withTaskGroup(of: String.self) { group in
+            (0..<3).forEach { _ in
+                group.addTask {
+                    do {
+                        _ = try RepositoryMirror.local("git-diff-parser", having: [absent])
+                        return "found \(absent)"
+                    } catch {
+                        return String(describing: error)
+                    }
+                }
+            }
+            return await group.reduce(into: [String]()) { $0.append($1) }
+        }
+        #expect(errors.count == 3)
+        #expect(errors.allSatisfy { $0.contains("lacks \(absent) even after a fetch") }, "\(errors)")
+    }
+
     /// `swift-steward-17` → `swift-steward`.
     static func repository(of name: String) -> String {
         name.split(separator: "-").dropLast().joined(separator: "-")

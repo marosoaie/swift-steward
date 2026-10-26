@@ -77,7 +77,7 @@ struct Log: Sendable {
     /// which the runner finds anywhere in a line. Both line breaks count,
     /// as they do for the runner.
     static func couldHoldCommands(_ text: String) -> Bool {
-        text.contains("##[")
+        text.unicodeScalars.contains("##[".unicodeScalars)
             || text.unicodeScalars
                 .split(omittingEmptySubsequences: false) { $0 == "\n" || $0 == "\r" }
                 .contains { $0.drop { $0.properties.isWhitespace }.starts(with: "::".unicodeScalars) }

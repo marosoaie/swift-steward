@@ -21,22 +21,31 @@ enum Markdown {
     ///
     /// GitHub's table parser turns every `\|` back into `|` before it reads
     /// the cell's Markdown, so the cell renders as `text` would on its own,
-    /// a `\|` the text already had included.
+    /// a `\|` the text already had included. Pipes are found by scalar: a
+    /// `|` followed by a combining mark is one `Character`, but the parser
+    /// still splits the row at it.
     static func tableCell(_ text: String) -> String {
-        lines(of: text).map { $0.replacingOccurrences(of: "|", with: "\\|") }.joined(separator: "<br>")
+        lines(of: text).map { line in
+            String(line.unicodeScalars.flatMap { scalar -> [Unicode.Scalar] in
+                scalar == "|" ? ["\\", "|"] : [scalar]
+            }.map(Character.init))
+        }.joined(separator: "<br>")
     }
 
     /// `text` as a code span, which shows it verbatim: fenced by one more
     /// backtick than its longest run of them, and padded with spaces when
     /// it starts or ends with a backtick or a space, which the fence would
     /// otherwise swallow. Line breaks become spaces, as a code span shows
-    /// them anyway, so the span can sit in a table cell.
+    /// them anyway, so the span can sit in a table cell. Backticks are
+    /// counted by scalar, as the Markdown parser counts them, so one
+    /// followed by a combining mark still counts.
     static func codeSpan(_ text: String) -> String {
         let content = lines(of: text).joined(separator: " ")
-        let longestRun = content.split { $0 != "`" }.map(\.count).max() ?? 0
+        let scalars = content.unicodeScalars
+        let longestRun = scalars.split { $0 != "`" }.map(\.count).max() ?? 0
         let fence = String(repeating: "`", count: longestRun + 1)
-        let needsPadding = content.first.map { $0 == "`" || $0 == " " } == true
-            || content.last.map { $0 == "`" || $0 == " " } == true
+        let needsPadding = scalars.first.map { $0 == "`" || $0 == " " } == true
+            || scalars.last.map { $0 == "`" || $0 == " " } == true
         let padding = needsPadding ? " " : ""
         return fence + padding + content + padding + fence
     }

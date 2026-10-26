@@ -15,6 +15,8 @@ struct MarkdownTests {
         #expect(Markdown.tableCell("a|b\nc\r\nd\re\n") == #"a\|b<br>c<br>d<br>e<br>"#)
         #expect(Markdown.tableCell(#"already \| escaped"#) == #"already \\| escaped"#)
         #expect(Markdown.tableCell("").isEmpty)
+        // One Character, two scalars: GitHub still splits the row there.
+        #expect(Markdown.tableCell("a|\u{301}b") == "a\\|\u{301}b")
     }
 
     @Test("a code span fences past the text's backticks and keeps its edges", arguments: [
@@ -24,6 +26,10 @@ struct MarkdownTests {
         [" x", "`  x `"],
         ["two\nlines", "`two lines`"],
         ["", "``"],
+        // A backtick and a combining mark are one Character, but a backtick
+        // to the Markdown parser.
+        ["a`\u{301}b", "``a`\u{301}b``"],
+        ["`\u{301}x", "`` `\u{301}x ``"],
     ])
     func codeSpan(pair: [String]) {
         #expect(Markdown.codeSpan(pair[0]) == pair[1])

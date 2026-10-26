@@ -14,7 +14,10 @@ extension PullRequest {
         base: Branch,
         head: Branch
     ) -> PullRequest {
-        let lines = changes.diff.files.flatMap(\.lines)
+        // Per file, so the diff's compact line storage is never copied out.
+        func count(_ kind: LineInfo.Kind) -> Int {
+            changes.diff.files.reduce(0) { total, file in total + file.lines.count { $0.info.kind == kind } }
+        }
         // GitHub counts a type change (a file turned into a symlink, say)
         // once, though git's patch deletes and creates the path.
         let typeChanges = Set(changes.deletedFiles).intersection(changes.createdFiles).count
@@ -29,8 +32,8 @@ extension PullRequest {
             head: head,
             labels: [],
             webURL: "",
-            additions: lines.count { $0.info.kind == .addition },
-            deletions: lines.count { $0.info.kind == .deletion },
+            additions: count(.addition),
+            deletions: count(.deletion),
             changedFiles: changes.diff.files.count - typeChanges,
             commits: changes.commits.count
         )

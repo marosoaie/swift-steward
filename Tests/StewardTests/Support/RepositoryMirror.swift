@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Bare mirrors of this project's repositories on GitHub, cloned once into
 /// the fixture cache the other test targets use, and fetched again only
@@ -28,27 +29,34 @@ enum RepositoryMirror {
         #endif
     }
 
+    /// Held while a mirror is checked, cloned, or fetched: suites run in
+    /// parallel, `.serialized` only orders the tests inside one, and two
+    /// fetches into one mirror can fail on each other's ref locks.
+    private static let refreshing = Mutex(())
+
     /// The mirror of `marosoaie/<name>`, cloned or fetched so that it has
     /// every commit in `commits`.
     static func local(_ name: String, having commits: [String]) throws -> URL {
-        let mirror = directory.appendingPathComponent("\(name).git", isDirectory: true)
-        if !FileManager.default.fileExists(atPath: mirror.path) {
-            try clone(name, to: mirror)
+        try refreshing.withLock { _ in
+            let mirror = directory.appendingPathComponent("\(name).git", isDirectory: true)
+            if !FileManager.default.fileExists(atPath: mirror.path) {
+                try clone(name, to: mirror)
+            }
+            if try !missing(commits, in: mirror).isEmpty {
+                _ = try Subprocess.output(
+                    of: ["git", "-C", mirror.path, "fetch", "--quiet", "--prune", "origin"],
+                    environment: TestRepository.environment
+                )
+            }
+            let stillMissing = try missing(commits, in: mirror)
+            guard stillMissing.isEmpty else {
+                throw FixtureError("""
+                    \(mirror.path) lacks \(stillMissing.joined(separator: ", ")) even after a fetch from \
+                    github.com/marosoaie/\(name); delete the folder to clone it again
+                    """)
+            }
+            return mirror
         }
-        if try !missing(commits, in: mirror).isEmpty {
-            _ = try Subprocess.output(
-                of: ["git", "-C", mirror.path, "fetch", "--quiet", "--prune", "origin"],
-                environment: TestRepository.environment
-            )
-        }
-        let stillMissing = try missing(commits, in: mirror)
-        guard stillMissing.isEmpty else {
-            throw FixtureError("""
-                \(mirror.path) lacks \(stillMissing.joined(separator: ", ")) even after a fetch from \
-                github.com/marosoaie/\(name); delete the folder to clone it again
-                """)
-        }
-        return mirror
     }
 
     /// Clones into a temporary folder beside `mirror`, then moves it into
