@@ -1,8 +1,9 @@
 # Steward: a pure-Swift Danger
 
-**Status: reviewed (plan step 4.1).** Step 4.2 built the context, and
-step 4.3 the DSL, the runner, and the dry run; steps 4.4–4.10 build on
-what this document settles. Each section ends with
+**Status: reviewed (plan step 4.1).** Step 4.2 built the context,
+step 4.3 the DSL, the runner, and the dry run, and step 4.5 the built-in
+diagnostics rule; the other steps up to 4.10 build on what this document
+settles. Each section ends with
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
 recommended (7 with a documentation requirement added), the four
@@ -140,7 +141,7 @@ import Steward
 @main
 struct PullRequestChecks: Dangerfile {
     static var rules: [Rule] {
-        Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log"), .swiftLint("swiftlint.json")])
+        Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log"), .swiftLint("swiftlint.log")])
 
         Rule("Changelog") { context in
             guard !context.git.modifiedFiles.contains("CHANGELOG.md") else { return [] }
@@ -412,6 +413,18 @@ at the edge:
   head counterpart (they can't be on the pull request's changes, which
   exist in the head), and matches the rest against `context.git` with
   `DiagnosticMatcher`. Dropped diagnostics are counted in the log.
+
+  As built, a `DiagnosticSource` is `.xcodebuild`, `.swiftLint` (the
+  default `xcode` reporter, as `steward filter --tool swiftlint` reads
+  it), `.swiftFormat`, or `.sonar`, each with a path and an optional
+  `builtAt:`. A relative path starts from the workspace, and log paths
+  resolve as `filter --repo-root <workspace>` resolves them, against the
+  pull request's paths and the built paths the map knows. An error is a
+  failure, a warning a warning, and a note a message. The log says, for
+  each report, how many diagnostics it held, matched, and dropped. A
+  report that can't be read, or whose `builtAt:` commit the checkout
+  lacks, is one failure of the rule, and the other reports are still
+  read; content the parser doesn't recognize gives no diagnostics.
 
 Why not the others: B makes the summary disagree with the Files changed
 tab, and its links rot as soon as the merge ref moves. B is also what
@@ -768,7 +781,7 @@ of it. `context` is the rule closure's parameter.
 | `danger.github.reviews`, `.requestedReviewers` | – | Would need the API from rules; not in v1 |
 | `danger.github.api` (OctoKit) | – | The host isn't exposed to rules in v1 |
 | `danger.gitLab`, `.bitbucketCloud`, `.bitbucketServer` | – | GitHub only, behind the seam (backlog) |
-| `SwiftLint.lint(inline: true, …)` | `Rule.diagnosticsOnChangedLines(in: [.swiftLint("swiftlint.json")])` | Reads a report the workflow already produced instead of running SwiftLint, and keeps only changed lines (4.5); also xcodebuild, SwiftFormat, Sonar |
+| `SwiftLint.lint(inline: true, …)` | `Rule.diagnosticsOnChangedLines(in: [.swiftLint("swiftlint.log")])` | Reads a report the workflow already produced instead of running SwiftLint, and keeps only changed lines (4.5); also xcodebuild, SwiftFormat, Sonar |
 | `// fileImport: Other.swift` | Another file in the `Dangerfile` target | It's an ordinary package |
 | `import X // package: <url>`, or a `DangerDeps` library product | `dependencies:` in `Dangerfile/Package.swift` | |
 | `danger-swift ci` | The composite Action (4.8), which runs `swift run` in `Dangerfile/` | |
