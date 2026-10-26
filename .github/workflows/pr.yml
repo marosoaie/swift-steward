@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0   # reach the merge base
+          fetch-depth: 0   # reach the merge base; the Actions-run suite needs it too
 
       - name: Select newest Xcode (Swift 6.2+ required)
         run: |
@@ -105,5 +105,10 @@ jobs:
       - name: Build
         run: swift build --build-tests -Xswiftc -warnings-as-errors
 
+      # The container runs as root on a checkout the runner owns, and the
+      # Actions-run suite reads that checkout with git: it must find the
+      # depth-1 history too shallow, not be refused the repository.
       - name: Run tests
-        run: swift test --skip-build
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          swift test --skip-build

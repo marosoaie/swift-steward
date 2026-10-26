@@ -37,15 +37,6 @@ func expectedPullRequest(_ json: [String: Any]) throws -> PullRequest {
     )
 }
 
-/// The part of an Actions `pull_request` event the host's mapping reads.
-private struct PullRequestEventPayload: Decodable {
-    let pullRequest: Components.Schemas.PullRequest
-
-    enum CodingKeys: String, CodingKey {
-        case pullRequest = "pull_request"
-    }
-}
-
 @Suite("GitHubHost reads a pull request's metadata")
 struct GitHubHostPullRequestTests {
     @Test("a recorded closed, merged, and open draft pull request map field for field", arguments: [
@@ -108,7 +99,8 @@ struct GitHubHostPullRequestTests {
         #expect(sent.path == "/repos/marosoaie/swift-steward/pulls/20")
     }
 
-    /// 4.2 reads the pull request from GITHUB_EVENT_PATH with this mapping.
+    /// Steward reads the pull request from GITHUB_EVENT_PATH through
+    /// `PullRequestEvent`, with this mapping.
     @Test("an Actions event's pull request maps like a pulls/get response", arguments: [
         "pull-request-event.opened",
         "pull-request-event.synchronize",
@@ -116,12 +108,23 @@ struct GitHubHostPullRequestTests {
     func eventPayload(fixture: String) throws {
         let url = try #require(Bundle.module.url(forResource: fixture, withExtension: "json", subdirectory: "Fixtures"))
         let data = try Data(contentsOf: url)
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        let pull = PullRequest(try decoder.decode(PullRequestEventPayload.self, from: data).pullRequest)
+        let event = try PullRequestEvent(payload: data)
         let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect(pull == (try expectedPullRequest(#require(json["pull_request"] as? [String: Any]))))
-        #expect(pull.state == .open)
+        #expect(event.pullRequest == (try expectedPullRequest(#require(json["pull_request"] as? [String: Any]))))
+        #expect(event.action == json["action"] as? String)
+        #expect(event.pullRequest.state == .open)
+    }
+
+    @Test("a payload that isn't a pull request event's fails to decode", arguments: [
+        "{}",
+        #"{"action": "opened"}"#,
+        #"{"ref": "refs/heads/main", "before": "0", "after": "1"}"#,
+        "[]",
+    ])
+    func notAnEvent(payload: String) {
+        #expect(throws: DecodingError.self) {
+            try PullRequestEvent(payload: Data(payload.utf8))
+        }
     }
 
     @Test("a pull request whose head is in another repository is from a fork")

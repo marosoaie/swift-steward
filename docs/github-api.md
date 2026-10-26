@@ -233,7 +233,7 @@ same-repository pull requests only, so neither case can happen yet.
 | `SpecFixRegressionTests` | One test per correction, on its fixture |
 | `SpecAdaptationTests` (Tooling) | One test per adaptation, on the committed `openapi.yaml` |
 | `RepositoryFixListTests` (Tooling) | Every fix has a test named after it and no test outlives its fix; every fixture a fix names exists; every fix detects its own result |
-| `GitHubHostPullRequestTests` | `GitHubHost` maps every recorded pull request and both event payloads, compared with the JSON read by `JSONSerialization`; the request it sends |
+| `GitHubHostPullRequestTests` | `GitHubHost` maps every recorded pull request, and `PullRequestEvent` both event payloads, compared with the JSON read by `JSONSerialization`; JSON that isn't a `pull_request` payload throws; the request it sends |
 | `GitHubHostCommentTests` | The spike's recorded create → list → update → delete exchange, replayed request by request; the marker and author rules; pagination over made-up pages; deleted comments |
 | `GitHubHostErrorTests` | Every status, recorded or made up, maps to its `kind`; network failures and cancellation; the token never shows up in descriptions, `dump`, or errors |
 | `SummaryMarkerTests`, `LinkHeaderTests` | The first-line rule, CRLF included; `rel="next"` parsing |

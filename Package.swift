@@ -89,6 +89,27 @@ let package = Package(
             ],
             swiftSettings: swiftSettings
         ),
+        // Steward, the pure-Swift Danger (docs/danger.md). Not a product
+        // yet: so far it has the context rules see; the runner comes next.
+        .target(
+            name: "Steward",
+            dependencies: [
+                .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "PullRequestHosting",
+                "GitHubAPI",
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .testTarget(
+            name: "StewardTests",
+            dependencies: [
+                "Steward",
+                .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "PullRequestHosting",
+            ],
+            resources: [.copy("Fixtures")],
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
             name: "GitHubAPITests",
             dependencies: [
