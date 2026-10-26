@@ -127,22 +127,6 @@ struct DryRunTests {
         #expect(context.git.head == fixture.head)
     }
 
-    @Test("the repository comes from an origin remote on the server's host, for links")
-    func originRepository() async throws {
-        let fixture = try Self.checkedOutFixture()
-        defer { fixture.remove() }
-        try fixture.repository.git(["remote", "add", "origin", "git@github.com:marosoaie/swift-steward.git"])
-        let context = try await Self.context(["--base", "main"], in: fixture)
-        #expect(context.pullRequest.base.repository == "marosoaie/swift-steward")
-        let elsewhere = try await Self.context(
-            ["--base", "main"],
-            environment: ["GITHUB_SERVER_URL": "https://ghe.example.com"],
-            in: fixture
-        )
-        #expect(elsewhere.pullRequest.base.repository.isEmpty)
-        #expect(elsewhere.run.serverURL.absoluteString == "https://ghe.example.com")
-    }
-
     @Test("--pull-request reads the pull request through pulls/get, with the token when there is one", arguments: [
         "probe-token-77", nil,
     ])

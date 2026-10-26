@@ -14,7 +14,10 @@ extension Context {
     /// is the identity. The base is `--base`, or else the `origin` remote's
     /// default branch. The repository is `GITHUB_REPOSITORY`'s, or else the
     /// `origin` remote's when it's on `GITHUB_SERVER_URL`'s host; without
-    /// either, it's empty, and the summary has no links. The pull request
+    /// either, it's empty, and the summary has no links. An SSH host alias
+    /// (`github-work:o/r`) doesn't name the server's host, so a checkout
+    /// whose `origin` uses one gets its repository by setting
+    /// `GITHUB_REPOSITORY`. The pull request
     /// is read through `makeHost` with `--pull-request`, or else it's a
     /// placeholder built from the head commit.
     static func dryRun(
