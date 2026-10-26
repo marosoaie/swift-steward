@@ -3,14 +3,16 @@ import GitDiffKit
 extension GitChanges {
     /// The lines the pull request adds, by head path: what
     /// `ChangedLines(diff:)` reads from the same diff, for
-    /// `DiagnosticMatcher`.
+    /// `DiagnosticMatcher`. Each line goes straight into its file's merged
+    /// ranges, which a diff's ascending lines extend in O(1).
     var addedLines: ChangedLines {
-        let lines = diff.files.reduce(into: [String: [ClosedRange<Int>]]()) { lines, file in
+        let lines = diff.files.reduce(into: [String: LineRangeSet]()) { lines, file in
             guard let path = file.header.newPath?.string else { return }
-            lines[path, default: []] += file.lines.compactMap { line in
-                line.info.kind == .addition ? line.info.newNumber.map { $0...$0 } : nil
+            lines[path] = file.lines.reduce(into: lines[path] ?? LineRangeSet()) { added, line in
+                guard line.info.kind == .addition, let number = line.info.newNumber else { return }
+                added.insert(number)
             }
         }
-        return ChangedLines(files: lines.mapValues { LineRangeSet($0) })
+        return ChangedLines(files: lines)
     }
 }

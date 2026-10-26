@@ -55,6 +55,16 @@ struct DiagnosticsRuleOracleTests {
         })
     }
 
+    @Test(
+        "the lines the rule matches against are the ones filter reads from the same real diff",
+        arguments: [RealWorldFixture.swiftArgumentParser, .redis]
+    )
+    func addedLines(fixture: RealWorldFixture) async throws {
+        let bytes = [UInt8](try Data(contentsOf: try await RealWorldFixtureStore.localDiffURL(for: fixture)))
+        let changes = GitChanges(diff: Diff(diff: bytes), commits: [], mergeBase: "a", head: "b")
+        #expect(changes.addedLines == ChangedLines(diff: String(decoding: bytes, as: UTF8.self)))
+    }
+
     /// A pull request whose changes are the diff at `diff`, built at its
     /// head, so the line map is the identity.
     private static func context(diff: URL, workspace: String) throws -> Context {
