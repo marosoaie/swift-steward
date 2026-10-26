@@ -152,11 +152,11 @@ struct RealPullRequestTests {
     }
 
     /// `swift-steward-17` → `swift-steward`.
-    private static func repository(of name: String) -> String {
+    static func repository(of name: String) -> String {
         name.split(separator: "-").dropLast().joined(separator: "-")
     }
 
-    private static func recordedCommits(_ name: String) throws -> [String] {
+    static func recordedCommits(_ name: String) throws -> [String] {
         let url = Bundle.module.url(forResource: name, withExtension: "commits", subdirectory: "Fixtures/pulls")
         guard let url else {
             throw FixtureError("no fixture Fixtures/pulls/\(name).commits")

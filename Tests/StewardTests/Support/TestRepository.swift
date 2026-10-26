@@ -25,6 +25,16 @@ struct TestRepository {
         "GIT_COMMITTER_EMAIL": "charles@example.com",
     ]
 
+    /// The test process's environment without the variables Actions and
+    /// git read, then `environment`, then `variables`: what a run under
+    /// test sees.
+    static func runEnvironment(adding variables: [String: String]) -> [String: String] {
+        ProcessInfo.processInfo.environment
+            .filter { !$0.key.hasPrefix("GITHUB_") && !$0.key.hasPrefix("GIT_") }
+            .merging(environment) { $1 }
+            .merging(variables) { $1 }
+    }
+
     /// An empty repository whose first branch is `main`.
     init(bare: Bool = false) throws {
         try self.init(creatingIn: Self.temporaryRoot())

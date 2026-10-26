@@ -16,12 +16,10 @@ extension Runner {
         recording: RecordingConsole,
         transport: any ClientTransport = ForbiddenTransport()
     ) -> Runner {
-        let process = ProcessInfo.processInfo.environment
-            .filter { !$0.key.hasPrefix("GITHUB_") && !$0.key.hasPrefix("GIT_") }
-        return Runner(
+        Runner(
             arguments: arguments,
             program: "PullRequestChecks",
-            environment: process.merging(TestRepository.environment) { $1 }.merging(environment) { $1 },
+            environment: TestRepository.runEnvironment(adding: environment),
             currentDirectory: directory,
             console: recording.console,
             makeHost: { apiURL, owner, repository, token in

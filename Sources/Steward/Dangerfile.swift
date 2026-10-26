@@ -41,7 +41,11 @@ public protocol Dangerfile {
 extension Dangerfile {
     /// Runs the rules over the pull request, as `Dangerfile` describes, and
     /// exits with the run's status.
+    @concurrent
     public static func main() async {
+        // @concurrent: under NonisolatedNonsendingByDefault a plain async
+        // main is nonisolated(nonsending), which @main doesn't take as an
+        // entry point.
         exit(await Runner.standard().run(rules).rawValue)
     }
 }

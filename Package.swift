@@ -101,10 +101,25 @@ let package = Package(
             ],
             swiftSettings: swiftSettings
         ),
+        // A Dangerfile as a repository would write one, built for the
+        // end-to-end tests, which run it as its own process and import its
+        // rules. Not a product, so packages that depend on this one never
+        // build it.
+        .executableTarget(
+            name: "DangerfileFixture",
+            dependencies: [
+                "Steward",
+                .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "PullRequestHosting",
+            ],
+            path: "Tests/DangerfileFixture",
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
             name: "StewardTests",
             dependencies: [
                 "Steward",
+                "DangerfileFixture",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "PullRequestHosting",
                 // Hosts on fixture transports, so a run's requests are
