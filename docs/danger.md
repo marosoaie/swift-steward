@@ -6,9 +6,10 @@ comment; steps 4.5–4.10 build on what this document settles. Each section ends
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
 recommended (7 with a documentation requirement added), the four
-step 4.2 raised in swift-steward#27 the same day, each as recommended, and
+step 4.2 raised in swift-steward#27 the same day, each as recommended,
 the seven step 4.3 raised in swift-steward#28, also that day and as
-recommended. The sections reflect the answers. Claims about danger-swift, GitHub, and
+recommended, and the four step 4.4 raised in swift-steward#29 on
+2026-10-27, as recommended too. The sections reflect the answers. Claims about danger-swift, GitHub, and
 SwiftPM were checked against their sources or by experiment;
 [Checks](#checks) lists how.
 
@@ -20,8 +21,8 @@ SwiftPM were checked against their sources or by experiment;
 | S2 | Context | **Paths, the dry-run placeholder, `Run`'s fields, and the activity types decided 2026-10-26.** One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; a placeholder pull request in a local dry run without `--pull-request`; `Run` carries the line map and the API and server URLs; `ready_for_review` joins the accepted activity types | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 | S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default, or the head when only the head is checked out) to the head before matching; Steward leaves `safe.directory` to the workflow | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | **Generator decided 2026-10-26:** `Steward <version>`, the version the CLI prints. A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
-| S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26.** The 3.5 marker on the first line, only the token's own comments; danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
-| S6 | Posting failures | **Decided 2026-10-26.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped | Always fail; fail on configuration errors only; refusing to run on forks |
+| S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26; the author option and the budget's API 2026-10-27.** The 3.5 marker on the first line, only the token's own comments (`--summary-author` names another account); danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
+| S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
 | S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting` | `action.yml` at swift-steward's root with a moving `v1` tag |
 
@@ -546,8 +547,9 @@ when reading, so the renderer never sees it. Two choices are left:
 - **Whose comments count.** Steward passes `summaryAuthor`, so a comment
   only counts if the token's own account wrote it: `github-actions[bot]`
   by default, and `--summary-author <login>` for a PAT or a GitHub App
-  token (the login compared ignoring case). danger-js has
-  no such filter: any comment containing its `DangerID` marker and
+  token (the login compared ignoring case). **Decided 2026-10-27
+  (question 22):** the Action (4.8) exposes the option as an input.
+  danger-js has no such filter: any comment containing its `DangerID` marker and
   "Generated by" is fair game for it to overwrite or delete.
 - **One summary or several.** danger-js keys its marker
   (`DangerID: danger-id-<id>;`, `--id` to change it) so several Danger
@@ -622,7 +624,9 @@ findings", pointing at where all of them are. A truncated text is shown
 as code, so whatever it opens, a code block or an HTML tag, can't
 swallow the rest of the comment. The budget is
 `PullRequestHost.maximumSummarySize`, which `GitHubHost` sets to what's
-left of 65,536 bytes once the marker line is added. The rendering also
+left of 65,536 bytes once the marker line is added; it's public, so
+another host can state its own limit (decided 2026-10-27, question 23).
+The rendering also
 goes to `$GITHUB_STEP_SUMMARY`, cut the same way to what's left of 1 MiB
 once earlier steps' summaries are counted: GitHub drops a larger step
 summary entirely instead of truncating it. When nothing fits there, the
@@ -679,7 +683,8 @@ retry, since a newer run may have posted during the pause.
    pull request comes from a fork (v1 checks `PullRequest.isFromFork`
    first, says why it won't post in a `::notice title=Steward::` annotation, and
    carries on, so fork contributors still get a check status and the job
-   summary; decided 2026-10-26, question 10). Posting needs
+   summary; decided 2026-10-26, question 10, and the notice 2026-10-27,
+   question 25). Posting needs
    `GITHUB_TOKEN`; a step without it warns and sends no request.
 6. **Exit.**
 
@@ -726,7 +731,7 @@ Posting can fail for reasons that say nothing about the pull request:
 |---|---|---|
 | `forbidden` | The workflow lacks `pull-requests: write`; or a Dependabot pull request, which is a same-repository branch but gets a read-only token (documented) | Warns with the fix: grant `pull-requests: write` (enough for issue comments on pull requests, per the REST docs), or skip Dependabot |
 | `unauthorized` | No token, or a wrong one. A missing token is caught before any request | Warns |
-| `rateLimited`, `serverError`, `network` | GitHub is busy or down; `GITHUB_TOKEN` has 1,000 requests an hour per repository | Retries once, then warns. It waits as long as GitHub asks (`retry-after`, or the primary limit's reset), or else a minute for a rate limit and 2 seconds for the rest; a wait over a minute isn't worth the job's time, so it warns at once, saying how long GitHub asked for |
+| `rateLimited`, `serverError`, `network` | GitHub is busy or down; `GITHUB_TOKEN` has 1,000 requests an hour per repository | Retries once, then warns. It waits as long as GitHub asks (`retry-after`, or the primary limit's reset, which the error carries as its public `retryAfter`; decided 2026-10-27, question 24), or else a minute for a rate limit and 2 seconds for the rest; a wait over a minute isn't worth the job's time, so it warns at once, saying how long GitHub asked for |
 | `notFound` on update | Someone deleted the summary since it was listed | Not a failure: creates a new one |
 | `rejected` | Too long despite the budget, or GitHub's spam check | Warns |
 | `malformedResponse`, `unexpectedStatus` | GitHub answered something the client doesn't understand | Warns |
@@ -902,8 +907,9 @@ tag.
 The maintainer answered all ten on 2026-10-26, the four that step 4.2
 raised in swift-steward#27 (numbered on from 11) the same day, and the
 seven that step 4.3 raised in swift-steward#28 (numbered on from 15) that
-day too. The sections refer to them by number, and each section above
-already reflects its answer.
+day too, and the four that step 4.4 raised in swift-steward#29 (numbered
+on from 22) on 2026-10-27. The sections refer to them by number, and each
+section above already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -994,6 +1000,25 @@ already reflects its answer.
 21. **The size budget (S5). Answered 2026-10-26: step 4.4's.** The
     65,536-byte cut comes with the sticky comment; until then, the job
     summary isn't cut. (Step 4.4 built both cuts.)
+22. **The summary's author (S5). Answered 2026-10-27: `--summary-author
+    <login>`** ("ok, go with the recommendations", for all four of #29's
+    questions). Only comments by that account count as the summary; the
+    default is `github-actions[bot]`, the login is compared ignoring case,
+    and the Action (4.8) exposes it as an input for a PAT or a GitHub App
+    token.
+23. **The comment's budget (S5). Answered 2026-10-27: public API.**
+    `PullRequestHost.maximumSummarySize` is the byte budget the renderer
+    cuts to. `GitHubHost` sets it to what's left of 65,536 bytes once the
+    marker line is added, and another host would state its own.
+24. **How long GitHub asks to wait (S6). Answered 2026-10-27: public
+    API.** `PullRequestHostError.retryAfter`, set for some `rateLimited`
+    and `serverError` errors, is the wait from `retry-after` or the
+    primary limit's reset. The retry honors it up to a minute and warns
+    without retrying past that.
+25. **The fork skip (S6). Answered 2026-10-27: a notice.** A fork pull
+    request's skipped post is a `::notice title=Steward::` annotation, not
+    a warning: nothing is wrong, and a warning on every fork pull request
+    would teach people to ignore Steward's warnings.
 
 ## Checks
 
