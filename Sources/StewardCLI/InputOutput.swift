@@ -54,7 +54,8 @@ extension ChangedLines {
     /// into memory at once.
     init(streamingFrom pathArgument: String) throws {
         var parser = DiffParser()
-        try forEachChunk(ofInput: pathArgument) { parser.consume($0) }
+        // GitDiffKit doesn't import Foundation, so it takes bytes, not Data.
+        try forEachChunk(ofInput: pathArgument) { parser.consume([UInt8]($0)) }
         self = parser.finalize()
     }
 }

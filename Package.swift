@@ -11,7 +11,9 @@ let swiftSettings: [SwiftSetting] = [
 
 let package = Package(
     name: "swift-steward",
-    platforms: [.macOS(.v14)],
+    // GitDiffKit 0.2 needs the 26 releases, whose standard library has
+    // `Span`; Linux has no floor.
+    platforms: [.macOS(.v26)],
     products: [
         .library(name: "BuildLogKit", targets: ["BuildLogKit"]),
         .library(name: "DiffDiagnostics", targets: ["DiffDiagnostics"]),
@@ -20,7 +22,7 @@ let package = Package(
     dependencies: [
         // GitDiffKit. Tagged versions only: SwiftPM rejects branch and
         // revision dependencies underneath a versioned package.
-        .package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.1.0"),
+        .package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.2.0"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
         // The GitHub client target only (decision 5). The generator itself
         // lives in Tooling/Package.swift, so packages that depend on this one
