@@ -103,8 +103,11 @@ struct Summary: Sendable {
     }
 
     private func cell(for finding: Finding) -> String {
-        let parts = [finding.text.isEmpty ? nil : finding.text, finding.location.map(link)].compactMap(\.self)
-        return Markdown.tableCell(parts.joined(separator: "\n"))
+        // Each part on its own, so a backslash that ends the text stays one.
+        [finding.text.isEmpty ? nil : finding.text, finding.location.map(link)]
+            .compactMap(\.self)
+            .map(Markdown.tableCell)
+            .joined(separator: "<br>")
     }
 
     /// The location as a code span, linked to the head commit's blob when

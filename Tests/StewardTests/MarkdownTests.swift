@@ -19,6 +19,16 @@ struct MarkdownTests {
         #expect(Markdown.tableCell("a|\u{301}b") == "a\\|\u{301}b")
     }
 
+    @Test("a table cell keeps a backslash from escaping the <br> after it, a hard break's or a literal one's")
+    func tableCellBackslashes() {
+        // GitHub renders `first\<br>second` as the text `first<br>second`.
+        #expect(Markdown.tableCell(#"hard\"# + "\nbreak") == "hard<br>break")
+        #expect(Markdown.tableCell(#"escaped \\"# + "\nbackslash") == #"escaped \\<br>backslash"#)
+        #expect(Markdown.tableCell(#"three \\\"# + "\nbackslashes") == #"three \\<br>backslashes"#)
+        #expect(Markdown.tableCell(#"ends in \"#) == #"ends in \\"#)
+        #expect(Markdown.tableCell(#"ends in \\"#) == #"ends in \\"#)
+    }
+
     @Test("a code span fences past the text's backticks and keeps its edges", arguments: [
         ["Sources/App.swift", "`Sources/App.swift`"],
         ["a`b", "``a`b``"],

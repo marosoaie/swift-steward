@@ -19,8 +19,11 @@ extension PullRequest {
             changes.diff.files.reduce(0) { total, file in total + file.lines.count { $0.info.kind == kind } }
         }
         // GitHub counts a type change (a file turned into a symlink, say)
-        // once, though git's patch deletes and creates the path.
-        let typeChanges = Set(changes.deletedFiles).intersection(changes.createdFiles).count
+        // once, though git's patch deletes and creates the path. By bytes,
+        // as two paths can decode to one String.
+        let deleted = Set(changes.diff.files.compactMap { $0.header.change == .deleted ? $0.header.oldPath : nil })
+        let added = Set(changes.diff.files.compactMap { $0.header.change == .added ? $0.header.newPath : nil })
+        let typeChanges = deleted.intersection(added).count
         return PullRequest(
             number: 0,
             title: headCommit.subject,

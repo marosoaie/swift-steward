@@ -124,6 +124,9 @@ struct SummaryTests {
         #expect(summary.contains("""
             | :no_entry_sign: | Two<br>lines \\| one pipe<br>[`a\\|b.swift:3`](https://github.com/o/r/blob/\(Self.head)/a%7Cb.swift#L3) |
             """))
+        // A backslash that ends the text is a literal one, not a hard break.
+        let backslash = Self.summary([.warning(#"C:\"#, at: Location(path: "a.swift"))])
+        #expect(backslash.contains(#"| :warning: | C:\\<br>[`a.swift`]"#))
     }
 
     @Test("a path is shown verbatim and linked with each segment percent-encoded")

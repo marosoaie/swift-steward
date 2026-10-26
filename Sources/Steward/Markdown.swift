@@ -17,18 +17,25 @@ enum Markdown {
     private static let inlinePunctuation: Set<Unicode.Scalar> = ["\\", "`", "*", "_", "[", "]", "<", ">", "&", "~"]
 
     /// `text` as the content of a table cell: `|` escaped and line breaks
-    /// as `<br>`.
+    /// as `<br>`, so cells joined with `<br>` stay cells.
     ///
     /// GitHub's table parser turns every `\|` back into `|` before it reads
     /// the cell's Markdown, so the cell renders as `text` would on its own,
     /// a `\|` the text already had included. Pipes are found by scalar: a
     /// `|` followed by a combining mark is one `Character`, but the parser
-    /// still splits the row at it.
+    /// still splits the row at it. A backslash would escape the `<` of a
+    /// `<br>` after it, so one before a line break, Markdown's hard break,
+    /// is dropped for the `<br>` that stands in for it, and one that ends
+    /// the text, a literal backslash, is doubled.
     static func tableCell(_ text: String) -> String {
-        lines(of: text).map { line in
-            String(line.unicodeScalars.flatMap { scalar -> [Unicode.Scalar] in
-                scalar == "|" ? ["\\", "|"] : [scalar]
-            }.map(Character.init))
+        let lines = lines(of: text)
+        return zip(lines.indices, lines).map { index, line in
+            let scalars = line.unicodeScalars
+            let isLast = index == lines.count - 1
+            let endsInEscape = scalars.reversed().prefix { $0 == "\\" }.count % 2 == 1
+            let kept = endsInEscape && !isLast ? scalars.dropLast() : scalars[...]
+            let escaped = kept.flatMap { scalar -> [Unicode.Scalar] in scalar == "|" ? ["\\", "|"] : [scalar] }
+            return String((escaped + (endsInEscape && isLast ? ["\\"] : [])).map(Character.init))
         }.joined(separator: "<br>")
     }
 
