@@ -1,6 +1,7 @@
 import GitDiffKit
 import Foundation
 @testable import Steward
+import StewardVersion
 import Testing
 
 /// Whole runs in GitHub Actions mode, in-process, over `PullRequestFixture`.
@@ -52,14 +53,14 @@ struct RunnerTests {
 
             ## Notes
 
-            <sub>Steward · [workflow run](https://github.com/marosoaie/swift-steward/actions/runs/42) · \(short)</sub>
+            <sub>Steward \(Release.version) · [workflow run](https://github.com/marosoaie/swift-steward/actions/runs/42) · \(short)</sub>
 
             """)
         let report = try #require(outcome.report)
         #expect(report.repository == "marosoaie/swift-steward")
         #expect(report.pullRequest == 21)
         #expect(report.headCommit == head)
-        #expect(report.generator == "Steward")
+        #expect(report.generator == "Steward \(Release.version)")
         #expect(report.findings.map(\.rule) == ["Deleted files", "Deleted files", "Edits", "Size", "Notes"])
         #expect(outcome.log.contains("""
             ::group::Context
@@ -93,7 +94,7 @@ struct RunnerTests {
 
             **No findings** on \(short)
 
-            <sub>Steward · [workflow run](https://github.com/marosoaie/swift-steward/actions/runs/42) · \(short)</sub>
+            <sub>Steward \(Release.version) · [workflow run](https://github.com/marosoaie/swift-steward/actions/runs/42) · \(short)</sub>
 
             """)
     }
@@ -185,7 +186,7 @@ struct RunnerTests {
         let outcome = try await Self.run([], on: fixture, environment: environment)
         #expect(outcome.status == .clean)
         #expect(outcome.log.contains("::warning title=Steward::GITHUB_STEP_SUMMARY isn't set"))
-        #expect(outcome.log.contains("<sub>Steward · \(fixture.head.prefix(7))</sub>\n::endgroup::"))
+        #expect(outcome.log.contains("<sub>Steward \(Release.version) · \(fixture.head.prefix(7))</sub>\n::endgroup::"))
     }
 
     @Test("findings that could pass for workflow commands are logged with commands paused")

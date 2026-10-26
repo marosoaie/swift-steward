@@ -1,5 +1,6 @@
 import Foundation
 @testable import Steward
+import StewardVersion
 
 /// What the fixture Dangerfile (`FixtureChecks`) should find in a pull
 /// request, worked out from git's raw output, the commits' raw objects, and
@@ -95,7 +96,7 @@ struct FixtureExpectation {
             pullRequest: pullRequest,
             headCommit: head,
             findings: findings,
-            generator: "Steward"
+            generator: "Steward \(Release.version)"
         )
     }
 

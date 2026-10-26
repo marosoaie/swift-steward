@@ -1,4 +1,5 @@
 import ArgumentParser
+import StewardVersion
 
 @main
 struct StewardCommand: ParsableCommand {
@@ -12,7 +13,7 @@ struct StewardCommand: ParsableCommand {
             Inputs are streamed, so arbitrarily large diffs and logs are fine. \
             Pass '-' as any file argument to read that input from stdin.
             """,
-        version: "2.0.0",
+        version: Release.version,
         subcommands: [Changes.self, Filter.self]
     )
 }

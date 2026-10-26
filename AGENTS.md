@@ -19,7 +19,9 @@ dependency direction:
 `GitDiffKit` and `BuildLogKit` must never import each other; only
 `DiffDiagnostics` couples them. `StreamParsing` is an internal target
 (chunk-to-line splitting, shared via the `package` access level) — never
-expose it as a product. Libraries take no third-party dependencies;
+expose it as a product. `StewardVersion` is another: the release version,
+one constant that `steward --version` and `Steward`'s reports both read.
+Libraries take no third-party dependencies;
 swift-argument-parser is allowed in the CLI target only, and Apple's
 swift-openapi-runtime and swift-openapi-urlsession in the `GitHubAPI`
 target only.
@@ -180,10 +182,11 @@ iteration), never narration of the next line.
   clone this repo, and LFS breaks checkouts on machines with missing or
   misconfigured `git-lfs`. Big test fixtures are downloaded and cached at
   test time instead.
-- Releases: bump `CommandConfiguration.version` via PR, then run the
-  "Release" workflow (Actions tab) with the matching semver number and
-  branch. It tests, packages the arm64 binary, tags `vX.Y.Z`, publishes a
-  GitHub release with generated notes, and pins the Homebrew formula in
-  marosoaie/homebrew-tap to the new tag (via the `TAP_DEPLOY_KEY` secret).
+- Releases: bump `Release.version` (in `Sources/StewardVersion`) via PR,
+  then run the "Release" workflow (Actions tab) with the matching semver
+  number and branch. It tests, packages the arm64 binary, tags `vX.Y.Z`,
+  publishes a GitHub release with generated notes, and pins the Homebrew
+  formula in marosoaie/homebrew-tap to the new tag (via the
+  `TAP_DEPLOY_KEY` secret).
   The maintainer drives version numbers — never change the version outside
   this procedure.

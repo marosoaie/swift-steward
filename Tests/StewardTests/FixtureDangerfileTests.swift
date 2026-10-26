@@ -1,6 +1,7 @@
 @testable import DangerfileFixture
 import Foundation
 @testable import Steward
+import StewardVersion
 import Testing
 
 /// The fixture Dangerfile (`FixtureChecks`) on merged pull requests of this
@@ -70,7 +71,8 @@ struct FixtureDangerfileTests {
     ]
 
     /// The job summary of each pull request's workflow run, as `Fingerprint`
-    /// pins it, so macOS and Linux write the same bytes.
+    /// pins it with the footer's version taken out (`versionless`), so macOS
+    /// and Linux write the same bytes, and a release needn't re-pin them.
     static let summaryFingerprints = [
         "swift-steward-17": "2706:dba1a2812282f379", "swift-steward-20": "1608:d36373ff0f431b65",
         "swift-steward-22": "12207:711f7ed0373919c6", "swift-steward-24": "8015:3f491566cab1a9b4",
@@ -80,6 +82,11 @@ struct FixtureDangerfileTests {
     ]
 
     static let serverURL = URL(string: "https://github.com")!
+
+    /// `summary` with the footer naming Steward alone, not its release.
+    static func versionless(_ summary: String) -> String {
+        summary.replacingOccurrences(of: "<sub>Steward \(Release.version) · ", with: "<sub>Steward · ")
+    }
 
     @Test("run as a workflow runs it, the fixture reports what git finds, writes the summary, and exits 0 or 1",
           arguments: pullRequests)
@@ -96,7 +103,7 @@ struct FixtureDangerfileTests {
         let summary = Summary(report: expected, serverURL: Self.serverURL, origin: .workflowRun(runURL),
                               unlinkedPaths: expectation.unlinkedPaths)
         #expect(run.jobSummary == summary.text)
-        #expect(Fingerprint.of(run.jobSummary) == Self.summaryFingerprints[name])
+        #expect(Fingerprint.of(Self.versionless(run.jobSummary)) == Self.summaryFingerprints[name])
         #expect(run.outcome.log.hasPrefix("""
             ::group::Context
             Pull request #\(pullRequest.number) in \(pullRequest.repository):\u{20}

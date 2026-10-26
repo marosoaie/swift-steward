@@ -38,6 +38,13 @@ let package = Package(
             name: "StreamParsing",
             swiftSettings: swiftSettings
         ),
+        // The release version, in one place: `steward --version` prints it
+        // and Steward's reports name it, so a release bumps it once. Internal
+        // to the package (not a product), like StreamParsing.
+        .target(
+            name: "StewardVersion",
+            swiftSettings: swiftSettings
+        ),
         // Build/lint logs → diagnostics, with tool-specific parsers for
         // xcodebuild, SwiftLint, and SwiftFormat.
         .target(
@@ -63,6 +70,7 @@ let package = Package(
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",
                 "DiffDiagnostics",
+                "StewardVersion",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
             swiftSettings: swiftSettings
@@ -100,6 +108,7 @@ let package = Package(
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "PullRequestHosting",
                 "GitHubAPI",
+                "StewardVersion",
             ],
             swiftSettings: swiftSettings
         ),
@@ -119,6 +128,7 @@ let package = Package(
             dependencies: [
                 "Steward",
                 "DangerfileFixture",
+                "StewardVersion",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "PullRequestHosting",
                 // Hosts on fixture transports, so a run's requests are
@@ -147,6 +157,7 @@ let package = Package(
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",
                 "DiffDiagnostics",
+                "StewardVersion",
             ],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings

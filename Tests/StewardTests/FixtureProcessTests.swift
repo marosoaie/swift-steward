@@ -1,6 +1,7 @@
 @testable import DangerfileFixture
 import Foundation
 @testable import Steward
+import StewardVersion
 import Testing
 
 /// The fixture Dangerfile (`FixtureChecks`) as its own process, over
@@ -34,7 +35,7 @@ struct FixtureProcessTests {
         #expect(summary.hasPrefix("**\(asksToThrow ? "1 failure, " : "")1 warning, 5 messages, 1 note** on \(short)"))
         #expect(summary.contains("Rule “Fixture marker” failed") == asksToThrow)
         #expect(summary.hasSuffix("""
-            <sub>Steward · [workflow run](https://github.com/marosoaie/swift-steward/actions/runs/42) · \(short)</sub>
+            <sub>Steward \(Release.version) · [workflow run](https://github.com/marosoaie/swift-steward/actions/runs/42) · \(short)</sub>
 
             """))
         let report = try JSONDecoder().decode(

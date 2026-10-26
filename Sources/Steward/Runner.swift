@@ -2,6 +2,7 @@ import Foundation
 import GitDiffKit
 import GitHubAPI
 import PullRequestHosting
+import StewardVersion
 
 /// A Dangerfile's whole run (docs/danger.md, section 6): the options, the
 /// context, the rules, the report, the summary, and the exit status.
@@ -29,6 +30,10 @@ struct Runner: Sendable {
     var console: Console
     var makeHost: HostFactory
     var makeToken: @Sendable () -> String = { UUID().uuidString }
+
+    /// What a run's report names as its generator: Steward and the release
+    /// `steward --version` prints.
+    static let generator = "Steward \(Release.version)"
 
     /// The runner of this process: its arguments, environment, directory,
     /// standard streams, and GitHub's API.
@@ -78,7 +83,7 @@ struct Runner: Sendable {
             pullRequest: context.pullRequest.number,
             headCommit: context.git.head,
             findings: findings,
-            generator: "Steward"
+            generator: Self.generator
         )
         let wroteReport = options.reportPath.map { write(report, to: $0, log: log) } ?? true
         await publish(summary(of: report, in: context, options: options), mode: mode, log: log)

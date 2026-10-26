@@ -37,8 +37,8 @@ jobs:
       - name: Build arm64 binary
         run: swift build -c release
 
-      # The hard-coded CLI version is bumped via PR; releasing anything else
-      # is a mistake.
+      # Release.version (Sources/StewardVersion) is bumped via PR; releasing
+      # anything else is a mistake.
       - name: Binary version must match the release
         run: |
           actual="$(.build/release/steward --version)"

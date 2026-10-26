@@ -4,6 +4,7 @@ import HTTPTypes
 import OpenAPIRuntime
 import PullRequestHosting
 @testable import Steward
+import StewardVersion
 import Testing
 
 /// Dry runs, in-process, over `PullRequestFixture` checked out at its head.
@@ -41,7 +42,7 @@ struct DryRunTests {
 
             ## Notes
 
-            <sub>Steward · dry run with a placeholder pull request · \(short)</sub>
+            <sub>Steward \(Release.version) · dry run with a placeholder pull request · \(short)</sub>
 
             """)
         #expect(log.hasPrefix("Pull request #0 in : feature into main\n"))
@@ -164,7 +165,7 @@ struct DryRunTests {
         let (output, log) = await recording.finishStreams()
         #expect(status == .clean)
         #expect(output.contains("| :book: | 26: Depend on GitDiffKit 0.2.0 and require macOS 26 (step 2.9) |"))
-        #expect(output.contains("<sub>Steward · dry run · \(fixture.head.prefix(7))</sub>"))
+        #expect(output.contains("<sub>Steward \(Release.version) · dry run · \(fixture.head.prefix(7))</sub>"))
         #expect(log.hasPrefix("""
             Pull request #26 in marosoaie/swift-steward: claude/step-2-9-library-0-2-0-a056d5 into main
             """))
