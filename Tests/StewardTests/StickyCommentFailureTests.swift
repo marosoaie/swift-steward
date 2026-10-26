@@ -21,6 +21,12 @@ struct StickyCommentFailureTests {
         var testDescription: String {
             name
         }
+
+        /// Whether the request writes the comment, so that its retry
+        /// re-reads the pull request first.
+        var isWrite: Bool {
+            operation == "issues/create-comment" || operation == "issues/update-comment"
+        }
     }
 
     static let failureCases = [
@@ -111,8 +117,8 @@ struct StickyCommentFailureTests {
         let posting = try await StickyCommentTests.post(to: github)
         #expect(posting.pauses == failure.pauses)
         #expect(posting.comments.map(\.body) == (failure.posts ? [StickyCommentTests.posted] : []))
-        let retried = posting.requests.count - Set(posting.requests).count
-        #expect(retried == failure.pauses.count)
+        let repeated = posting.requests.count - Set(posting.requests).count
+        #expect(repeated == failure.pauses.count * (failure.isWrite ? 2 : 1))
         if failure.posts {
             #expect(posting.log.contains("Trying again in"))
             guard case .created = posting.outcome else { Issue.record("\(posting.outcome)"); return }
@@ -137,6 +143,27 @@ struct StickyCommentFailureTests {
             Couldn't post the summary comment: issues/create-comment failed (rejected). \
             The findings are in this run's \(place)
             """)
+    }
+
+    @Test("a write whose retry finds the head moved during the pause writes nothing", arguments: [false, true])
+    func movedDuringPause(hasComment: Bool) async throws {
+        let github = FakeGitHub(head: StickyCommentTests.head)
+        let earlier = StickyCommentTests.marker + "Earlier"
+        if hasComment {
+            await github.addComment(earlier, by: StickyCommentTests.bot)
+        }
+        let operation = hasComment ? "issues/update-comment" : "issues/create-comment"
+        await github.fail(operation, with: .status(502, message: "Bad Gateway"))
+        let newer = String(repeating: "b", count: 40)
+        let posting = try await StickyCommentTests.post(to: github) { await github.push(newer) }
+        guard case .stale(let head) = posting.outcome else { Issue.record("\(posting.outcome)"); return }
+        #expect(head == newer)
+        #expect(posting.pauses == [.seconds(2)])
+        let write = hasComment ? StickyCommentTests.edit(1_001) : StickyCommentTests.create
+        let read = StickyCommentTests.read
+        #expect(posting.requests == [StickyCommentTests.list, read, write, read])
+        #expect(posting.comments.map(\.body) == (hasComment ? [earlier] : []))
+        #expect(!posting.log.contains("::warning"))
     }
 
     @Test("a duplicate that can't be deleted fails the posting, after the update went through")

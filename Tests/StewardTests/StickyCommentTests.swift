@@ -37,12 +37,13 @@ struct StickyCommentTests {
     }
 
     /// Posts `summary` to `github`'s pull request as github-actions[bot],
-    /// `perPage` comments a page.
+    /// `perPage` comments a page, running `whilePausing` in each pause.
     static func post(
         _ summary: Summary = summary(),
         to github: FakeGitHub,
         perPage: Int = 100,
-        elsewhere: Summary.Elsewhere = .jobSummary
+        elsewhere: Summary.Elsewhere = .jobSummary,
+        whilePausing: @escaping @Sendable () async -> Void = {}
     ) async throws -> Posting {
         let recording = RecordingConsole()
         let pauses = Pauses()
@@ -60,7 +61,10 @@ struct StickyCommentTests {
             pullRequest: 21,
             headCommit: head,
             log: Log(mode: .actions, console: recording.console, makeToken: { "T0K3N" }),
-            sleep: { await pauses.take($0) }
+            sleep: {
+                await pauses.take($0)
+                await whilePausing()
+            }
         )
         let outcome = try await sticky.post(summary, elsewhere: elsewhere)
         let (_, log) = await recording.finishStreams()

@@ -20,9 +20,10 @@ import PullRequestHosting
 ///
 /// A request that fails in a way waiting can fix, a rate limit, a server
 /// error, or a lost connection, is tried once more after a pause (see
-/// `pause(before:)`). So a comment whose creation went through but whose
-/// response was lost can be created twice; the next run deletes the
-/// duplicate.
+/// `pause(before:)`). A write re-reads the pull request before its retry,
+/// since a newer run may have posted during the pause. So a comment whose
+/// creation went through but whose response was lost can be created
+/// twice; the next run deletes the duplicate.
 struct StickyComment: Sendable {
     /// What posting did.
     enum Outcome: Sendable {
@@ -68,44 +69,71 @@ struct StickyComment: Sendable {
         return outcome
     }
 
+    /// The head the pull request moved on to, which stops a posting.
+    private struct MovedHead: Error {
+        let head: String
+    }
+
     private func write(_ summary: Summary, elsewhere: Summary.Elsewhere) async throws -> Outcome {
         let comments = try await retrying { try await host.summaryComments(onPullRequest: pullRequest) }
         if comments.isEmpty, summary.report.findings.isEmpty { return .nothingToPost }
-        // Re-read just before writing: a run for an older commit that
-        // finishes last mustn't overwrite a newer run's summary.
-        let head = try await retrying { try await host.pullRequest(number: pullRequest) }.head.commit
-        guard head.lowercased() == headCommit.lowercased() else { return .stale(head: head) }
-
-        let text = summary.text(fitting: host.maximumSummarySize, elsewhere: elsewhere)
-        let create = { () async throws -> Outcome in
-            .created(try await retrying { try await host.createSummaryComment(onPullRequest: pullRequest, body: text) })
-        }
-        guard let oldest = comments.first else { return try await create() }
-        let duplicates = comments.dropFirst()
-        // Written before the duplicates go, so a failure loses nothing.
-        let outcome: Outcome
         do {
-            let updated = try await retrying { try await host.updateSummaryComment(oldest.id, body: text) }
-            outcome = .updated(updated, deletedDuplicates: duplicates.count)
-        } catch let error as PullRequestHostError where error.kind == .notFound {
-            log.write("The summary comment \(oldest.webURL) is gone since it was found, so Steward posts a new one.")
-            outcome = try await create()
+            // Checked just before writing: a run for an older commit that
+            // finishes last mustn't overwrite a newer run's summary.
+            try await checkHead()
+            let text = summary.text(fitting: host.maximumSummarySize, elsewhere: elsewhere)
+            let create = { () async throws -> Outcome in
+                .created(try await retrying(checkingHead: true) {
+                    try await host.createSummaryComment(onPullRequest: pullRequest, body: text)
+                })
+            }
+            guard let oldest = comments.first else { return try await create() }
+            let duplicates = comments.dropFirst()
+            // Written before the duplicates go, so a failure loses nothing.
+            let outcome: Outcome
+            do {
+                let updated = try await retrying(checkingHead: true) {
+                    try await host.updateSummaryComment(oldest.id, body: text)
+                }
+                outcome = .updated(updated, deletedDuplicates: duplicates.count)
+            } catch let error as PullRequestHostError where error.kind == .notFound {
+                log.write("""
+                    The summary comment \(oldest.webURL) is gone since it was found, so Steward posts a new one.
+                    """)
+                outcome = try await create()
+            }
+            try await duplicates.asyncForEach { duplicate in
+                try await retrying { try await host.deleteSummaryComment(duplicate.id) }
+            }
+            return outcome
+        } catch let moved as MovedHead {
+            return .stale(head: moved.head)
         }
-        try await duplicates.asyncForEach { duplicate in
-            try await retrying { try await host.deleteSummaryComment(duplicate.id) }
-        }
-        return outcome
+    }
+
+    /// Throws `MovedHead` when the pull request's head is no longer
+    /// `headCommit`.
+    private func checkHead() async throws {
+        let head = try await retrying { try await host.pullRequest(number: pullRequest) }.head.commit
+        guard head.lowercased() == headCommit.lowercased() else { throw MovedHead(head: head) }
     }
 
     /// Runs `request`, and once more after a pause when it fails in a way
-    /// waiting can fix.
-    private func retrying<Value>(_ request: () async throws -> Value) async throws -> Value {
+    /// waiting can fix; with `checkingHead`, only if the pull request's
+    /// head is still `headCommit` after the pause.
+    private func retrying<Value>(
+        checkingHead: Bool = false,
+        _ request: () async throws -> Value
+    ) async throws -> Value {
         do {
             return try await request()
         } catch let error as PullRequestHostError {
             guard let pause = Self.pause(before: error) else { throw error }
             log.write("\(error). Trying again in \(Self.seconds(pause)).")
             try await sleep(pause)
+            if checkingHead {
+                try await checkHead()
+            }
             return try await request()
         }
     }

@@ -657,7 +657,8 @@ writing, the runner re-reads the pull request (`pulls/get`, one request)
 and skips posting when its head is no longer `headCommit`: a newer run
 will post. The skip is logged, not an error. The re-read comes after the
 summary is found and before the first write, so a clean run with
-nothing to post doesn't spend the request.
+nothing to post doesn't spend the request, and again before a write's
+retry, since a newer run may have posted during the pause.
 
 ## 6. Running, exit codes, and posting failures (S6)
 
