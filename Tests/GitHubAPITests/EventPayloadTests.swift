@@ -2,10 +2,11 @@ import Foundation
 @testable import GitHubAPI
 import Testing
 
-/// What Steward reads from an Actions `pull_request` event: the trigger, and
-/// the pull request and repository with the REST API's schemas. The filter
-/// keeps no webhook schemas, so one type serves the event and `pulls/get`.
-private struct PullRequestEvent: Decodable {
+/// An Actions `pull_request` event: the trigger, and the pull request and
+/// repository with the REST API's schemas. The filter keeps no webhook
+/// schemas, so one type serves the event and `pulls/get`. Steward's own
+/// reader, `PullRequestEvent`, keeps less of it.
+private struct RawPullRequestEvent: Decodable {
     let action: String
     let number: Int
     let before: String?
@@ -31,12 +32,12 @@ struct EventPayloadTests {
         return decoder
     }()
 
-    private func event(_ name: String) throws -> PullRequestEvent {
+    private func event(_ name: String) throws -> RawPullRequestEvent {
         let url = try #require(
             Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Fixtures"),
             "no fixture \(name).json"
         )
-        return try decoder.decode(PullRequestEvent.self, from: Data(contentsOf: url))
+        return try decoder.decode(RawPullRequestEvent.self, from: Data(contentsOf: url))
     }
 
     @Test("an opened event decodes, naming its pull request and repository")
