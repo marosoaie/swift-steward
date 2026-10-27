@@ -141,12 +141,13 @@ report, the summary, and the log. Everything after the context is a real
 run's: the rules in order, a thrown error as a failure, the report, the
 summary cut to the host's size, the job summary, and the sticky comment.
 
-With the diff above as `static let sourcesOnly`:
+With the rule test's diff as `static let sourcesOnly` in
+`ChangelogTests`:
 
 ```swift
 @Test("a pull request without a changelog entry passes with a warning")
 func wholeRun() async throws {
-    let context = try Context.fixture(diff: Self.sourcesOnly)
+    let context = try Context.fixture(diff: ChangelogTests.sourcesOnly)
     let host = FakePullRequestHost(pullRequest: context.pullRequest)
     let outcome = await Checks.run(on: context, postingTo: host)
     #expect(outcome.exitStatus == 0)
@@ -179,3 +180,45 @@ own: it writes no report file, its summary links to no workflow run, and
 its token goes nowhere but the host. The fake host doesn't simulate
 GitHub's failures (rate limits, outages); a rule test doesn't need them,
 and Steward's own tests cover how a run handles them.
+
+## The diagnostics rule
+
+`Rule.diagnosticsOnChangedLines(in:failingOn:)` reads its reports under
+`context.run.workspace`, so its test writes one into a directory of its
+own and builds the context there:
+
+```swift
+// Dangerfile/Tests/DangerfileTests/BuildLogTests.swift
+import Foundation
+import StewardTesting
+import Testing
+
+@Suite("Build log")
+struct BuildLogTests {
+    @Test("a warning on an added line is reported at that line")
+    func warningOnAddedLine() async throws {
+        let workspace = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: workspace, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: workspace) }
+        try """
+            /ci/checkout/Sources/App.swift:2:5: warning: initialization of immutable value 'greeting' was never used
+            """.write(to: workspace.appendingPathComponent("build.log"), atomically: true, encoding: .utf8)
+        let context = try Context.fixture(diff: ChangelogTests.sourcesOnly, workspace: workspace.path)
+        let findings = try await Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log")]).evaluate(context)
+        #expect(findings == [.warning(
+            "initialization of immutable value 'greeting' was never used",
+            at: Location(path: "Sources/App.swift", line: 2)
+        )])
+    }
+}
+```
+
+A report's paths resolve as in a run: a path to a file under the
+workspace is that file, and any other matches the pull request's path it
+ends with, so a CI runner's absolute paths work as they are. A fixture's
+line map is the identity, so the report's line numbers are the head's.
+Leave out `builtAt:`: it maps a report through git in the checkout, which
+a fixture doesn't have, so the rule reports a failure. `evaluate(_:)`
+drops what the rule logs; a whole run's log says how many
+diagnostics each report held, matched, and dropped.

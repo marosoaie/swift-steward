@@ -15,3 +15,11 @@ struct Verbose: Dangerfile {
         }
     }
 }
+
+/// A Dangerfile with only the built-in diagnostics rule, on the
+/// workspace's `build.log`.
+struct BuildChecks: Dangerfile {
+    static var rules: [Rule] {
+        Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log")])
+    }
+}
