@@ -31,10 +31,14 @@ struct Checks: Dangerfile {
         return [.failure("Describe what this pull request changes and why.")]
     }
 
-    /// A change to the sources comes with a changelog entry.
+    /// A change to the sources, moving a file out of them included, comes
+    /// with a changelog entry. Deleting the changelog isn't one.
     static let changelog = Rule("Changelog") { context in
-        let paths = context.git.createdFiles + context.git.modifiedFiles + context.git.deletedFiles
-        guard paths.contains(where: { $0.hasPrefix("Sources/") }), !paths.contains("CHANGELOG.md") else { return [] }
+        let git = context.git
+        let changed = git.createdFiles + git.modifiedFiles
+        let touched = changed + git.deletedFiles + git.renamedFiles.map(\.from)
+        guard touched.contains(where: { $0.hasPrefix("Sources/") }), !changed.contains("CHANGELOG.md")
+        else { return [] }
         return [.warning("Add an entry to CHANGELOG.md for the changes under `Sources/`.")]
     }
 

@@ -26,6 +26,28 @@ enum SampleDiff {
 
         """
 
+    /// The same edit, deleting the changelog.
+    static let sourcesDeletingChangelog = sources + """
+        diff --git a/CHANGELOG.md b/CHANGELOG.md
+        deleted file mode 100644
+        index 3333333..0000000
+        --- a/CHANGELOG.md
+        +++ /dev/null
+        @@ -1,2 +0,0 @@
+        -# Changelog
+        -- Start the app.
+
+        """
+
+    /// A file moved out of `Sources/`, unchanged.
+    static let moveOutOfSources = """
+        diff --git a/Sources/Legacy.swift b/Archive/Legacy.swift
+        similarity index 100%
+        rename from Sources/Legacy.swift
+        rename to Archive/Legacy.swift
+
+        """
+
     /// An edit outside `Sources/`.
     static let readme = """
         diff --git a/README.md b/README.md
