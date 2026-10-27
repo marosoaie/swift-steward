@@ -1,0 +1,38 @@
+diff --git a/Sources/CScratch/include/probe.h b/Sources/CScratch/include/probe.h
+new file mode 100644
+index 0000000..5ab72a6
+--- /dev/null
++++ b/Sources/CScratch/include/probe.h
+@@ -0,0 +1 @@
++int probe(void);
+diff --git a/Sources/CScratch/probe.c b/Sources/CScratch/probe.c
+new file mode 100644
+index 0000000..a1428e3
+--- /dev/null
++++ b/Sources/CScratch/probe.c
+@@ -0,0 +1,6 @@
++#include "probe.h"
++
++int probe(void) {
++#warning "hand-rolled warning"
++    return 0;
++}
+diff --git a/Sources/Scratch/Error.swift b/Sources/Scratch/Error.swift
+new file mode 100644
+index 0000000..232a611
+--- /dev/null
++++ b/Sources/Scratch/Error.swift
+@@ -0,0 +1,3 @@
++public func broken() -> Int {
++    return "not an int"
++}
+diff --git a/Sources/Scratch/Warning.swift b/Sources/Scratch/Warning.swift
+new file mode 100644
+index 0000000..bd92a77
+--- /dev/null
++++ b/Sources/Scratch/Warning.swift
+@@ -0,0 +1,4 @@
++public func greet() -> String {
++    let unused = 42
++    return "hello"
++}

@@ -16,6 +16,11 @@ import StreamParsing
 /// A cheap byte-level scan for a severity marker gates the per-line regex,
 /// so multi-gigabyte logs that are mostly non-diagnostic noise parse
 /// quickly.
+///
+/// Coloured logs parse like plain ones: terminal escape sequences (ANSI
+/// colours, OSC 8 hyperlinks) are removed from a line before it's matched,
+/// so `swift build`'s coloured output needs no `--no-color-diagnostics`.
+/// Lines without an `ESC` byte are matched as they are.
 public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
     package var partialLine: [UInt8] = []
 
@@ -35,6 +40,7 @@ public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
         // swiftlint:disable:next line_length
         /^(?<path>[^:\n][^\n]*?):(?<line>\d+)(?::(?<column>\d+))?:\s*(?<severity>fatal error|error|warning|note|remark):\s*(?<message>.*)$/
 
+    // containsSeverityMarker switches on their first bytes: keep it in step.
     private static let severityMarkers: [[UInt8]] = [
         Array("error:".utf8),
         Array("warning:".utf8),
@@ -60,8 +66,18 @@ public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
     }
 
     package mutating func processLine(_ line: ArraySlice<UInt8>) {
-        guard !line.isEmpty, containsSeverityMarker(line) else { return }
+        guard !line.isEmpty, containsSeverityMarker(line, orEscape: true) else { return }
+        guard line.contains(TerminalEscapes.escape) else {
+            return parseDiagnostic(line)
+        }
+        // Match what a terminal would show: the gate may have passed on the
+        // ESC alone, and colours can even split a severity word.
+        let plain = TerminalEscapes.removing(from: line)
+        guard containsSeverityMarker(plain[...], orEscape: false) else { return }
+        parseDiagnostic(plain[...])
+    }
 
+    private mutating func parseDiagnostic(_ line: ArraySlice<UInt8>) {
         let text = String(decoding: line, as: UTF8.self)
         guard let match = text.firstMatch(of: diagnosticRegex),
               let lineNumber = Int(match.line)
@@ -93,13 +109,21 @@ public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
     }
 
     /// Fast pre-filter: a matching line necessarily contains one of the
-    /// severity words followed by a colon.
-    private func containsSeverityMarker(_ line: ArraySlice<UInt8>) -> Bool {
-        // Hot path (runs per byte of the log); the first-byte comparison
-        // rejects almost every position before the full starts(with:).
+    /// severity words followed by a colon, or, in a coloured line, an `ESC`
+    /// that may hide one.
+    private func containsSeverityMarker(_ line: ArraySlice<UInt8>, orEscape: Bool) -> Bool {
+        // Hot path (runs per byte of the log): switching on the byte rejects
+        // almost every position before any starts(with:), and the ESC test
+        // rides along, so a plain line that holds no marker is scanned once.
         line.indices.contains { index in
-            Self.severityMarkers.contains { marker in
-                line[index] == marker[0] && line[index...].starts(with: marker)
+            switch line[index] {
+            case TerminalEscapes.escape:
+                orEscape
+            // The markers' first bytes.
+            case UInt8(ascii: "e"), UInt8(ascii: "w"), UInt8(ascii: "n"), UInt8(ascii: "r"):
+                Self.severityMarkers.contains { line[index...].starts(with: $0) }
+            default:
+                false
             }
         }
     }

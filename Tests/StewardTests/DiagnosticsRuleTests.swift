@@ -130,6 +130,27 @@ struct DiagnosticsRuleTests {
         ])
     }
 
+    @Test("a coloured build log gives the findings of its plain twin")
+    func colouredLog() async throws {
+        let reports = try Reports()
+        defer { reports.remove() }
+        // Coloured as Swift 6.4's default build system colours a piped log:
+        // swiftc's severity and message, and clang's path too.
+        let coloured = try reports.write("""
+            Sources/A.swift:2:1: \u{1B}[1;31merror: \u{1B}[1;39mcannot find 'x' in scope\u{1B}[0;0m
+            \u{1B}[1mSources/A.swift:4:1: \u{1B}[0m\u{1B}[0;1;35mwarning: \u{1B}[0m\u{1B}[1munused variable 'y' \
+            [-Wunused-variable]\u{1B}[0m
+            Sources/B.swift:1:1: \u{1B}[1;30mnote: \u{1B}[1;39mdid you mean 'z'?\u{1B}[0;0m
+
+            """, to: "coloured.log")
+        let plain = try reports.write(Self.severitiesLog, to: "build.log")
+
+        let (findings, _) = try await run([.xcodebuild(coloured)])
+        let (plainFindings, _) = try await run([.xcodebuild(plain)])
+        #expect(findings.map(\.kind) == [.failure, .warning, .message])
+        #expect(findings == plainFindings)
+    }
+
     @Test("failing on a severity fails on it and every severity above it, as filter --fail-on does", arguments: [
         (DiagnosticSeverity.error, [Finding.Kind.failure, .warning, .message]),
         (.warning, [.failure, .failure, .message]),

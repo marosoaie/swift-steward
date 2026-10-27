@@ -1,0 +1,27 @@
+Building for debugging...
+[Planning deferred tasks]
+[22 / 33]
+[1m/ci/Scratch/Sources/CScratch/probe.c:4:2: [0m[0;1;35mwarning: [0m[1m"hand-rolled warning" [-W#warnings][0m
+    4 | #warning [0;32m"hand-rolled warning"[0m
+      | [0;1;32m ^
+[0m1 warning generated.
+[27 / 39] CScratch
+error: SwiftCompile normal arm64 /ci/Scratch/Sources/Scratch/Error.swift failed with a nonzero exit code. Command line:     cd /ci
+    builtin-SwiftPerFileCompile Error.swift
+/ci/Scratch/Sources/Scratch/Error.swift:2:12: [1;31merror: [1;39mcannot convert return expression of type 'String' to return type 'Int'[0;0m
+[0;36m1 |[0;0m public func broken() -> Int {
+[0;36m2 |[0;0m     return [4;39m"not an int"[0;0m
+  [0;36m|[0;0m            `- [1;31merror: [1;39mcannot convert return expression of type 'String' to return type 'Int'[0;0m
+[0;36m3 |[0;0m }
+[0;36m4 |[0;0m 
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c [... about 4 KB of arguments elided, among them -color-diagnostics -Xcc -fcolor-diagnostics ...]
+/ci/Scratch/Sources/Scratch/Warning.swift:2:9: [1;33mwarning: [1;39minitialization of immutable value 'unused' was never used; consider replacing with assignment to '_' or removing it[0;0m [#]8;;https://docs.swift.org/compiler/documentation/diagnostics/no-usage\NoUsage]8;;\]
+[0;36m1 |[0;0m public func greet() -> String {
+[0;36m2 |[0;0m     let unused = 42
+  [0;36m|[0;0m         `- [1;33mwarning: [1;39minitialization of immutable value 'unused' was never used; consider replacing with assignment to '_' or removing it[0;0m [#]8;;https://docs.swift.org/compiler/documentation/diagnostics/no-usage\NoUsage]8;;\]
+[0;36m3 |[0;0m     return "hello"
+[0;36m4 |[0;0m }
+
+[#NoUsage]: <https://docs.swift.org/compiler/documentation/diagnostics/no-usage>
+error: Build failed
