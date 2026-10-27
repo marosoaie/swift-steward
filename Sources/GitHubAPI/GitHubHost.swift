@@ -22,6 +22,12 @@ public struct GitHubHost: PullRequestHost, CustomStringConvertible {
     /// it reading forever.
     static let maximumCommentPages = 100
 
+    /// The longest comment GitHub takes, counted in UTF-8 bytes. Its 422
+    /// says "maximum is 65536 characters", and no way of counting
+    /// characters counts more of them than there are bytes, so a body of
+    /// this many bytes is never too long, whatever GitHub counts.
+    static let maximumCommentSize = 65_536
+
     /// A session that never answers from a cache. GitHub marks its responses
     /// `Cache-Control: private, max-age=60`, so `URLSession.shared` serves a
     /// repeated request from its cache for a minute: a comment posted or
@@ -97,6 +103,11 @@ public struct GitHubHost: PullRequestHost, CustomStringConvertible {
                 GitHubHeadersMiddleware(token: token.flatMap { $0.isEmpty ? nil : $0 }),
             ]
         )
+    }
+
+    /// GitHub's limit on a comment, less the marker line the host adds.
+    public var maximumSummarySize: Int {
+        Self.maximumCommentSize - marker.marking("").utf8.count
     }
 
     /// The repository and the API URL; never the token.

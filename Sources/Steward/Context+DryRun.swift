@@ -72,7 +72,7 @@ extension Context {
         }
         let token = environment["GITHUB_TOKEN"].flatMap { $0.isEmpty ? nil : $0 }
         do {
-            return try await makeHost(apiURL, repository.owner, repository.name, token).pullRequest(number: number)
+            return try await makeHost(apiURL, repository.owner, repository.name, token, nil).pullRequest(number: number)
         } catch {
             throw ContextError.unreadablePullRequest(number: number, reason: String(errorDescription: error))
         }

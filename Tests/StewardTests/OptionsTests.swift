@@ -6,11 +6,13 @@ struct OptionsTests {
     @Test("no arguments means a run with every default")
     func defaults() throws {
         #expect(try Options(arguments: []) == Options())
+        #expect(Options().summaryAuthor == "github-actions[bot]")
     }
 
     @Test("every option parses, its value either after = or as the next argument", arguments: [
-        ["--base", "main", "--pull-request", "27", "--report", "out.json", "--fail-on-post-error"],
-        ["--base=main", "--pull-request=27", "--report=out.json", "--fail-on-post-error"],
+        ["--base", "main", "--pull-request", "27", "--report", "out.json", "--fail-on-post-error",
+         "--summary-author", "app[bot]"],
+        ["--base=main", "--pull-request=27", "--report=out.json", "--fail-on-post-error", "--summary-author=app[bot]"],
     ])
     func everyOption(arguments: [String]) throws {
         var expected = Options()
@@ -18,6 +20,7 @@ struct OptionsTests {
         expected.pullRequest = 27
         expected.reportPath = "out.json"
         expected.failsOnPostError = true
+        expected.summaryAuthor = "app[bot]"
         #expect(try Options(arguments: arguments) == expected)
     }
 
@@ -41,6 +44,8 @@ struct OptionsTests {
         (["--base="], .missingValue("--base")),
         (["--base", "--report", "r.json"], .missingValue("--base")),
         (["--report", ""], .missingValue("--report")),
+        (["--summary-author"], .missingValue("--summary-author")),
+        (["--summary-author="], .missingValue("--summary-author")),
         (["--pull-request", "0"], .invalidPullRequest("0")),
         (["--pull-request=-3"], .invalidPullRequest("-3")),
         (["--pull-request", "#27"], .invalidPullRequest("#27")),
@@ -55,7 +60,8 @@ struct OptionsTests {
         let usage = Options.usage(program: "PullRequestChecks")
         #expect(usage.hasPrefix("USAGE: PullRequestChecks [--base <ref>]"))
         let mentions = [
-            "--base <ref>", "--pull-request <number>", "--report <path>", "--fail-on-post-error", "-h, --help",
+            "--base <ref>", "--pull-request <number>", "--report <path>", "--fail-on-post-error",
+            "--summary-author <login>", "-h, --help",
             "  0  ", "  1  ", "  2  ",
         ]
         #expect(mentions.allSatisfy { usage.contains($0) })
