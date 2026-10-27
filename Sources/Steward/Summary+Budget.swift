@@ -80,8 +80,12 @@ extension Summary {
     /// Everything else, display math included, ends at that blank line. A
     /// note with either may well close what it opens, but telling would
     /// take a Markdown parser.
+    ///
+    /// Compares scalars, not characters: a combining mark after the third
+    /// backtick joins it into another character, and GitHub still reads a
+    /// fence there.
     static func isSelfContained(_ text: String) -> Bool {
-        !["```", "~~~", "<"].contains { text.contains($0) }
+        !["```", "~~~", "<"].contains { text.unicodeScalars.contains($0.unicodeScalars) }
     }
 
     /// The bytes `part` adds to a rendering whose last part is `previous`:

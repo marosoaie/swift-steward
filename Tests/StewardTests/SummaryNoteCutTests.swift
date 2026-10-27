@@ -23,6 +23,9 @@ struct SummaryNoteCutTests {
     @Test("a note that opens a block a later note closes is cut with it, not after it", arguments: [
         ("```swift\nlet x = 1", "```"),
         ("~~~\nlet x = 1", "~~~"),
+        // Regression (Codex review): the mark joins the last tilde into one
+        // Character, but GitHub still opens the fence.
+        ("~~~\u{301}\nlet x = 1", "~~~"),
         ("<details><summary>Coverage</summary>\n\n- 98%", "</details>"),
         ("<!-- generated", "-->"),
         ("A <b>bold", "word</b>"),
@@ -71,6 +74,9 @@ struct SummaryNoteCutTests {
         ("$$\nx^2\n$$", true),
         ("```swift\nlet x = 1\n```", false),
         ("~~~\nx\n~~~", false),
+        ("```\u{301}\nx", false),
+        ("~~~\u{301}\nx", false),
+        ("a <\u{338} b", false),
         ("a <b>bold</b> word", false),
         ("1 < 2", false),
     ])
