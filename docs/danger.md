@@ -821,8 +821,9 @@ danger-swift 3.23.1 (the latest release, 2026-10-18) evaluates the
 Dangerfile, writes its results as JSON, and hands them to danger-js,
 which needs Node and does all the posting. Steward replaces both halves.
 The table maps every call a Dangerfile commonly makes, read from
-danger-swift's source at that tag; the migration guide (4.10) grows out
-of it. `context` is the rule closure's parameter.
+danger-swift's source at that tag; the
+[migration guide](migrating-from-danger-swift.md) (4.10) grew out of it.
+`context` is the rule closure's parameter.
 
 | danger-swift | Steward v1 | Notes |
 |---|---|---|
