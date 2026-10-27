@@ -677,6 +677,14 @@ commit can do the same, which the head can't show, so a duplicate's
 deletion also lists the summary comments again before its retry: when
 the one this run kept is gone, it deletes no more.
 
+Without that `concurrency` group, concurrent runs on one pull request
+are unsupported, even for the same commit: GitHub's comment API has no
+locking and no compare-and-set, so the sticky comment isn't race-free.
+The checks above cover a run whose head moved and one run's own
+retries; they can't order two runs against each other, and two runs
+posting at once can leave a duplicate, or no summary until the next run
+posts. That's why the Action's documentation (4.8) sets the group.
+
 ## 6. Running, exit codes, and posting failures (S6)
 
 ### The run
