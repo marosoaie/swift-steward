@@ -2,19 +2,21 @@
 
 **Status: reviewed (plan step 4.1).** Step 4.2 built the context,
 step 4.3 the DSL, the runner, and the dry run, step 4.4 the sticky
-comment, and step 4.5 the built-in diagnostics rule; steps 4.6–4.10
-build on what this document settles. Each section ends with
+comment, step 4.5 the built-in diagnostics rule, and step 4.6 the
+`Steward` and `StewardTesting` products; steps 4.7–4.10 build on what
+this document settles. Each section ends with
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
 recommended (7 with a documentation requirement added), the four
 step 4.2 raised in swift-steward#27 the same day, each as recommended,
 the seven step 4.3 raised in swift-steward#28, also that day and as
 recommended, the four step 4.4 raised in swift-steward#29 on
-2026-10-27, as recommended too, and the ten step 4.5 raised in
+2026-10-27, as recommended too, the ten step 4.5 raised in
 swift-steward#30 the same day, as recommended (six as built, four
-changed). The sections reflect the answers. Claims about danger-swift,
-GitHub, and SwiftPM were checked against their sources or by experiment;
-[Checks](#checks) lists how.
+changed), and the nine step 4.6 raised in swift-steward#31 the same
+day, as recommended and as built. The sections reflect the answers.
+Claims about danger-swift, GitHub, and SwiftPM were checked against
+their sources or by experiment; [Checks](#checks) lists how.
 
 ## Decisions at a glance
 
@@ -27,7 +29,7 @@ GitHub, and SwiftPM were checked against their sources or by experiment;
 | S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26; the author option and the budget's API 2026-10-27.** The 3.5 marker on the first line, only the token's own comments (`--summary-author` names another account); danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
-| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting` | `action.yml` at swift-steward's root with a moving `v1` tag |
+| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner | `action.yml` at swift-steward's root with a moving `v1` tag |
 
 ## Context and constraints
 
@@ -875,7 +877,8 @@ swift-steward gains two library products:
   module, Swift has no supported way to re-export one, and
   `PullRequestHosting` isn't a product, so a Dangerfile couldn't import it
   itself.
-- **`StewardTesting`** (4.6): builds a `Context` from fixtures (a diff
+- **`StewardTesting`** (built in 4.6; [rule-tests.md](rule-tests.md)
+  says how to use it): builds a `Context` from fixtures (a diff
   as text, which the full model parses exactly as in a real run; a
   `PullRequest` with defaults for every field; commits) and a fake
   `PullRequestHost` that records what the runner would post. A rule the
@@ -899,6 +902,16 @@ swift-steward gains two library products:
 **Decided 2026-10-26 (question 15):** both products arrive in step 4.6,
 together; until then, `Steward` is a target the end-to-end tests' fixture
 Dangerfile builds against.
+
+**Decided 2026-10-27 (questions 36–44), as built:**
+`FakePullRequestHost` is an actor (36); `StewardTesting` re-exports
+`Steward` (37); a damaged fixture diff throws `Context.FixtureError`
+(38); a fixture context without a pull request gets one sized from the
+diff, and one given is used as it is (39); the fixture values are
+fixed (40); a fixture run returns a `RunOutcome` whose exit status is
+an `Int32` (41) and keeps a real dry run's footer (42); the fake host
+injects no failures (43); and `StewardTesting` reaches the runner
+through `package` hooks (44).
 
 A user's `Dangerfile/` is an ordinary package: an executable target that
 depends on `Steward`, a test target that depends on `StewardTesting`, and
@@ -957,9 +970,11 @@ The maintainer answered all ten on 2026-10-26, the four that step 4.2
 raised in swift-steward#27 (numbered on from 11) the same day, and the
 seven that step 4.3 raised in swift-steward#28 (numbered on from 15) that
 day too, the four that step 4.4 raised in swift-steward#29 (numbered
-on from 22) on 2026-10-27, and the ten that step 4.5 raised in
-swift-steward#30 (numbered on from 26) the same day. The sections refer
-to them by number, and each section above already reflects its answer.
+on from 22) on 2026-10-27, the ten that step 4.5 raised in
+swift-steward#30 (numbered on from 26) the same day, and the nine that
+step 4.6 raised in swift-steward#31 (numbered on from 35) that day too.
+The sections refer to them by number, and each section above already
+reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1111,6 +1126,53 @@ to them by number, and each section above already reflects its answer.
     reference to it.
 35. **`DiagnosticPathResolver` (S3). Answered 2026-10-27: `package`**,
     shared by `DiagnosticMatcher` and Steward, not DiffDiagnostics API.
+36. **The fake host (S8). Answered 2026-10-27: an actor, as built** ("go
+    with the recommendations", for all nine of #31's questions).
+    `FakePullRequestHost` holds the comments, the requests, and the
+    head, which the test and the run both change across `await`s; a
+    struct couldn't take the run's changes, and a class with a lock is
+    against the style.
+37. **Re-exports (S8). Answered 2026-10-27: `StewardTesting` re-exports
+    `Steward`,** so a test file imports `StewardTesting`, `Testing`, and
+    the Dangerfile, much as a Dangerfile imports only `Steward`
+    (question 16).
+38. **A damaged fixture diff (S8). Answered 2026-10-27: it throws.**
+    `Context.fixture` throws the typed `Context.FixtureError`, which lists
+    where the parser found damage: a diff git couldn't have written is a
+    typo in the test, and a real run's recovery (dropping the file) would
+    test a diff its author didn't mean. The error is nested in `Context`
+    so it can't clash with a test's own `FixtureError`. If a rule about
+    diff damage ever needs a test, a defaulted option that allows damage
+    can come later without breaking anything.
+39. **Missing fixtures (S8). Answered 2026-10-27: sized from the diff.**
+    Without a pull request, the context gets `PullRequest.fixture()` with
+    additions, deletions, changed files, and commits counted from the
+    diff and the commits as GitHub counts them. A pull request given is
+    used as it is, sizes included, so a test can set sizes that disagree
+    with the diff. Without commits, there is one: the head on the base,
+    with the pull request's title and description.
+40. **Fixture values (S8). Answered 2026-10-27: fixed.** Base
+    `ba5eba5e…`, head `4ead4ead…`, `octocat/hello-world`, author
+    `octocat`, 2026-01-01T00:00:00Z, and workspace `/workspace`, so
+    summaries and logs compare exactly.
+41. **A fixture run's outcome (S8). Answered 2026-10-27: `RunOutcome`,
+    as built.** `Dangerfile.run(on:postingTo:)` and `run(on:)` return the
+    exit status, the report, the summary, and the log. `exitStatus` stays
+    the `Int32` the process would exit with, and the runner's status enum
+    stays internal; a public status type could join it later without
+    breaking anything.
+42. **A fixture dry run's footer (S5, S8). Answered 2026-10-27: kept.**
+    It says "dry run with a placeholder pull request", as a real dry run
+    without `--pull-request` does, so a fixture run takes the real run's
+    path.
+43. **Failure injection (S8). Answered 2026-10-27: none.** The fake host
+    doesn't simulate GitHub's failures: a rule can't change how posting
+    fails, and Steward's own tests cover that against the simulated
+    GitHub.
+44. **How `StewardTesting` reaches the runner (S8). Answered 2026-10-27:
+    `package` hooks:** `FixtureRun` and `Runner.run(_:in:options:log:)`,
+    plus the size counting, the damage sentence, and GitHub's summary
+    size it shares with the runner, not public API on `Runner`.
 
 ## Checks
 

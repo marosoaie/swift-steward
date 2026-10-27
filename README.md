@@ -156,7 +156,7 @@ new-side line number, which is exactly what the GitHub review-comment API
 
 ## Using the libraries
 
-The package exports two library products and builds on a third, so other
+The package exports four library products and builds on a fifth, so other
 tooling — e.g. a Danger-Swift plugin — can depend on exactly the layer it
 needs:
 
@@ -165,6 +165,8 @@ needs:
 | `GitDiffKit` | Unified git diffs → changed files and line ranges (`DiffParser`, `ChangedLines`). From the [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library |
 | `BuildLogKit` | Build/lint logs → diagnostics. `ClangStyleLogParser` handles any clang-style log; `XcodeLogParser`, `SwiftLintLogParser`, and `SwiftFormatLogParser` additionally extract the violated rule. All conform to `LogParsing` |
 | `DiffDiagnostics` | The join: `DiagnosticMatcher` filters diagnostics to the lines a diff touches (depends on both of the above) |
+| `Steward` | A pure-Swift Danger: a `Dangerfile` package's rules, and a built-in one for build and lint diagnostics on changed lines, check a pull request in GitHub Actions and post one summary comment ([design](docs/danger.md)). Re-exports `GitDiffKit` |
+| `StewardTesting` | For a Dangerfile's tests: `Context.fixture(diff:)` builds the context a run would, and `Dangerfile.run(on:)` runs every rule against a fake host ([how to write a rule test](docs/rule-tests.md)) |
 
 ```swift
 // Package.swift
@@ -219,6 +221,8 @@ let kept = DiagnosticMatcher.match(
   benchmarks, and how the parser is validated against real-world diffs.
 - [AGENTS.md](AGENTS.md) — contribution conventions and coding style, written
   for humans and coding agents alike. Read it before contributing.
+- [docs/rule-tests.md](docs/rule-tests.md) — how to test a Dangerfile's rules
+  with `StewardTesting`.
 
 ## License
 

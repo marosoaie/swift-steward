@@ -110,6 +110,13 @@ public struct GitHubHost: PullRequestHost, CustomStringConvertible {
         Self.maximumCommentSize - marker.marking("").utf8.count
     }
 
+    /// `maximumSummarySize` with Steward's marker: what a host made by the
+    /// public initializer takes, and so what StewardTesting's fake takes by
+    /// default.
+    package static var stewardMaximumSummarySize: Int {
+        maximumCommentSize - SummaryMarker.steward.marking("").utf8.count
+    }
+
     /// The repository and the API URL; never the token.
     public var description: String {
         "GitHubHost(\(owner)/\(repository) at \(apiURL.absoluteString))"

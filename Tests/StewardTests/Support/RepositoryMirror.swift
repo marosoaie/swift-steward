@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import Synchronization
 
 /// Bare mirrors of this project's repositories on GitHub, cloned once into
@@ -82,5 +85,89 @@ enum RepositoryMirror {
             )
             return String(decoding: output, as: UTF8.self).hasPrefix("no")
         }
+    }
+}
+
+extension RepositoryMirror {
+    /// A mirror of the public GitHub repository `owner/name` without its
+    /// blobs: the commits and trees behind `tags`, fetched once into the
+    /// fixture cache, with each blob fetched the first time git reads it.
+    ///
+    /// For repositories too large to clone whole, such as redis/redis.
+    static func upstream(_ repository: String, tags: [String]) throws -> URL {
+        try refreshing.withLock { _ in
+            let mirror = directory.appendingPathComponent("upstream/\(repository).git", isDirectory: true)
+            if !FileManager.default.fileExists(atPath: mirror.path) {
+                try FileManager.default.createDirectory(
+                    at: mirror.deletingLastPathComponent(),
+                    withIntermediateDirectories: true
+                )
+                // Built beside the mirror, then moved into place, so an
+                // interrupted fetch never looks like a mirror.
+                let partial = mirror.deletingLastPathComponent()
+                    .appendingPathComponent(".\(mirror.lastPathComponent)-\(UUID().uuidString)", isDirectory: true)
+                defer { try? FileManager.default.removeItem(at: partial) }
+                try [
+                    ["init", "--quiet", "--bare", partial.path],
+                    ["-C", partial.path, "remote", "add", "origin", "https://github.com/\(repository).git"],
+                    ["-C", partial.path, "config", "remote.origin.promisor", "true"],
+                    ["-C", partial.path, "config", "remote.origin.partialclonefilter", "blob:none"],
+                ].forEach { try git($0) }
+                try fetch(tags, into: partial)
+                try? FileManager.default.moveItem(at: partial, to: mirror)
+            }
+            let missing = try tags.filter { tag in
+                let output = try Subprocess.output(
+                    of: ["sh", "-c", """
+                        git -C "$0" rev-parse --verify --quiet "refs/tags/$1" >/dev/null && echo yes || echo no
+                        """, mirror.path, tag],
+                    environment: TestRepository.environment
+                )
+                return String(decoding: output, as: UTF8.self).hasPrefix("no")
+            }
+            if !missing.isEmpty {
+                try fetch(missing, into: mirror)
+            }
+            return mirror
+        }
+    }
+
+    private static func fetch(_ tags: [String], into mirror: URL) throws {
+        try git(["-C", mirror.path, "fetch", "--quiet", "--filter=blob:none", "--no-tags", "origin"]
+            + tags.map { "refs/tags/\($0):refs/tags/\($0)" })
+    }
+
+    private static func git(_ arguments: [String]) throws {
+        _ = try Subprocess.output(
+            of: ["git"] + arguments,
+            environment: TestRepository.environment.merging(["GIT_TERMINAL_PROMPT": "0"]) { $1 }
+        )
+    }
+
+    /// GitHub's diff of `base...head` in `owner/name`, as its compare page
+    /// serves it, from the fixture cache, or downloaded into it first.
+    ///
+    /// Named as SwiftStewardTests' `RealWorldFixtureStore` names its
+    /// copies, `<name>-<base>-to-<head>.diff`, so the two share them.
+    static func compareDiff(of repository: String, from base: String, to head: String) async throws -> String {
+        let name = repository.split(separator: "/").last.map(String.init) ?? repository
+        let cached = directory.deletingLastPathComponent().appendingPathComponent("\(name)-\(base)-to-\(head).diff")
+        if let data = try? Data(contentsOf: cached), data.prefix(4096).contains(Data("diff --git".utf8)) {
+            return String(decoding: data, as: UTF8.self)
+        }
+        guard let url = URL(string: "https://github.com/\(repository)/compare/\(base)...\(head).diff") else {
+            throw FixtureError("no compare URL for \(repository) \(base)...\(head)")
+        }
+        let (data, response) = try await URLSession.shared.data(from: url)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard status == 200, data.prefix(4096).contains(Data("diff --git".utf8)) else {
+            throw FixtureError("GET \(url) answered \(status), not a diff; try again, or check the URL")
+        }
+        try FileManager.default.createDirectory(
+            at: cached.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try data.write(to: cached, options: .atomic)
+        return String(decoding: data, as: UTF8.self)
     }
 }
