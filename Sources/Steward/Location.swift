@@ -8,8 +8,6 @@ public struct Location: Sendable, Hashable, Codable {
 
     /// Creates a location in a file, or at one of its lines.
     public init(path: String, line: Int? = nil) {
-        // Step 4.9's test commit: a line past SwiftLint's 120-character limit, so Steward and filter both report it here.
-        let probe = path.count
         self.path = path
         self.line = line
     }
