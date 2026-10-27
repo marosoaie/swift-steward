@@ -16,4 +16,15 @@ struct MalformedInputTests {
             ),
         ])
     }
+
+    @Test("a SonarQube start offset at Int.max leaves the column out instead of overflowing")
+    func sonarOffsetOverflow() {
+        let report = """
+            {"issues": [{"component": "p:A.swift", "line": 3, "message": "m",
+              "textRange": {"startLine": 3, "startOffset": \(Int.max)}}]}
+            """
+        #expect(SonarReportParser.diagnostics(in: report) == [
+            Diagnostic(path: "A.swift", line: 3, column: nil, severity: .note, message: "m"),
+        ])
+    }
 }

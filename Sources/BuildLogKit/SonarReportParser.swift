@@ -68,11 +68,20 @@ public struct SonarReportParser: LogParsing, Sendable {
             return Diagnostic(
                 path: path,
                 line: line,
-                column: textRange?.startOffset.map { $0 + 1 },
+                column: column,
                 severity: mappedSeverity,
                 message: message ?? rule ?? "SonarQube issue",
                 rule: rule
             )
+        }
+
+        /// The 1-based column of the issue's 0-based start offset; nil when
+        /// there's none, or for an offset so large that one more overflows.
+        private var column: Int? {
+            textRange?.startOffset.flatMap { offset in
+                let (column, overflow) = offset.addingReportingOverflow(1)
+                return overflow ? nil : column
+            }
         }
 
         private var mappedSeverity: Diagnostic.Severity {

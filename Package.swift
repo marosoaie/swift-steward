@@ -102,14 +102,17 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         // Steward, the pure-Swift Danger (docs/danger.md): the DSL, the
-        // context rules see, and the runner, which checks a pull request in
-        // CI and posts its summary, or prints it in a dry run. It re-exports
-        // GitDiffKit and PullRequestHosting, so a Dangerfile imports only
-        // Steward.
+        // context rules see, the runner, which checks a pull request in CI
+        // and posts its summary, or prints it in a dry run, and the built-in
+        // rule that reports build and lint diagnostics on changed lines. It
+        // re-exports GitDiffKit and PullRequestHosting, so a Dangerfile
+        // imports only Steward.
         .target(
             name: "Steward",
             dependencies: [
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "BuildLogKit",
+                "DiffDiagnostics",
                 "PullRequestHosting",
                 "GitHubAPI",
                 "StewardVersion",
@@ -146,8 +149,12 @@ let package = Package(
                 "Steward",
                 "StewardTesting",
                 "DangerfileFixture",
+                // `steward filter`, the oracle for the diagnostics rule.
+                "StewardCLI",
                 "StewardVersion",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
+                "BuildLogKit",
+                "DiffDiagnostics",
                 "PullRequestHosting",
                 // Hosts on fixture transports, so a run's requests are
                 // checked, and a dry run is shown to make none.
@@ -186,6 +193,9 @@ let package = Package(
                 "BuildLogKit",
                 "DiffDiagnostics",
                 "StewardVersion",
+                // Steward's diagnostics rule, checked against `steward
+                // filter` on the real logs here.
+                "Steward",
             ],
             resources: [.copy("Fixtures")],
             swiftSettings: swiftSettings

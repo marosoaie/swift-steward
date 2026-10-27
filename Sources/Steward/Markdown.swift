@@ -4,17 +4,52 @@ import Foundation
 enum Markdown {
     /// `text`, plain text such as an error's description, escaped so it
     /// renders as written inside a line: Markdown's inline punctuation is
-    /// backslash-escaped, and every `@` is followed by a zero-width space,
-    /// so a message can't mention anyone. (GitHub still turns `\@name` into
-    /// a mention: it finds mentions in the rendered text.)
+    /// backslash-escaped, and a zero-width space follows every `@`, so a
+    /// message can't mention anyone, and comes between an issue number and
+    /// the `#` or `GH-` before it, so `#12`, `GH-12` and `owner/repo#12`
+    /// can't cross-reference an issue. (GitHub finds mentions and issue
+    /// references in the rendered text, so a backslash wouldn't stop
+    /// them.) `#if` and the like, with no digit after the `#`, are left as
+    /// they are. A bare URL still renders as a link, but one that contains
+    /// escaped punctuation or such a number, as in `…/page#12`, links to
+    /// the escaped spelling.
     static func escaped(_ text: String) -> String {
-        String(text.unicodeScalars.flatMap { scalar -> [Unicode.Scalar] in
-            if scalar == "@" { return ["@", "\u{200B}"] }
-            return inlinePunctuation.contains(scalar) ? ["\\", scalar] : [scalar]
+        let scalars = Array(text.unicodeScalars)
+        return String(scalars.indices.flatMap { index -> [Unicode.Scalar] in
+            let scalar = scalars[index]
+            let escaped: [Unicode.Scalar] = inlinePunctuation.contains(scalar) ? ["\\", scalar] : [scalar]
+            return endsReferencePrefix(at: index, in: scalars) ? escaped + ["\u{200B}"] : escaped
         }.map(Character.init))
     }
 
     private static let inlinePunctuation: Set<Unicode.Scalar> = ["\\", "`", "*", "_", "[", "]", "<", ">", "&", "~"]
+
+    /// Whether the scalar at `index` ends what GitHub reads as the start of
+    /// a reference: an `@`; the `#` before an issue number, even after a
+    /// word (`owner/repo#12`); or the `GH-`, in any case, before one, but
+    /// not inside a word (`high-5`), which GitHub doesn't link. GitHub
+    /// reads issue numbers in ASCII digits only.
+    private static func endsReferencePrefix(at index: Int, in scalars: [Unicode.Scalar]) -> Bool {
+        let isDigitNext = scalars.dropFirst(index + 1).first.map(isASCIIDigit) == true
+        switch scalars[index] {
+        case "@": return true
+        case "#": return isDigitNext
+        case "-":
+            let before = scalars[..<index]
+            return isDigitNext
+                && before.suffix(2).map { String($0).lowercased() } == ["g", "h"]
+                && before.dropLast(2).last.map(isASCIIWordScalar) != true
+        default: return false
+        }
+    }
+
+    private static func isASCIIDigit(_ scalar: Unicode.Scalar) -> Bool {
+        ("0"..."9").contains(scalar)
+    }
+
+    private static func isASCIIWordScalar(_ scalar: Unicode.Scalar) -> Bool {
+        ("a"..."z").contains(scalar) || ("A"..."Z").contains(scalar) || isASCIIDigit(scalar) || scalar == "_"
+    }
 
     /// `text` as the content of a table cell: `|` escaped and line breaks
     /// as `<br>`, so cells joined with `<br>` stay cells.

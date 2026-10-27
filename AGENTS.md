@@ -15,7 +15,7 @@ the `GitDiffKit` library, strict dependency direction:
 | `BuildLogKit` | – | Build/lint logs → `[Diagnostic]` (xcodebuild, SwiftLint, SwiftFormat, SonarQube parsers) |
 | `DiffDiagnostics` | both above | The join: which diagnostics land on changed lines |
 | `steward` (CLI, target `StewardCLI`) | all three | `changes` and `filter` subcommands |
-| `Steward` | `GitDiffKit`, `PullRequestHosting`, `GitHubAPI` | A Dangerfile's DSL, context, and runner |
+| `Steward` | `GitDiffKit`, `BuildLogKit`, `DiffDiagnostics`, `PullRequestHosting`, `GitHubAPI` | A Dangerfile's DSL, context, runner, and built-in diagnostics rule |
 | `StewardTesting` | `Steward` | Fixture contexts and a fake host for a Dangerfile's tests |
 
 `GitDiffKit` and `BuildLogKit` must never import each other; only
@@ -41,16 +41,19 @@ spec fixes, and how to update them.
 
 `Steward` is the pure-Swift Danger replacement that
 [docs/danger.md](docs/danger.md) designs, on top of `GitDiffKit`,
-`PullRequestHosting` and `GitHubAPI`. It has the DSL (`Rule`,
-`Finding`, the `Dangerfile` protocol), the `Context` it builds from the
-GitHub Actions variables, the event payload and the local checkout, and
-the runner: in CI it writes the report and the job summary and posts the
-summary as one sticky comment, and anywhere else it's a dry run that
-prints the summary. It runs git with every output-shaping option pinned,
-so a user's configuration can't change what it parses. It re-exports
-`GitDiffKit` and `PullRequestHosting`, so a Dangerfile imports only
-`Steward`; generated types stay out of its public API.
-`StewardTesting` is for a Dangerfile's tests
+`PullRequestHosting`, `GitHubAPI`, `BuildLogKit` and `DiffDiagnostics`.
+It has the DSL (`Rule`, `Finding`, the `Dangerfile` protocol), the
+`Context` it builds from the GitHub Actions variables, the event payload
+and the local checkout, the runner, and the built-in rule
+`Rule.diagnosticsOnChangedLines(in:failingOn:)`, which maps a build's
+diagnostics to the head and keeps the ones on changed lines, as
+`steward filter` does. In CI the runner writes the report and the job
+summary and posts the summary as one sticky comment, and anywhere else
+it's a dry run that prints the summary. It runs git with every
+output-shaping option pinned, so a user's configuration can't change what
+it parses. It re-exports `GitDiffKit` and `PullRequestHosting`, so a
+Dangerfile imports only `Steward`; generated types stay out of its public
+API. `StewardTesting` is for a Dangerfile's tests
 ([docs/rule-tests.md](docs/rule-tests.md)): `Context.fixture(diff:)`
 parses a diff with the parser a run uses, `FakePullRequestHost` records
 what a run posts, and `Dangerfile.run(on:postingTo:)` runs every rule
