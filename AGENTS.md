@@ -6,8 +6,8 @@ agents alike; nothing here is specific to any particular tool or model.
 ## What this is
 
 A Swift package that surfaces build/lint diagnostics only on lines a pull
-request touches. Three products on top of the `GitDiffKit` library, strict
-dependency direction:
+request touches, and Steward, a pure-Swift Danger. Five products on top of
+the `GitDiffKit` library, strict dependency direction:
 
 | Product | Depends on | Purpose |
 |---|---|---|
@@ -15,6 +15,8 @@ dependency direction:
 | `BuildLogKit` | – | Build/lint logs → `[Diagnostic]` (xcodebuild, SwiftLint, SwiftFormat, SonarQube parsers) |
 | `DiffDiagnostics` | both above | The join: which diagnostics land on changed lines |
 | `steward` (CLI, target `StewardCLI`) | all three | `changes` and `filter` subcommands |
+| `Steward` | `GitDiffKit`, `PullRequestHosting`, `GitHubAPI` | A Dangerfile's DSL, context, and runner |
+| `StewardTesting` | `Steward` | Fixture contexts and a fake host for a Dangerfile's tests |
 
 `GitDiffKit` and `BuildLogKit` must never import each other; only
 `DiffDiagnostics` couples them. `StreamParsing` is an internal target
@@ -26,9 +28,9 @@ swift-argument-parser is allowed in the CLI target only, and Apple's
 swift-openapi-runtime and swift-openapi-urlsession in the `GitHubAPI`
 target only.
 
-`PullRequestHosting` (not a product yet) is the host seam: the
+`PullRequestHosting` (not a product) is the host seam: the
 `PullRequestHost` protocol and its models, with no dependencies.
-`GitHubAPI` (not a product yet) implements it as `GitHubHost`, over a
+`GitHubAPI` (not a product) implements it as `GitHubHost`, over a
 GitHub REST client generated from GitHub's OpenAPI description and
 committed under `Generated/`. Generated types stay internal, so they
 never reach public API: map them to hand-written models instead. Never
@@ -37,19 +39,28 @@ lives in the nested `Tooling/` package, which the root manifest never
 depends on. See [docs/github-api.md](docs/github-api.md) for the pin, the
 spec fixes, and how to update them.
 
-`Steward` (not a product yet) is the pure-Swift Danger replacement that
+`Steward` is the pure-Swift Danger replacement that
 [docs/danger.md](docs/danger.md) designs, on top of `GitDiffKit`,
-`PullRequestHosting` and `GitHubAPI`. So far it has the DSL (`Rule`,
+`PullRequestHosting` and `GitHubAPI`. It has the DSL (`Rule`,
 `Finding`, the `Dangerfile` protocol), the `Context` it builds from the
 GitHub Actions variables, the event payload and the local checkout, and
-the runner: in CI it writes the report and the job summary, and anywhere
-else it's a dry run that prints the summary. It doesn't post yet. It runs
-git with every output-shaping option pinned, so a user's configuration
-can't change what it parses. It re-exports `GitDiffKit` and
-`PullRequestHosting`, so a Dangerfile imports only `Steward`.
-`DangerfileFixture`, under `Tests/`, is a test-only executable target: a
-Dangerfile the end-to-end tests run as a process, and which depends on
-`Steward` alone, as a user's would.
+the runner: in CI it writes the report and the job summary and posts the
+summary as one sticky comment, and anywhere else it's a dry run that
+prints the summary. It runs git with every output-shaping option pinned,
+so a user's configuration can't change what it parses. It re-exports
+`GitDiffKit` and `PullRequestHosting`, so a Dangerfile imports only
+`Steward`; generated types stay out of its public API.
+`StewardTesting` is for a Dangerfile's tests
+([docs/rule-tests.md](docs/rule-tests.md)): `Context.fixture(diff:)`
+parses a diff with the parser a run uses, `FakePullRequestHost` records
+what a run posts, and `Dangerfile.run(on:postingTo:)` runs every rule
+after the context exactly as `main()` does, through the `package` hook
+`FixtureRun`. It re-exports `Steward`. `FixtureContextOracleTests` and
+`FakeHostOracleTests` hold both to real runs: keep them passing when
+either side changes. `DangerfileFixture`, under `Tests/`, is a test-only
+executable target: a Dangerfile the end-to-end tests run as a process,
+whose rules `StewardTestingTests` test as a user's tests would, and which
+depends on `Steward` alone, as a user's would.
 
 `GitDiffKit` comes from the first-party git-diff-parser package, pinned to
 tagged versions (`from:`) only, never a branch or revision: SwiftPM rejects

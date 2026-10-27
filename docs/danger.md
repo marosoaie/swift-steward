@@ -1,8 +1,9 @@
 # Steward: a pure-Swift Danger
 
 **Status: reviewed (plan step 4.1).** Step 4.2 built the context, and
-step 4.3 the DSL, the runner, and the dry run, and step 4.4 the sticky
-comment; steps 4.5–4.10 build on what this document settles. Each section ends with
+step 4.3 the DSL, the runner, and the dry run, step 4.4 the sticky
+comment, and step 4.6 the `Steward` and `StewardTesting` products; the
+other steps up to 4.10 build on what this document settles. Each section ends with
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
 recommended (7 with a documentation requirement added), the four
@@ -847,7 +848,8 @@ swift-steward gains two library products:
   module, Swift has no supported way to re-export one, and
   `PullRequestHosting` isn't a product, so a Dangerfile couldn't import it
   itself.
-- **`StewardTesting`** (4.6): builds a `Context` from fixtures (a diff
+- **`StewardTesting`** (built in 4.6; [rule-tests.md](rule-tests.md)
+  says how to use it): builds a `Context` from fixtures (a diff
   as text, which the full model parses exactly as in a real run; a
   `PullRequest` with defaults for every field; commits) and a fake
   `PullRequestHost` that records what the runner would post. A rule the

@@ -66,7 +66,7 @@ let package = Package(
             swiftSettings: swiftSettings
         ),
         // The `steward` command. Not named after its product: a module
-        // `steward` would collide with the planned `Steward` library module
+        // `steward` would collide with the `Steward` library module
         // on case-insensitive file systems.
         .executableTarget(
             name: "StewardCLI",
