@@ -11,7 +11,8 @@ struct Filter: ParsableCommand {
             The log is scanned for clang-style diagnostics \
             ("path:line:col: warning: message"), the format emitted by swiftc, \
             xcodebuild, SwiftLint, and SwiftFormat; all other log lines are \
-            ignored. Pick a --tool to additionally extract the violated rule \
+            ignored. Terminal colours are removed first, so a coloured log \
+            parses like a plain one. Pick a --tool to additionally extract the violated rule \
             (SwiftLint rule identifier, SwiftFormat rule name, clang warning \
             flag) into the output. Absolute log paths are matched to \
             repo-relative diff paths by longest component-aligned suffix, so \

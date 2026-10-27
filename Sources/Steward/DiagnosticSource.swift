@@ -32,7 +32,9 @@ public struct DiagnosticSource: Sendable, Hashable {
     /// The output of `xcodebuild`, `swift build`, `swiftc`, or clang:
     /// clang-style diagnostic lines (`path:line:column: warning: message`)
     /// anywhere in the log, with a clang warning flag such as
-    /// `-Wunused-variable` taken as the rule.
+    /// `-Wunused-variable` taken as the rule. Colours are removed first, so
+    /// a coloured log, which Swift 6.4's `swift build` writes even when
+    /// piped, reads like a plain one.
     public static func xcodebuild(_ path: String, builtAt commit: String? = nil) -> DiagnosticSource {
         DiagnosticSource(tool: .xcodebuild, path: path, builtCommit: commit)
     }

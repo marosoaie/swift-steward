@@ -76,7 +76,9 @@ steward filter build.log --diff pr.diff --format github
 
 The log is scanned for the de-facto standard clang format that `swiftc`,
 `xcodebuild`, SwiftLint, and SwiftFormat all emit — everything else in the
-log is ignored, so pipe the raw build output straight in:
+log is ignored, so pipe the raw build output straight in. Colours are fine:
+terminal escape codes are removed before matching, and Swift 6.4's
+`swift build` colours its diagnostics even when piped.
 
 ```
 /path/to/File.swift:42:13: warning: variable 'x' was never used

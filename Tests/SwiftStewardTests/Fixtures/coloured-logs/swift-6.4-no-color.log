@@ -1,0 +1,26 @@
+Building for debugging...
+[Planning deferred tasks]
+[22 / 33]
+/ci/Scratch/Sources/CScratch/probe.c:4:2: warning: "hand-rolled warning" [-W#warnings]
+    4 | #warning "hand-rolled warning"
+      |  ^
+1 warning generated.
+error: SwiftCompile normal arm64 /ci/Scratch/Sources/Scratch/Error.swift failed with a nonzero exit code. Command line:     cd /ci
+    builtin-SwiftPerFileCompile Error.swift
+/ci/Scratch/Sources/Scratch/Error.swift:2:12: error: cannot convert return expression of type 'String' to return type 'Int'
+1 | public func broken() -> Int {
+2 |     return "not an int"
+  |            `- error: cannot convert return expression of type 'String' to return type 'Int'
+3 | }
+4 | 
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c [... about 4 KB of arguments elided, among them -no-color-diagnostics -Xcc -fno-color-diagnostics ...]
+/ci/Scratch/Sources/Scratch/Warning.swift:2:9: warning: initialization of immutable value 'unused' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+1 | public func greet() -> String {
+2 |     let unused = 42
+  |         `- warning: initialization of immutable value 'unused' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+3 |     return "hello"
+4 | }
+
+[#NoUsage]: <https://docs.swift.org/compiler/documentation/diagnostics/no-usage>
+error: Build failed
