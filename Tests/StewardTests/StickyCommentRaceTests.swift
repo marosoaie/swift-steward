@@ -55,6 +55,40 @@ struct StickyCommentRaceTests {
         #expect(!posting.log.contains("::warning"))
     }
 
+    // Regression (Copilot review): with the head unchanged, a deletion's
+    // retry deleted the summary a run for the same commit had just updated.
+    @Test("a duplicate's deletion is retried only while the summary this run kept is still there",
+          arguments: [false, true])
+    func keptGoneDuringDeletionPause(isKeptGone: Bool) async throws {
+        let github = FakeGitHub(head: StickyCommentTests.head)
+        let oldest = await github.addComment(StickyCommentTests.marker + "First", by: StickyCommentTests.bot)
+        let duplicate = await github.addComment(StickyCommentTests.marker + "Second", by: StickyCommentTests.bot)
+        await github.fail("issues/delete-comment", with: .status(502, message: "Bad Gateway"))
+        let otherSummary = StickyCommentTests.marker + "Other run's"
+        // In the pause, someone deletes the oldest, and another run for this
+        // commit updates the one left.
+        let posting = try await StickyCommentTests.post(to: github) {
+            if isKeptGone {
+                await github.removeComment(oldest)
+                await github.editComment(duplicate, to: otherSummary)
+            }
+        }
+        guard case .updated(let comment, let deleted) = posting.outcome else {
+            Issue.record("\(posting.outcome)")
+            return
+        }
+        #expect(comment.id.rawValue == oldest)
+        #expect(deleted == (isKeptGone ? 0 : 1))
+        #expect(posting.pauses == [.seconds(2)])
+        let (list, read) = (StickyCommentTests.list, StickyCommentTests.read)
+        let (edit, delete) = (StickyCommentTests.edit(oldest), StickyCommentTests.delete(duplicate))
+        #expect(posting.requests == [list, read, edit, delete, read, list] + (isKeptGone ? [] : [delete]))
+        #expect(posting.comments.map(\.id) == [isKeptGone ? duplicate : oldest])
+        #expect(posting.comments.map(\.body) == [isKeptGone ? otherSummary : StickyCommentTests.posted])
+        #expect(posting.log.contains("was deleted during the pause, so this run deletes no other") == isKeptGone)
+        #expect(!posting.log.contains("::warning"))
+    }
+
     // Regression: a duplicate another run deleted first counted as one this
     // run deleted.
     @Test("a duplicate a run for the same commit deleted first is no failure, and isn't counted")

@@ -672,7 +672,10 @@ nothing to post doesn't spend the request, and again before a write's
 retry, a duplicate's deletion included, since a newer run may have
 posted during the pause: when the oldest summary was deleted meanwhile,
 the duplicate is the newer run's summary. A run that finds its head
-moved then stops, leaving the rest to the newer run.
+moved then stops, leaving the rest to the newer run. A run for the same
+commit can do the same, which the head can't show, so a duplicate's
+deletion also lists the summary comments again before its retry: when
+the one this run kept is gone, it deletes no more.
 
 ## 6. Running, exit codes, and posting failures (S6)
 
