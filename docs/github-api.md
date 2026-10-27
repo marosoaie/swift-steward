@@ -207,7 +207,8 @@ The choices, made in step 3.5:
   GitHub's JSON still maps by status.
   Updating a comment someone deleted fails as `notFound` (thanks to the
   `update-comment-404` fix), so 4.4 can post a new one. Deleting a
-  comment that's already gone succeeds (the `delete-comment-404` fix).
+  comment that's already gone succeeds (the `delete-comment-404` fix),
+  and returns false, so the caller can tell it didn't delete it.
   Nothing is retried here: whether a rate limit is worth waiting for is
   the runner's call. A `rateLimited` error, or a `serverError` whose
   response has a `retry-after`, carries the wait GitHub asked for as

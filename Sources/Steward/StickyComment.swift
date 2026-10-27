@@ -31,7 +31,8 @@ struct StickyComment: Sendable {
     enum Outcome: Sendable {
         /// Posted the first summary comment.
         case created(SummaryComment)
-        /// Updated the summary comment, and deleted this many duplicates.
+        /// Updated the summary comment, and deleted this many duplicates;
+        /// any another run deleted first aren't counted.
         case updated(SummaryComment, deletedDuplicates: Int)
         /// There were no findings and no summary comment to clear.
         case nothingToPost
@@ -93,24 +94,31 @@ struct StickyComment: Sendable {
             guard let oldest = comments.first else { return try await create() }
             let duplicates = comments.dropFirst()
             // Written before the duplicates go, so a failure loses nothing.
-            let outcome: Outcome
+            // The outcome, given how many duplicates this run deleted.
+            let outcome: (Int) -> Outcome
             do {
                 let updated = try await retrying(checkingHead: true) {
                     try await host.updateSummaryComment(oldest.id, body: text)
                 }
-                outcome = .updated(updated, deletedDuplicates: duplicates.count)
+                outcome = { .updated(updated, deletedDuplicates: $0) }
             } catch let error as PullRequestHostError where error.kind == .notFound {
                 log.write("""
                     The summary comment \(oldest.webURL) is gone since it was found, so Steward posts a new one.
                     """)
-                outcome = try await create()
+                let created = try await create()
+                outcome = { _ in created }
             }
-            try await duplicates.asyncForEach { duplicate in
+            // A duplicate another run deleted since it was listed isn't
+            // counted: this run didn't delete it.
+            let deleted = try await duplicates.asyncReduce(0) { count, duplicate in
                 // Checked too: after a newer run updated a duplicate whose
                 // oldest was deleted in the pause, it's that run's summary.
-                try await retrying(checkingHead: true) { try await host.deleteSummaryComment(duplicate.id) }
+                let isDeleted = try await retrying(checkingHead: true) {
+                    try await host.deleteSummaryComment(duplicate.id)
+                }
+                return isDeleted ? count + 1 : count
             }
-            return outcome
+            return outcome(deleted)
         } catch let moved as MovedHead {
             return .stale(head: moved.head)
         }
@@ -218,12 +226,18 @@ struct StickyComment: Sendable {
 }
 
 private extension Sequence {
-    /// Runs `body` on each element in turn, waiting for each to finish.
-    func asyncForEach(_ body: (Element) async throws -> Void) async rethrows {
-        // Imperative: `forEach` takes no async closure, and the requests
+    /// Combines `initial` with each element in turn through `next`,
+    /// waiting for each to finish.
+    func asyncReduce<Result>(
+        _ initial: Result,
+        _ next: (Result, Element) async throws -> Result
+    ) async rethrows -> Result {
+        // Imperative: `reduce` takes no async closure, and the requests
         // must go one at a time.
+        var result = initial
         for element in self {
-            try await body(element)
+            result = try await next(result, element)
         }
+        return result
     }
 }

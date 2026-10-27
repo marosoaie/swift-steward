@@ -30,6 +30,10 @@ public protocol PullRequestHost: Sendable {
     /// deleted by hand since it was found.
     func updateSummaryComment(_ id: SummaryComment.ID, body: String) async throws -> SummaryComment
 
-    /// Deletes a summary comment. Succeeds when the comment is already gone.
-    func deleteSummaryComment(_ id: SummaryComment.ID) async throws
+    /// Deletes a summary comment, and returns whether this call deleted it.
+    ///
+    /// Succeeds when the comment is already gone, for example deleted by
+    /// another run since it was found, and returns false.
+    @discardableResult
+    func deleteSummaryComment(_ id: SummaryComment.ID) async throws -> Bool
 }

@@ -567,7 +567,10 @@ When `summaryComments(onPullRequest:)` returns more than one (two runs
 raced to create one), the runner updates the oldest and deletes the rest,
 as danger-js does. It updates first, so a run that fails part-way still
 leaves the current summary; a duplicate it couldn't delete is collapsed
-by the next run. If the oldest was deleted since it was listed
+by the next run. A duplicate that's already gone, deleted by another
+run for the same commit, is no failure, and the outcome counts only the
+duplicates this run deleted: `deleteSummaryComment(_:)` returns whether
+it deleted the comment. If the oldest was deleted since it was listed
 (`notFound`), the runner posts a new one instead. Comments are listed a
 hundred a page, through every page.
 

@@ -42,7 +42,7 @@ struct GitHubHostCommentTests {
         let updated = try await host.updateSummaryComment(created.id, body: "Updated.")
         #expect(updated.id == created.id)
         #expect(updated.body == "Updated.")
-        try await host.deleteSummaryComment(created.id)
+        #expect(try await host.deleteSummaryComment(created.id))
 
         let sent = await transport.sent
         #expect(sent.map(\.operationID) == [
@@ -175,10 +175,10 @@ struct GitHubHostCommentTests {
         ))
     }
 
-    @Test("deleting a comment that's already gone succeeds")
+    @Test("deleting a comment that's already gone succeeds, and says this call didn't delete it")
     func deleteDeleted() async throws {
         let transport = ScriptedTransport([try RecordedResponse(fixture: "issues-delete-comment.macos-delete-deleted")])
-        try await GitHubHost.stubbed(transport).deleteSummaryComment(.init(rawValue: 6_383_467_478))
+        #expect(try await !GitHubHost.stubbed(transport).deleteSummaryComment(.init(rawValue: 6_383_467_478)))
         #expect(try #require(await transport.sent.only).method == .delete)
     }
 
