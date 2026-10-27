@@ -16,12 +16,14 @@ import PullRequestHosting
 /// - With several, after two runs raced to create one, it updates the
 ///   oldest and deletes the rest.
 /// - When the pull request's head is no longer the commit the summary
-///   describes, it writes nothing: a newer run will post.
+///   describes, it writes nothing, or nothing more when a retry finds it
+///   so: a newer run will post.
 ///
 /// A request that fails in a way waiting can fix, a rate limit, a server
 /// error, or a lost connection, is tried once more after a pause (see
-/// `pause(before:)`). A write re-reads the pull request before its retry,
-/// since a newer run may have posted during the pause. So a comment whose
+/// `pause(before:)`). A write, a deletion included, re-reads the pull
+/// request before its retry, since a newer run may have posted during the
+/// pause. So a comment whose
 /// creation went through but whose response was lost can be created
 /// twice; the next run deletes the duplicate.
 struct StickyComment: Sendable {
@@ -33,7 +35,8 @@ struct StickyComment: Sendable {
         case updated(SummaryComment, deletedDuplicates: Int)
         /// There were no findings and no summary comment to clear.
         case nothingToPost
-        /// The pull request's head moved on to this commit.
+        /// The pull request's head moved on to this commit, so posting
+        /// stopped: before its first write, or before a write's retry.
         case stale(head: String)
         /// A request failed, even after its retry when it got one.
         case failed(any Error)
@@ -103,7 +106,9 @@ struct StickyComment: Sendable {
                 outcome = try await create()
             }
             try await duplicates.asyncForEach { duplicate in
-                try await retrying { try await host.deleteSummaryComment(duplicate.id) }
+                // Checked too: after a newer run updated a duplicate whose
+                // oldest was deleted in the pause, it's that run's summary.
+                try await retrying(checkingHead: true) { try await host.deleteSummaryComment(duplicate.id) }
             }
             return outcome
         } catch let moved as MovedHead {
@@ -176,7 +181,7 @@ struct StickyComment: Sendable {
             log.write("No findings, and no summary comment to update: nothing to post.")
         case .stale(let head):
             log.write("""
-                The pull request's head is \(head) now, not \(headCommit), so this run posts nothing: \
+                The pull request's head is \(head) now, not \(headCommit), so this run stops posting: \
                 the run for the newer commit posts its summary.
                 """)
         case .failed(let error):

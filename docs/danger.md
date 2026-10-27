@@ -662,7 +662,10 @@ and skips posting when its head is no longer `headCommit`: a newer run
 will post. The skip is logged, not an error. The re-read comes after the
 summary is found and before the first write, so a clean run with
 nothing to post doesn't spend the request, and again before a write's
-retry, since a newer run may have posted during the pause.
+retry, a duplicate's deletion included, since a newer run may have
+posted during the pause: when the oldest summary was deleted meanwhile,
+the duplicate is the newer run's summary. A run that finds its head
+moved then stops, leaving the rest to the newer run.
 
 ## 6. Running, exit codes, and posting failures (S6)
 

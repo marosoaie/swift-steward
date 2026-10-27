@@ -85,6 +85,16 @@ actor FakeGitHub: ClientTransport {
         return nextID
     }
 
+    /// Changes a comment's body, as another run updating it does.
+    func editComment(_ id: Int64, to body: String) {
+        comments = comments.map { $0.id == id ? Comment(id: id, body: body, login: $0.login) : $0 }
+    }
+
+    /// Removes a comment, as someone deleting it does.
+    func removeComment(_ id: Int64) {
+        comments.removeAll { $0.id == id }
+    }
+
     func send(
         _ request: HTTPRequest,
         body: HTTPBody?,

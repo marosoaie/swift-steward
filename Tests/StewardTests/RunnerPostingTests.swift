@@ -171,7 +171,7 @@ struct RunnerPostingTests {
         #expect(outcome.status == .failures)
         #expect(outcome.requests == [Self.list, Self.read])
         #expect(outcome.comments.isEmpty)
-        #expect(outcome.log.contains("The pull request's head is \(newer) now, not \(fixture.head), so this run posts"))
+        #expect(outcome.log.contains("The pull request's head is \(newer) now, not \(fixture.head), so this run stops"))
     }
 
     @Test("--summary-author makes another account's summary comments the run's, a personal access token's")

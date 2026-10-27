@@ -188,7 +188,7 @@ struct StickyCommentTests {
         #expect(posting.comments.map(\.body) == (hasComment ? [Self.marker + "Newer run's"] : []))
         guard case .stale(let head) = posting.outcome else { Issue.record("\(posting.outcome)"); return }
         #expect(head == String(repeating: "b", count: 40))
-        #expect(posting.log.contains("so this run posts nothing"))
+        #expect(posting.log.contains("so this run stops posting"))
         #expect(!posting.log.contains("::warning"))
     }
 
