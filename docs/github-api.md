@@ -14,6 +14,7 @@ seam, wraps the client, so they never reach Steward's users (see
 | `Specs/github/openapi-generator-config.yaml` | The operations kept, and the generator's options |
 | `Specs/github/fixes.yaml` | The reviewed fixes to the description, one per entry |
 | `Specs/github/openapi.yaml` | The generator's input: the filtered, fixed description. Written by the pipeline, committed for review |
+| `Specs/github/LICENSE` | GitHub's licence for the description (MIT), upstream's `LICENSE.md` at the pinned commit. Written by the pipeline; every generated file's header points to it |
 | `Sources/GitHubAPI/Generated/` | The generated client. Written by the pipeline; never edit it by hand |
 | `Sources/GitHubAPI/*.swift` | `GitHubHost` and its helpers, written by hand |
 | `Sources/PullRequestHosting/` | The host seam: the `PullRequestHost` protocol and its models, with no dependencies |
@@ -30,9 +31,10 @@ The script downloads the pinned description (13 MB, cached in
 `Tooling/.build/spec-cache/`) and stops if its SHA-256 differs from the
 pin. Then it runs `swift-openapi-generator filter`, applies `fixes.yaml`
 with `github-spec-fix`, and generates the client. It writes
-`Specs/github/openapi.yaml` and `Generated/` only when every step
-succeeds. From a cold cache it builds the generator in release mode
-first, which takes a few minutes; after that a run takes about 40 s.
+`Specs/github/openapi.yaml`, `Specs/github/LICENSE` (downloaded from the
+pinned commit too), and `Generated/` only when every step succeeds. From
+a cold cache it builds the generator in release mode first, which takes
+a few minutes; after that a run takes about 40 s.
 
 To see exactly what the fixes change, compare the filtered description
 with the committed input:
@@ -68,7 +70,11 @@ commits. So the pin is a commit plus the checksum of one file.
 
    One run reports every fix that no longer applies, not just the first.
 4. Review `git diff Specs/github/openapi.yaml`: it shows what upstream
-   changed in the operations Steward uses. Then run the tests.
+   changed in the operations Steward uses. A change to
+   `Specs/github/LICENSE` means upstream changed its licence: check that
+   it still allows committing the description and the client, and update
+   [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). Then run the
+   tests.
 
 The pinned file is API version 2022-11-28: it's what GitHub serves when a
 request names no version, and it's the version GitHub Enterprise Server

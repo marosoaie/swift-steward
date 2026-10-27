@@ -6,10 +6,11 @@
 #
 # Usage: Tooling/generate-github-api.sh   (from anywhere in the repository)
 #
-# Writes Specs/github/openapi.yaml (the generator's input, committed) and the
-# generated sources only when every step succeeds. The download and the
-# filtered description stay in Tooling/.build/spec-cache; `diff` the filtered
-# one against openapi.yaml to see exactly what the fixes change.
+# Writes Specs/github/openapi.yaml (the generator's input, committed),
+# Specs/github/LICENSE (upstream's licence at the pin), and the generated
+# sources only when every step succeeds. The downloads and the filtered
+# description stay in Tooling/.build/spec-cache; `diff` the filtered one
+# against openapi.yaml to see exactly what the fixes change.
 set -eu
 
 # `filter` decodes vendor extensions (x-github) and examples into
@@ -52,6 +53,18 @@ if [ "$actual" != "$SPEC_SHA256" ]; then
     exit 1
 fi
 
+# The description is MIT, whose notice has to travel with every copy, and
+# openapi.yaml and the generated client are copies. Fetched at the same
+# commit, so a new pin brings upstream's licence as it stands there; no
+# checksum, since the drift guard holds it to the committed copy.
+license="$cache/LICENSE-$SPEC_COMMIT.md"
+if [ ! -f "$license" ]; then
+    echo "Downloading $SPEC_REPO@$SPEC_COMMIT:LICENSE.md"
+    curl -sSfL --retry 3 -o "$license.download" \
+        "https://raw.githubusercontent.com/$SPEC_REPO/$SPEC_COMMIT/LICENSE.md"
+    mv "$license.download" "$license"
+fi
+
 echo "Building the generator and github-spec-fix"
 swift build --package-path "$tooling" -c release --product swift-openapi-generator >/dev/null
 swift build --package-path "$tooling" -c release --product github-spec-fix >/dev/null
@@ -72,7 +85,8 @@ rm -rf "$cache/generated"
     "$cache/openapi.yaml" >/dev/null
 
 cp "$cache/openapi.yaml" "$specs/openapi.yaml"
+cp "$license" "$specs/LICENSE"
 rm -rf "$generated"
 mkdir -p "$(dirname "$generated")"
 cp -R "$cache/generated" "$generated"
-echo "Wrote Specs/github/openapi.yaml and Sources/GitHubAPI/Generated"
+echo "Wrote Specs/github/openapi.yaml, Specs/github/LICENSE, and Sources/GitHubAPI/Generated"
