@@ -202,7 +202,7 @@ rules. The second is usually better anyway: each finding names its rule
 in the report. The maintainer chose this shape and this error and order
 behavior on 2026-10-26 (questions 1 and 2). **Decided 2026-10-26
 (question 20):** `markdown(_:at:)` takes a location like the other three
-factories, since section 7 maps danger-swift's `markdown(_:file:line:)`
+factories, since section 7 maps danger-swift's `markdown(message:file:line:)`
 to it.
 
 ## 2. The context (S2)
@@ -462,14 +462,17 @@ Constraints this puts on the workflow:
 - **History.** The mapping and the merge base need the head, the base
   tip, their merge base, and the built commit in the local repository.
   `actions/checkout`'s default depth of 1 has only the merge commit. The
-  quickstart can say `fetch-depth: 0`; the composite Action (4.8) should
-  fetch just what it needs (the two SHAs, with history back to their
-  merge base) so large repositories don't pay for a full clone. Back to
-  the merge base on every path, that is: a shallow cut the base reaches
-  above a commit the pull request's commits start from can move shared
-  history into `base..head`, so Steward refuses a clone with one. For a
-  branch that merged the base, that means back past the branch's fork
-  point, not only the last merge.
+  quickstart's workflow without the Action says `fetch-depth: 0`. The
+  composite Action (4.8) fetches the whole history of the base and head
+  commits when the checkout is shallow, and nothing on a full clone:
+  fetching just enough, back to the merge base, was weighed and dropped
+  as more code than the time it saves is worth (steward-action's
+  decision 6, section 8). The history has to reach the merge base on
+  every path: a shallow cut the base reaches above a commit the pull
+  request's commits start from can move shared history into
+  `base..head`, so Steward refuses a clone with one. For a branch that
+  merged the base, that means back past the branch's fork point, not
+  only the last merge.
 - **Conflicts.** A pull request with conflicts has no test merge commit,
   so there's no merge tree to map from; GitHub doesn't run `pull_request`
   workflows for it then (see [Checks](#checks)).
@@ -935,14 +938,22 @@ the Action's workflow (50) and keys the raw workflow's cache on
 
 ### The Action (decision 3, decided 2026-10-26)
 
-The composite Action (4.8) is glue: install a Swift toolchain on Ubuntu,
-restore a cache of `Dangerfile/.build` keyed on `Package.resolved`, the
-Swift version, and the OS, fetch the history section 3 needs, and run
-`swift run --package-path Dangerfile`. It needs `contents: read` and
-`pull-requests: write` (the REST docs list either `issues: write` or
-`pull-requests: write` as enough to create, update, and delete issue
-comments, and an Actions token is an installation token). Where it lives
-was plan decision 3:
+The composite Action (4.8,
+[marosoaie/steward-action](https://github.com/marosoaie/steward-action))
+is glue: use the runner's Swift, or install one with swiftly on a Linux
+runner that has none, trust the workspace for git, fetch the history
+section 3 needs, restore a cache of the Dangerfile's `.build`, run it
+with `swift run`, and upload the report. Its design decisions, with the
+alternatives weighed, are in its
+[docs/decisions.md](https://github.com/marosoaie/steward-action/blob/main/docs/decisions.md).
+It needs `contents: read` and `pull-requests: write`, and
+`pull-requests: write` is the only permission that lets the token
+comment on a pull request. The REST docs list `issues: write` as enough
+for issue comments too, but on a pull request it isn't: with it alone,
+creating a comment failed with 403, "Resource not accessible by
+integration", in steward-action#1's CI, while `pull-requests: write`
+alone created, updated, and deleted one (see [Checks](#checks)). Where
+it lives was plan decision 3:
 
 | | A. `action.yml` at swift-steward's root | B. A separate `marosoaie/steward-action` |
 |---|---|---|
@@ -1075,7 +1086,7 @@ section above already reflects its answer.
     declaration say.
 20. **A location for `markdown` (S1, S7). Answered 2026-10-26: accepted.**
     `markdown(_:at:)` takes a location like the other three factories, as
-    section 7's mapping of danger-swift's `markdown(_:file:line:)` needs.
+    section 7's mapping of danger-swift's `markdown(message:file:line:)` needs.
 21. **The size budget (S5). Answered 2026-10-26: step 4.4's.** The
     65,536-byte cut comes with the sticky comment; until then, the job
     summary isn't cut. (Step 4.4 built both cuts.)
@@ -1241,7 +1252,8 @@ How the factual claims were verified (2026-10-25/26):
   merge commit; no `pull_request` runs while a pull request has conflicts
   (quote checked directly); three-dot diffs in pull requests (comparing
   branches); either `issues: write` or `pull-requests: write` for issue
-  comments (REST issue comments); 1 MiB per step and 20 job summaries per
+  comments (REST issue comments), which doesn't hold for a pull request's
+  comments (the next bullet); 1 MiB per step and 20 job summaries per
   job (workflow commands, checked directly); 10 warning and 10 error
   annotations per step (checks API); `pull_request_target` running in the
   default branch's context (checked directly), and its announced default
@@ -1255,6 +1267,13 @@ How the factual claims were verified (2026-10-25/26):
   This repository's last three `pull_request` runs report the branch tip
   as their head SHA (for example run 40203970914 on `d40497b`), not the
   merge commit.
+- **Permissions for the comment** (2026-10-27), by steward-action#1's
+  CI, whose jobs each ran with one permission: with `issues: write`
+  alone, creating a pull request's comment answered 403, "Resource not
+  accessible by integration" (Steward runs 40567615423 and 40571827904,
+  job `issues-write`); with `pull-requests: write` alone, the token
+  created, updated, and deleted one, and Steward deleted a planted
+  second summary (job `pull-requests-write`, the same runs).
 - **Line numbers**, on both repositories' history: every merge commit
   `M` on `main` whose base had moved (`merge-base(M^1, M^2) != M^1`; six
   of them), with the files both sides changed. Two shared a file, and in
