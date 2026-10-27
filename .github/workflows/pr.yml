@@ -34,10 +34,17 @@ jobs:
 
       - uses: actions/cache@v6
         with:
-          path: |
-            .build
-            ~/Library/Caches/git-diff-parser-tests
+          path: .build
           key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.resolved') }}
+
+      # Keyed on what it holds, as in linux-tests.
+      - name: Restore the fixture cache
+        id: fixture-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/Library/Caches/git-diff-parser-tests
+          key: fixtures-${{ runner.os }}-newest
+          restore-keys: fixtures-${{ runner.os }}-
 
       - name: Build (capture compiler diagnostics)
         run: |
@@ -46,6 +53,20 @@ jobs:
 
       - name: Run tests
         run: swift test --skip-build
+
+      - name: Key the fixture cache on its contents
+        id: fixture-key
+        run: |
+          cd ~/Library/Caches/git-diff-parser-tests || exit 0
+          hash=$(find . -type f -exec stat -f '%N %z' {} + | LC_ALL=C sort | shasum -a 256 | cut -c1-16)
+          echo "key=fixtures-${{ runner.os }}-$hash" >> "$GITHUB_OUTPUT"
+
+      - name: Save the fixture cache
+        if: steps.fixture-key.outputs.key != '' && steps.fixture-key.outputs.key != steps.fixture-cache.outputs.cache-matched-key
+        uses: actions/cache/save@v6
+        with:
+          path: ~/Library/Caches/git-diff-parser-tests
+          key: ${{ steps.fixture-key.outputs.key }}
 
       - name: SwiftLint
         if: ${{ !cancelled() }}
@@ -93,14 +114,25 @@ jobs:
 
       - uses: actions/checkout@v7
 
-      # The fixture cache falls back to $HOME/.cache, and actions/cache
-      # expands ~ from the same HOME inside the container. .build stays
-      # uncached: the swift:6.2 tag moves across patch releases, and a key
-      # without the compiler would restore stale modules.
-      - uses: actions/cache@v6
+      # The fixture cache is keyed on what it holds: after the tests, on a
+      # hash of its files' names and sizes. A run that downloads a fixture
+      # saves a new cache, which the next run restores, and a run that
+      # downloads nothing saves nothing. (A fixed key never saves again
+      # once it hits, and a hash of the test sources would miss fixtures
+      # named in any other file and save again on every test change.) No
+      # cache has the key `newest`, so the restore takes the newest that
+      # `restore-keys` starts. The fixtures fall back to $HOME/.cache, and
+      # the cache actions expand ~ from the same HOME inside the container.
+      # .build stays uncached: the swift:6.2 tag moves across patch
+      # releases, and a key without the compiler would restore stale
+      # modules.
+      - name: Restore the fixture cache
+        id: fixture-cache
+        uses: actions/cache/restore@v6
         with:
           path: ~/.cache/git-diff-parser-tests
-          key: fixtures-${{ runner.os }}
+          key: fixtures-${{ runner.os }}-newest
+          restore-keys: fixtures-${{ runner.os }}-
 
       - name: Build
         run: swift build --build-tests -Xswiftc -warnings-as-errors
@@ -112,3 +144,17 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           swift test --skip-build
+
+      - name: Key the fixture cache on its contents
+        id: fixture-key
+        run: |
+          cd ~/.cache/git-diff-parser-tests || exit 0
+          hash=$(find . -type f -printf '%P %s\n' | LC_ALL=C sort | sha256sum | cut -c1-16)
+          echo "key=fixtures-${{ runner.os }}-$hash" >> "$GITHUB_OUTPUT"
+
+      - name: Save the fixture cache
+        if: steps.fixture-key.outputs.key != '' && steps.fixture-key.outputs.key != steps.fixture-cache.outputs.cache-matched-key
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/git-diff-parser-tests
+          key: ${{ steps.fixture-key.outputs.key }}
