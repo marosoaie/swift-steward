@@ -622,7 +622,11 @@ messages, warnings, and failures, last rows first), truncates any single
 text that alone exceeds the budget, and ends with "…and 312 more
 findings", pointing at where all of them are. A truncated text is shown
 as code, so whatever it opens, a code block or an HTML tag, can't
-swallow the rest of the comment. The budget is
+swallow the rest of the comment. For the same reason, the cut falls
+after a `markdown` finding only when neither it nor one before it has a
+code fence or HTML, which GitHub keeps open past a blank line until a
+later one closes it: the ones from the first that has either go
+together. The budget is
 `PullRequestHost.maximumSummarySize`, which `GitHubHost` sets to what's
 left of 65,536 bytes once the marker line is added; it's public, so
 another host can state its own limit (decided 2026-10-27, question 23).

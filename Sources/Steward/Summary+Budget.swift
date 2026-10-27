@@ -29,13 +29,20 @@ extension Summary {
     /// notes first, then messages, warnings, and failures, last rows
     /// first, and a line before the footer says how much is missing and
     /// that `elsewhere` holds all of it. The headline still counts every
-    /// finding. When not even the first finding fits, as much of its text
-    /// as does is shown as code, so whatever the text opens, a code block
-    /// or an HTML tag, can't swallow the rest of the comment. Only when the
-    /// headline and footer alone don't fit is the result over budget.
+    /// finding. A note can open a code block or an HTML tag that a later
+    /// note closes, so the cut falls after a note only when neither it nor
+    /// a note before it could (see `isSelfContained(_:)`); the others go
+    /// together. When not even the first finding fits, as much of its text
+    /// as does is shown as code, so whatever the text opens can't swallow
+    /// the rest of the comment. Only when the headline and footer alone
+    /// don't fit is the result over budget.
     func text(fitting budget: Int, elsewhere: Elsewhere) -> String {
         let findings = shownFindings
         let parts = findings.map { part(for: $0) }
+        // The most findings a cut can keep: up to the first note that might
+        // leave something open.
+        let cutsBefore = findings.firstIndex { $0.kind == .markdown && !Self.isSelfContained($0.text) }
+            ?? parts.count
         // The headline and the footer, two line breaks between them and one
         // after.
         let base = headline.utf8.count + footer.utf8.count + 3
@@ -50,8 +57,11 @@ extension Summary {
         let cutSize = { (dropped: Int, isTextCut: Bool) in
             2 + cutLine(dropped: dropped, isTextCut: isTextCut, elsewhere: elsewhere).utf8.count
         }
-        let kept = parts.indices.last { sizes[$0] + cutSize(parts.count - $0, false) <= budget } ?? 0
-        guard kept == 0, let first = findings.first,
+        let fits = { (kept: Int) in sizes[kept] + cutSize(parts.count - kept, false) <= budget }
+        let kept = parts.indices.last { $0 <= cutsBefore && fits($0) } ?? 0
+        // A first note that fits, but can't be cut after, isn't cut short:
+        // there's nothing of it to leave out.
+        guard kept == 0, let first = findings.first, !fits(1),
               let cut = cutShort(first, toFit: budget - base - cutSize(parts.count - 1, true))
         else {
             return rendered(Array(parts.prefix(kept)), cutLine: cutLine(
@@ -61,6 +71,17 @@ extension Summary {
             ))
         }
         return rendered([cut], cutLine: cutLine(dropped: parts.count - 1, isTextCut: true, elsewhere: elsewhere))
+    }
+
+    /// Whether a note's Markdown, `text`, surely leaves nothing open for
+    /// what follows it: it has no code fence (three backticks or tildes)
+    /// and no HTML (`<`), which GitHub keeps open past the blank line
+    /// between notes until a later note closes them, an inline tag too.
+    /// Everything else, display math included, ends at that blank line. A
+    /// note with either may well close what it opens, but telling would
+    /// take a Markdown parser.
+    static func isSelfContained(_ text: String) -> Bool {
+        !["```", "~~~", "<"].contains { text.contains($0) }
     }
 
     /// The bytes `part` adds to a rendering whose last part is `previous`:
