@@ -200,6 +200,9 @@ iteration), never narration of the next line.
   clone this repo, and LFS breaks checkouts on machines with missing or
   misconfigured `git-lfs`. Big test fixtures are downloaded and cached at
   test time instead.
+- Material from another project (a fixture, a spec) is committed with its
+  licence next to it and an entry in
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Releases: bump `Release.version` (in `Sources/StewardVersion`) via PR,
   then run the "Release" workflow (Actions tab) with the matching semver
   number and branch. It tests, packages the arm64 binary, tags `vX.Y.Z`,

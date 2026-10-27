@@ -8,6 +8,12 @@ generate:
 # that the import is unused. Generated types never appear in public API.
 accessModifier: internal
 namingStrategy: idiomatic
+# Under the generator's do-not-modify line in every file. The generated
+# doc comments are GitHub's descriptions, so each file points at GitHub's
+# licence, which MIT asks copies to carry.
+additionalFileComments:
+  - "From Specs/github/openapi.yaml, a filtered copy of GitHub's REST API"
+  - "description: MIT License, Copyright (c) 2020 GitHub; see Specs/github/LICENSE."
 # The operations Steward v1 calls. `filter` keeps only these and the
 # components they reach.
 filter:
