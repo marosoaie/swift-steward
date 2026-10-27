@@ -14,8 +14,10 @@ the seven step 4.3 raised in swift-steward#28, also that day and as
 recommended, the four step 4.4 raised in swift-steward#29 on
 2026-10-27, as recommended too, the ten step 4.5 raised in
 swift-steward#30 the same day, as recommended (six as built, four
-changed), and the nine step 4.6 raised in swift-steward#31 the same
-day, as recommended and as built. The sections reflect the answers.
+changed), the nine step 4.6 raised in swift-steward#31 the same
+day, as recommended and as built, and the seven step 4.7 raised in
+swift-steward#32 that day too, also as recommended and as built. The
+sections reflect the answers.
 Claims about danger-swift, GitHub, and SwiftPM were checked against
 their sources or by experiment; [Checks](#checks) lists how.
 
@@ -30,7 +32,7 @@ their sources or by experiment; [Checks](#checks) lists how.
 | S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26; the author option and the budget's API 2026-10-27.** The 3.5 marker on the first line, only the token's own comments (`--summary-author` names another account); danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
-| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner | `action.yml` at swift-steward's root with a moving `v1` tag |
+| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner; **the template decided 2026-10-27:** `Templates/Dangerfile`, copied with one `curl \| tar` line, on `branch: "main"` until a release ships `Steward`, and built and tested in CI against the pull request's own code | `action.yml` at swift-steward's root with a moving `v1` tag |
 
 ## Context and constraints
 
@@ -922,6 +924,15 @@ package, not inside it, so it never joins the app's build graph, and
 (4.7), `Templates/Dangerfile`, ships exactly that, and the
 [quickstart](quickstart.md) says how to copy it and run it.
 
+**Decided 2026-10-27 (questions 45–51), as built:** the template stays
+at `Templates/Dangerfile` and is copied with one `curl | tar` line (45);
+it depends on `branch: "main"` until a release ships `Steward` (46); CI
+builds and tests it against the pull request's own code, in two jobs
+that aren't required checks (47); it has three example rules (48) and
+the diagnostics rule commented out (49); and the quickstart leads with
+the Action's workflow (50) and keys the raw workflow's cache on
+`swift --version` too (51).
+
 ### The Action (decision 3, decided 2026-10-26)
 
 The composite Action (4.8) is glue: install a Swift toolchain on Ubuntu,
@@ -973,10 +984,11 @@ raised in swift-steward#27 (numbered on from 11) the same day, and the
 seven that step 4.3 raised in swift-steward#28 (numbered on from 15) that
 day too, the four that step 4.4 raised in swift-steward#29 (numbered
 on from 22) on 2026-10-27, the ten that step 4.5 raised in
-swift-steward#30 (numbered on from 26) the same day, and the nine that
-step 4.6 raised in swift-steward#31 (numbered on from 35) that day too.
-The sections refer to them by number, and each section above already
-reflects its answer.
+swift-steward#30 (numbered on from 26) the same day, the nine that
+step 4.6 raised in swift-steward#31 (numbered on from 35) that day too,
+and the seven that step 4.7 raised in swift-steward#32 (numbered on from
+44) that day as well. The sections refer to them by number, and each
+section above already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1175,6 +1187,39 @@ reflects its answer.
     `package` hooks:** `FixtureRun` and `Runner.run(_:in:options:log:)`,
     plus the size counting, the damage sentence, and GitHub's summary
     size it shares with the runner, not public API on `Runner`.
+45. **Where the template lives (S8). Answered 2026-10-27:
+    `Templates/Dangerfile`, as built** ("Go with your recommendations",
+    for all seven of #32's questions). Users copy it with the one
+    `curl | tar` line the quickstart gives, which needs only curl and tar.
+    A root `Dangerfile/` stays free for step 4.9's checks of this
+    repository's own pull requests, which a user's copy mustn't get. A
+    `steward init` command could come later.
+46. **Steward's version in the template (S8). Answered 2026-10-27:
+    `branch: "main"`** until a swift-steward release ships `Steward`;
+    `Package.resolved` pins the revision a user's first build saw.
+    AGENTS.md's release note says what that release switches to `from:`,
+    the tarball URL included. Step 5.1 reviews `Steward`'s and
+    `StewardTesting`'s API first, and no release ships them before then.
+47. **Testing the template (S8). Answered 2026-10-27: against the pull
+    request's own code.** `Templates/copy-dangerfile.sh` copies the
+    template as a user would and rewrites its swift-steward dependency to
+    the checkout's path; the `dangerfile-template` jobs, on macOS and in
+    `swift:6.2`, build it, test it, and dry-run it on the pull request.
+    Neither is a required check, and a pull request merges only when
+    every check is green.
+48. **The example rules (S8). Answered 2026-10-27: the three, as
+    built:** `description`, `changelog`, and `conflictMarkers`, which
+    read the pull request, `git`'s file lists, and the diff's lines.
+49. **The diagnostics rule in the template (S3, S8). Answered 2026-10-27:
+    commented out**, configured, with what to add to the workflow first:
+    enabled, it fails while its logs are missing.
+50. **The quickstart's workflows (S8). Answered 2026-10-27: the Action's
+    first**, saying the Action isn't released yet, then the workflow
+    without it, which works until 4.8 tags `v1`.
+51. **The raw workflow's cache (S8). Answered 2026-10-27: keyed on
+    `swift --version` too.** The `swift:6.2` tag moves across patch
+    releases, so a key on `Package.resolved` alone would restore modules
+    another compiler built.
 
 ## Checks
 
