@@ -18,6 +18,10 @@ let package = Package(
         .library(name: "BuildLogKit", targets: ["BuildLogKit"]),
         .library(name: "DiffDiagnostics", targets: ["DiffDiagnostics"]),
         .executable(name: "steward", targets: ["StewardCLI"]),
+        // A Dangerfile package's executable depends on Steward, and its
+        // tests on StewardTesting (docs/danger.md, section 8).
+        .library(name: "Steward", targets: ["Steward"]),
+        .library(name: "StewardTesting", targets: ["StewardTesting"]),
     ],
     dependencies: [
         // GitDiffKit. Tagged versions only: SwiftPM rejects branch and
@@ -97,11 +101,11 @@ let package = Package(
             ],
             swiftSettings: swiftSettings
         ),
-        // Steward, the pure-Swift Danger (docs/danger.md). Not a product
-        // yet: so far it has the DSL, the context rules see, and the runner,
-        // which checks a pull request in CI or locally but doesn't post. It
-        // re-exports GitDiffKit and PullRequestHosting, so a Dangerfile
-        // imports only Steward.
+        // Steward, the pure-Swift Danger (docs/danger.md): the DSL, the
+        // context rules see, and the runner, which checks a pull request in
+        // CI and posts its summary, or prints it in a dry run. It re-exports
+        // GitDiffKit and PullRequestHosting, so a Dangerfile imports only
+        // Steward.
         .target(
             name: "Steward",
             dependencies: [
@@ -109,6 +113,19 @@ let package = Package(
                 "PullRequestHosting",
                 "GitHubAPI",
                 "StewardVersion",
+            ],
+            swiftSettings: swiftSettings
+        ),
+        // Rule tests for a Dangerfile: contexts from fixture diffs, and a
+        // fake host that records what a whole run posts. It re-exports
+        // Steward, so a test imports only StewardTesting and the
+        // Dangerfile's own module.
+        .target(
+            name: "StewardTesting",
+            dependencies: [
+                "Steward",
+                // The size GitHub takes, for the fake host's default.
+                "GitHubAPI",
             ],
             swiftSettings: swiftSettings
         ),
@@ -127,6 +144,7 @@ let package = Package(
             name: "StewardTests",
             dependencies: [
                 "Steward",
+                "StewardTesting",
                 "DangerfileFixture",
                 "StewardVersion",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
@@ -137,6 +155,16 @@ let package = Package(
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
             ],
             resources: [.copy("Fixtures")],
+            swiftSettings: swiftSettings
+        ),
+        // StewardTesting as a Dangerfile's tests use it: through its public
+        // API alone, on the fixture Dangerfile's rules.
+        .testTarget(
+            name: "StewardTestingTests",
+            dependencies: [
+                "StewardTesting",
+                "DangerfileFixture",
+            ],
             swiftSettings: swiftSettings
         ),
         .testTarget(

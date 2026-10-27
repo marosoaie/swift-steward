@@ -1,6 +1,5 @@
-@testable import Steward
-
-/// A console that records what a run writes, for tests to read back.
+/// A console that records what a run writes, for a fixture run
+/// (`Runner.run(_:in:postingTo:)`) and tests to read back.
 struct RecordingConsole: Sendable {
     /// What a run wrote, and where.
     enum Entry: Sendable, Equatable {

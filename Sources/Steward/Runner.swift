@@ -83,7 +83,19 @@ struct Runner: Sendable {
             return .clean
         }
         guard let context = await context(mode: mode, options: options, log: log) else { return .broken }
+        return await run(rules, in: context, options: options, log: log).status
+    }
 
+    /// What a run did once it had its context.
+    struct Checked: Sendable {
+        var status: ExitStatus
+        /// Nil when the run was cancelled before the rules finished.
+        var report: Report?
+    }
+
+    /// The run once its context is built: the rules, the report, the
+    /// summary, and posting it, in `context.run.mode`.
+    func run(_ rules: [Rule], in context: Context, options: Options, log: Log) async -> Checked {
         let findings: [Finding]
         do {
             findings = try await log.group("Rules") { () async throws(CancellationError) in
@@ -91,7 +103,7 @@ struct Runner: Sendable {
             }
         } catch {
             log.error("The run was cancelled, so Steward stopped before writing a report or a summary.")
-            return .broken
+            return Checked(status: .broken)
         }
         let report = Report(
             repository: context.pullRequest.base.repository,
@@ -110,7 +122,14 @@ struct Runner: Sendable {
             fallback: options.reportPath != nil && wroteReport ? .reportArtifact : .log,
             log: log
         )
-        return max(report.hasFailures ? .failures : .clean, wroteReport ? .clean : .broken, published)
+        let status = max(report.hasFailures ? .failures : .clean, wroteReport ? .clean : .broken, published)
+        return Checked(status: status, report: report)
+    }
+
+    /// Logs what `context` is made of, and its diff's damage.
+    static func describe(_ context: Context, in log: Log) {
+        log.write(description(of: context))
+        log.record(context.git.diff.damage)
     }
 
     /// The run's context, with what it's made of and the diff's damage
@@ -133,8 +152,7 @@ struct Runner: Sendable {
                     makeHost: makeHost
                 )
                 }
-                log.write(Self.description(of: context))
-                log.record(context.git.diff.damage)
+                Self.describe(context, in: log)
                 return context
             }
         } catch {

@@ -8,22 +8,30 @@ extension Log {
     func record(_ damage: [DamageReport]) {
         damage.forEach { report in
             switch report.severity {
-            case .error: warning(Self.text(of: report))
-            case .info: write(Self.text(of: report))
+            case .error: warning(report.explanation)
+            case .info: write(report.explanation)
             }
         }
     }
+}
 
-    static func text(of report: DamageReport) -> String {
-        let path = (report.file?.newPath ?? report.file?.oldPath).map { " (\($0.string))" } ?? ""
-        let consequence = switch report.severity {
-        case .error: " Steward left the file out, so the rules didn't see it."
-        case .info: ""
+extension DamageReport {
+    /// Where the diff is damaged, how, and, for an abandoned file, what
+    /// that means for the rules, as the run's log says it.
+    var explanation: String {
+        switch severity {
+        case .error: "\(sentence) Steward left the file out, so the rules didn't see it."
+        case .info: sentence
         }
-        return "The diff is damaged at line \(report.lineNumber)\(path): \(reason(of: report.reason)).\(consequence)"
     }
 
-    private static func reason(of reason: DamageReport.Reason) -> String {
+    /// Where the diff is damaged, and how, in one sentence.
+    package var sentence: String {
+        let path = (file?.newPath ?? file?.oldPath).map { " (\($0.string))" } ?? ""
+        return "The diff is damaged at line \(lineNumber)\(path): \(Self.text(of: reason))."
+    }
+
+    private static func text(of reason: Reason) -> String {
         switch reason {
         case .hunkCutShort: "a hunk ends before its line counts are used up"
         case .missingLineMarker: "a hunk line has no +, -, or space marker"
