@@ -64,6 +64,10 @@ either side changes. `DangerfileFixture`, under `Tests/`, is a test-only
 executable target: a Dangerfile the end-to-end tests run as a process,
 whose rules `StewardTestingTests` test as a user's tests would, and which
 depends on `Steward` alone, as a user's would.
+`Templates/Dangerfile` is the package users copy beside their own
+([docs/quickstart.md](docs/quickstart.md)): a nested package, like
+`Tooling/`, that depends on swift-steward by URL, so the root manifest
+never sees it. PR CI builds and tests a copy pointed at the PR's checkout.
 
 `GitDiffKit` comes from the first-party git-diff-parser package, pinned to
 tagged versions (`from:`) only, never a branch or revision: SwiftPM rejects
@@ -204,3 +208,7 @@ iteration), never narration of the next line.
   `TAP_DEPLOY_KEY` secret).
   The maintainer drives version numbers — never change the version outside
   this procedure.
+  The first release that ships `Steward` also switches the requirement
+  users start from, `branch: "main"`, to `from:` that version: in
+  `Templates/Dangerfile/Package.swift`, `docs/quickstart.md` (and its
+  tarball URL), `docs/rule-tests.md`, and the README.

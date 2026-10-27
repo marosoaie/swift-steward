@@ -7,6 +7,9 @@ included:
   - Tests
   - Tooling/Sources
   - Tooling/Tests
+  # The Dangerfile template users copy (docs/quickstart.md).
+  - Templates/Dangerfile/Sources
+  - Templates/Dangerfile/Tests
 
 # Written by Tooling/generate-github-api.sh: the style is the generator's,
 # and hand edits would be overwritten (and fail the CI drift guard).
