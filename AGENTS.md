@@ -68,6 +68,11 @@ depends on `Steward` alone, as a user's would.
 ([docs/quickstart.md](docs/quickstart.md)): a nested package, like
 `Tooling/`, that depends on swift-steward by URL, so the root manifest
 never sees it. PR CI builds and tests a copy pointed at the PR's checkout.
+`Dangerfile/` is this repository's own pull request checks, run through
+[steward-action](https://github.com/marosoaie/steward-action) in PR CI's
+`tests-and-diagnostics` job: the same layout, but depending on the
+checkout it sits in (`path: ".."`), so every PR is checked by its own
+Steward, and the root manifest never sees it either.
 
 `GitDiffKit` comes from the first-party git-diff-parser package, pinned to
 tagged versions (`from:`) only, never a branch or revision: SwiftPM rejects
@@ -89,6 +94,7 @@ swift build -c release            # for benchmarks — never benchmark debug bui
 swiftlint lint --quiet            # must print nothing
 Tooling/generate-github-api.sh    # regenerate the GitHub client from Specs/github
 swift test --package-path Tooling # the spec-fix engine and the fix list
+swift test --package-path Dangerfile   # this repository's PR checks' rules
 ```
 
 SwiftLint's configuration (`.swiftlint.yml`, with a `Tests/.swiftlint.yml`
@@ -214,4 +220,5 @@ iteration), never narration of the next line.
   The first release that ships `Steward` also switches the requirement
   users start from, `branch: "main"`, to `from:` that version: in
   `Templates/Dangerfile/Package.swift`, `docs/quickstart.md` (and its
-  tarball URL), `docs/rule-tests.md`, and the README.
+  tarball URL), `docs/rule-tests.md`, and the README, and in the
+  `Dangerfile/Package.swift` of git-diff-parser and of steward-action.

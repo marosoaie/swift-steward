@@ -1,6 +1,6 @@
 # SwiftLint configuration. The style rationale lives in AGENTS.md; this file
 # encodes the mechanically checkable parts. PR CI surfaces violations only on
-# changed lines (see .github/workflows/pr.yml).
+# changed lines, in Steward's comment (see .github/workflows/pr.yml).
 
 included:
   - Sources
@@ -10,6 +10,9 @@ included:
   # The Dangerfile template users copy (docs/quickstart.md).
   - Templates/Dangerfile/Sources
   - Templates/Dangerfile/Tests
+  # This repository's own pull request checks (pr.yml).
+  - Dangerfile/Sources
+  - Dangerfile/Tests
 
 # Written by Tooling/generate-github-api.sh: the style is the generator's,
 # and hand edits would be overwritten (and fail the CI drift guard).
