@@ -47,7 +47,8 @@ struct FixtureProcessTests {
         // No token: the process, whose host would go to GitHub, posts nothing.
         #expect(outcome.log.hasSuffix("""
             ::warning title=Steward::GITHUB_TOKEN isn't set, so Steward can't post the summary comment: give the \
-            step `env: GITHUB_TOKEN: ${{ github.token }}`. The findings are in this run's log and job summary.
+            step `env: GITHUB_TOKEN: ${{ github.token }}`, or, with steward-action, a `token` input that isn't \
+            empty. The findings are in this run's log and job summary.
 
             """))
     }

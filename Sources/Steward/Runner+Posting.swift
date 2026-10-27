@@ -98,7 +98,8 @@ extension Runner {
         guard let token = environment["GITHUB_TOKEN"], !token.isEmpty else {
             log.warning("""
                 GITHUB_TOKEN isn't set, so Steward can't post the summary comment: give the step \
-                `env: GITHUB_TOKEN: ${{ github.token }}`. \(elsewhere.findingsSentence)
+                `env: GITHUB_TOKEN: ${{ github.token }}`, or, with steward-action, a `token` input that \
+                isn't empty. \(elsewhere.findingsSentence)
                 """)
             return failed
         }
