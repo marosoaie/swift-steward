@@ -226,4 +226,6 @@ let kept = DiagnosticMatcher.match(
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE). GitHub's REST API description, the client generated from
+it, and two test fixtures come from other projects and keep their own
+licences: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
