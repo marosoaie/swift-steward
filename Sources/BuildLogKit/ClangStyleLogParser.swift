@@ -55,6 +55,7 @@ public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
     }
 
     public mutating func finalize() -> [Diagnostic] {
+        let plantedProbeWarning = 42
         flushPartialLine()
         return diagnostics
     }

@@ -92,6 +92,35 @@ jobs:
             --format github \
             --fail-on warning || status=1
           exit $status
+  # Probe only (not for merging): which of this image's build paths colour
+  # a piped log.
+  colour-probe:
+    runs-on: macos-26
+    timeout-minutes: 20
+    steps:
+      - name: Select newest Xcode (as tests-and-diagnostics does)
+        run: |
+          sudo xcode-select -s "$(printf '%s\n' /Applications/Xcode*.app | sort -V | tail -1)"
+          swift --version
+          xcodebuild -version
+          ls -d /Applications/Xcode*.app
+      - name: Build a scratch package with a warning and an error, piped
+        run: |
+          mkdir -p "$RUNNER_TEMP/Scratch/Sources/Scratch"
+          cd "$RUNNER_TEMP/Scratch"
+          printf '%s\n' '// swift-tools-version: 6.0' 'import PackageDescription' 'let package = Package(name: "Scratch", targets: [.target(name: "Scratch")])' > Package.swift
+          printf '%s\n' 'public func greet() -> String {' '    let unused = 42' '    return "hello"' '}' > Sources/Scratch/Warning.swift
+          printf '%s\n' 'public func broken() -> Int {' '    return "not an int"' '}' > Sources/Scratch/Error.swift
+          for mode in default native swiftbuild; do
+            rm -rf .build
+            if [ "$mode" = default ]; then flags=""; else flags="--build-system $mode"; fi
+            swift build $flags > "/tmp/$mode.log" 2>&1 || true
+            echo "=== swift build ($mode): $(grep -c $'\x1b' "/tmp/$mode.log") lines with ESC"
+            grep -E 'warning:|error:' "/tmp/$mode.log" | grep -v 'Command line\|frontend' | cut -c1-400 | cat -v
+          done
+          xcodebuild -scheme Scratch-Package -destination platform=macOS -derivedDataPath "$RUNNER_TEMP/dd" build > /tmp/xcodebuild.log 2>&1 || true
+          echo "=== xcodebuild: $(grep -c $'\x1b' /tmp/xcodebuild.log) lines with ESC"
+          grep -E ':[0-9]+:[0-9]+: (warning|error):' /tmp/xcodebuild.log | cut -c1-400 | cat -v
   # Not a required check. The "Command line output" suite pins outputs taken
   # from the macOS build, so a pass here means Linux prints the same bytes.
   linux-tests:
