@@ -214,4 +214,6 @@ iteration), never narration of the next line.
   The first release that ships `Steward` also switches the requirement
   users start from, `branch: "main"`, to `from:` that version: in
   `Templates/Dangerfile/Package.swift`, `docs/quickstart.md` (and its
-  tarball URL), `docs/rule-tests.md`, and the README.
+  tarball URL), `docs/rule-tests.md`, and the README. Once
+  steward-action has a `v1` tag, the quickstart's two pins of it by
+  commit SHA become `@v1`.
