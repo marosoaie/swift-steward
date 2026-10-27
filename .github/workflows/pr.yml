@@ -31,12 +31,6 @@ jobs:
           sudo xcode-select -s "$(printf '%s\n' /Applications/Xcode*.app | sort -V | tail -1)"
           swift --version
 
-      # Same tree for diff and build, so line numbers can't drift.
-      - name: Diff against base
-        run: |
-          git fetch origin "${{ github.base_ref }}"
-          git diff "origin/${{ github.base_ref }}...HEAD" > /tmp/pr.diff
-
       - uses: actions/cache@v6
         with:
           path: .build
@@ -80,28 +74,11 @@ jobs:
           which swiftlint || brew install swiftlint
           swiftlint lint --quiet | tee swiftlint.log
 
-      # Annotate diagnostics on PR-touched lines; fail on new warnings there.
-      - name: Fail on new warnings in changed lines
-        if: always()
-        run: |
-          touch build.log swiftlint.log
-          status=0
-          .build/debug/steward filter build.log \
-            --diff /tmp/pr.diff \
-            --tool xcodebuild \
-            --format github \
-            --fail-on warning || status=1
-          .build/debug/steward filter swiftlint.log \
-            --diff /tmp/pr.diff \
-            --tool swiftlint \
-            --format github \
-            --fail-on warning || status=1
-          exit $status
-
       # This repository's own Dangerfile/, which depends on this checkout, so
       # the pull request is checked by its own Steward. Its diagnostics rule
-      # reads the two logs above, and fails on warnings on changed lines.
-      # Pinned to a commit until steward-action tags v1.
+      # reads the two logs above, maps them from the merge commit to the
+      # head, and fails on warnings on changed lines, as the `steward filter`
+      # step it replaced did. Pinned to a commit until steward-action tags v1.
       - name: Steward
         if: ${{ !cancelled() }}
         uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb

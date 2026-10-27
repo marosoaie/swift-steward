@@ -100,10 +100,10 @@ swift test --package-path Dangerfile   # this repository's PR checks' rules
 SwiftLint's configuration (`.swiftlint.yml`, with a `Tests/.swiftlint.yml`
 override) encodes the mechanically checkable parts of the style below —
 functional-preference rules are opted in, force unwraps are allowed in tests
-only. Keep the whole tree violation-free; PR CI additionally annotates and
-fails on violations on PR-touched lines. When a rule fights a deliberate
-design decision, disable it in config or inline — always with a comment
-saying why.
+only. Keep the whole tree violation-free; PR CI additionally fails, in
+Steward's comment, on violations on PR-touched lines. When a rule fights a
+deliberate design decision, disable it in config or inline — always with a
+comment saying why.
 
 Real-world test fixtures resolve from
 `~/Library/Caches/git-diff-parser-tests/` (on Linux,
