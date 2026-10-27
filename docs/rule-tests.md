@@ -10,7 +10,8 @@ design behind this page.
 
 A Dangerfile is an ordinary package beside your own: an executable target
 that depends on `Steward`, and a test target that depends on the
-executable target and `StewardTesting`.
+executable target and `StewardTesting`. The [quickstart](quickstart.md)'s
+template is one, with a test for each of its rules.
 
 ```swift
 // swift-tools-version: 6.2

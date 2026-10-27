@@ -2,9 +2,10 @@
 
 **Status: reviewed (plan step 4.1).** Step 4.2 built the context,
 step 4.3 the DSL, the runner, and the dry run, step 4.4 the sticky
-comment, step 4.5 the built-in diagnostics rule, and step 4.6 the
-`Steward` and `StewardTesting` products; steps 4.7–4.10 build on what
-this document settles. Each section ends with
+comment, step 4.5 the built-in diagnostics rule, step 4.6 the
+`Steward` and `StewardTesting` products, and step 4.7 the template
+package and the [quickstart](quickstart.md); steps 4.8–4.10 build on
+what this document settles. Each section ends with
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
 recommended (7 with a documentation requirement added), the four
@@ -918,7 +919,8 @@ depends on `Steward`, a test target that depends on `StewardTesting`, and
 any other dependencies the rules need. It lives beside the user's own
 package, not inside it, so it never joins the app's build graph, and
 `swift test --package-path Dangerfile` runs the rule tests. The template
-(4.7) ships exactly that.
+(4.7), `Templates/Dangerfile`, ships exactly that, and the
+[quickstart](quickstart.md) says how to copy it and run it.
 
 ### The Action (decision 3, decided 2026-10-26)
 
