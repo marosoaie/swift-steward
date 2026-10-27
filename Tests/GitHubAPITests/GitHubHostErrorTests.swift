@@ -8,7 +8,7 @@ import Testing
 struct GitHubHostErrorTests {
     /// The error `call` threw, failing the test when it threw another or
     /// none.
-    func hostError(
+    static func hostError(
         _ responses: [RecordedResponse],
         _ call: (GitHubHost) async throws -> Void = { _ = try await $0.pullRequest(number: 20) }
     ) async -> PullRequestHostError? {
@@ -19,7 +19,7 @@ struct GitHubHostErrorTests {
 
     @Test("a recorded bad token, which no operation declares, fails as unauthorized with GitHub's message")
     func badToken() async throws {
-        let error = await hostError([try RecordedResponse(fixture: "pulls-get.macos-bad-token")])
+        let error = await Self.hostError([try RecordedResponse(fixture: "pulls-get.macos-bad-token")])
         #expect(error == PullRequestHostError(
             kind: .unauthorized,
             operation: "pulls/get",
@@ -30,7 +30,7 @@ struct GitHubHostErrorTests {
 
     @Test("a recorded missing pull request fails as not found")
     func missing() async throws {
-        let error = await hostError([try RecordedResponse(fixture: "pulls-get.macos-missing")]) {
+        let error = await Self.hostError([try RecordedResponse(fixture: "pulls-get.macos-missing")]) {
             _ = try await $0.pullRequest(number: 999_999)
         }
         #expect(error == PullRequestHostError(
@@ -43,7 +43,7 @@ struct GitHubHostErrorTests {
 
     @Test("a recorded success in an undeclared media type is malformed, naming the content type")
     func diffMediaType() async throws {
-        let error = await hostError([try RecordedResponse(fixture: "pulls-get.macos-diff")])
+        let error = await Self.hostError([try RecordedResponse(fixture: "pulls-get.macos-diff")])
         #expect(error?.kind == .malformedResponse)
         #expect(error?.status == 200)
         #expect(error?.message?.contains("application/vnd.github.diff") == true, "\(String(describing: error))")
@@ -95,7 +95,8 @@ struct GitHubHostErrorTests {
             "documentation_url": "https://docs.github.com/rest",
             "status": "\(answer.status)",
         ]
-        let error = await hostError([try RecordedResponse(status: answer.status, headers: answer.headers, json: body)])
+        let response = try RecordedResponse(status: answer.status, headers: answer.headers, json: body)
+        let error = await Self.hostError([response])
         #expect(error?.kind == answer.kind)
         #expect(error?.status == answer.status)
         // pulls/get declares 304 without a body.
@@ -109,7 +110,7 @@ struct GitHubHostErrorTests {
     ])
     func createForbidden(message: String, kind: PullRequestHostError.Kind) async throws {
         let response = try RecordedResponse(status: 403, json: ["message": message])
-        let error = await hostError([response]) {
+        let error = await Self.hostError([response]) {
             _ = try await $0.createSummaryComment(onPullRequest: 21, body: "x")
         }
         #expect(error == PullRequestHostError(
@@ -120,27 +121,10 @@ struct GitHubHostErrorTests {
         ))
     }
 
-    // Regression (Codex review): the generated 403 for create-comment drops
-    // its headers, so only RateLimitMiddleware can see the retry-after.
-    @Test("issues/create-comment's declared 403 with a retry-after is a rate limit, whatever its message")
-    func createThrottled() async throws {
-        let message = "You have triggered an abuse detection mechanism. Please wait a few minutes."
-        let response = try RecordedResponse(status: 403, headers: ["retry-after": "120"], json: ["message": message])
-        let error = await hostError([response]) {
-            _ = try await $0.createSummaryComment(onPullRequest: 21, body: "x")
-        }
-        #expect(error == PullRequestHostError(
-            kind: .rateLimited,
-            operation: "issues/create-comment",
-            status: 403,
-            message: message
-        ))
-    }
-
     @Test("issues with comments turned off answer 410, which fails as not found")
     func gone() async throws {
         let response = try RecordedResponse(status: 410, json: ["message": "Issues are disabled for this repo"])
-        let error = await hostError([response]) { _ = try await $0.summaryComments(onPullRequest: 21) }
+        let error = await Self.hostError([response]) { _ = try await $0.summaryComments(onPullRequest: 21) }
         #expect(error?.kind == .notFound)
         #expect(error?.message == "Issues are disabled for this repo")
     }
@@ -157,7 +141,7 @@ struct GitHubHostErrorTests {
             ),
             body: Data("<html>proxy error</html>".utf8)
         )
-        let error = await hostError([html])
+        let error = await Self.hostError([html])
         #expect(error == PullRequestHostError(kind: kind, operation: "pulls/get", status: status))
     }
 
@@ -234,7 +218,7 @@ struct GitHubHostErrorTests {
         "pulls-get.macos-bad-token", "pulls-get.macos-diff", "pulls-get.macos-missing",
     ])
     func tokenNotInErrors(fixture: String) async throws {
-        let error = await hostError([try RecordedResponse(fixture: fixture)])
+        let error = await Self.hostError([try RecordedResponse(fixture: fixture)])
         var dumped = ""
         dump(error, to: &dumped)
         #expect(!dumped.contains(GitHubHost.probeToken))

@@ -195,20 +195,26 @@ The choices, made in step 3.5:
   | any other 403 | `forbidden` |
   | 404, or 410 (issues turned off) | `notFound` |
   | 422 | `rejected` |
-  | 5xx | `serverError` |
+  | 5xx, with or without a `retry-after` | `serverError` |
   | any other status, such as 304 or 406 | `unexpectedStatus` |
   | no response | `network` |
   | a success that doesn't decode, such as the diff media type | `malformedResponse` |
 
-  `RateLimitMiddleware` reads the rate-limit headers on every response,
-  because the generated client drops headers for declared statuses (such
-  as `issues/create-comment`'s 403). An error status whose body isn't
+  `RateLimitMiddleware` reads the rate-limit headers, and a server
+  error's `retry-after`, on every response, because the generated client
+  drops headers for declared statuses (such as `issues/create-comment`'s
+  403). An error status whose body isn't
   GitHub's JSON still maps by status.
   Updating a comment someone deleted fails as `notFound` (thanks to the
   `update-comment-404` fix), so 4.4 can post a new one. Deleting a
-  comment that's already gone succeeds (the `delete-comment-404` fix).
-  Nothing is retried: whether a rate limit is worth waiting for is the
-  runner's call.
+  comment that's already gone succeeds (the `delete-comment-404` fix),
+  and returns false, so the caller can tell it didn't delete it.
+  Nothing is retried here: whether a rate limit is worth waiting for is
+  the runner's call. A `rateLimited` error, or a `serverError` whose
+  response has a `retry-after`, carries the wait GitHub asked for as
+  `retryAfter`: the `retry-after` seconds, or, once the primary limit is
+  spent, the time left until `x-ratelimit-reset`. Steward's
+  sticky comment retries once (docs/danger.md, section 6).
 - **The token** lives in a `Credential` that prints as `<redacted>` in
   descriptions, debug output, and `dump`. It's added by a middleware, so
   the request a `ClientError` prints never carries it, and an empty token
@@ -218,11 +224,13 @@ The choices, made in step 3.5:
   schema, so 4.2 can read the context from `GITHUB_EVENT_PATH` without an
   API call.
 
-Left for Phase 4: GitHub caps a comment at 65,536 characters and answers
-a longer one with a 422 (`rejected`), so 4.4 has to truncate the summary.
-And `head.repo` is null for a pull request from a deleted fork, which the
-schema doesn't allow, so it fails as `malformedResponse`. v1 serves
-same-repository pull requests only, so neither case can happen yet.
+GitHub caps a comment at 65,536 characters and answers a longer one with
+a 422 (`rejected`). `GitHubHost.maximumSummarySize` is what's left of
+65,536 UTF-8 bytes once the marker line is added, and Steward cuts its
+summary to it (docs/danger.md, section 5). Left for later: `head.repo` is
+null for a pull request from a deleted fork, which the schema doesn't
+allow, so it fails as `malformedResponse`. v1 posts on same-repository
+pull requests only, so that can't happen yet.
 
 ## Tests
 
@@ -234,8 +242,8 @@ same-repository pull requests only, so neither case can happen yet.
 | `SpecAdaptationTests` (Tooling) | One test per adaptation, on the committed `openapi.yaml` |
 | `RepositoryFixListTests` (Tooling) | Every fix has a test named after it and no test outlives its fix; every fixture a fix names exists; every fix detects its own result |
 | `GitHubHostPullRequestTests` | `GitHubHost` maps every recorded pull request, and `PullRequestEvent` both event payloads, compared with the JSON read by `JSONSerialization`; JSON that isn't a `pull_request` payload throws; the request it sends |
-| `GitHubHostCommentTests` | The spike's recorded create → list → update → delete exchange, replayed request by request; the marker and author rules; pagination over made-up pages; deleted comments |
-| `GitHubHostErrorTests` | Every status, recorded or made up, maps to its `kind`; network failures and cancellation; the token never shows up in descriptions, `dump`, or errors |
+| `GitHubHostCommentTests` | The spike's recorded create → list → update → delete exchange, replayed request by request; the marker and author rules; pagination over made-up pages; deleted comments; the size budget, marker included |
+| `GitHubHostErrorTests` | Every status, recorded or made up, maps to its `kind`; the wait a throttled response asks for; network failures and cancellation; the token never shows up in descriptions, `dump`, or errors |
 | `SummaryMarkerTests`, `LinkHeaderTests` | The first-line rule, CRLF included; `rel="next"` parsing |
 | `LiveClientSupportTests` | The live test's client, offline: it refuses writes, sends the token without ever printing it, and records fixtures byte for byte |
 | `LiveSandboxSupportTests` | The write test's fence, offline: it lets through the sandbox pull request's requests and nothing else |
@@ -316,7 +324,28 @@ step fails after the comment exists, it deletes the comment before
 failing. At least 13 requests in all, more when the pull request has
 other comments.
 
-When it fails, GitHub changed something. Run it again with
+Steward's `LiveStickyCommentTests` (in `StewardTests`) takes the same
+variables, and `STEWARD_SANDBOX_SUMMARY_AUTHOR`, the token's login, so
+only its comments count, as in a run:
+
+```sh
+STEWARD_LIVE_GITHUB_WRITE_TESTS=1 STEWARD_SANDBOX_REPOSITORY=<owner>/<name> \
+    STEWARD_SANDBOX_PULL_REQUEST=<number> STEWARD_SANDBOX_SUMMARY_AUTHOR=<login> \
+    GITHUB_TOKEN=<token> swift test --filter LiveStickyCommentTests
+```
+
+It runs the sticky comment through the runs a pull request sees: a clean
+run posts nothing, the first run creates the comment, the next updates
+it, a planted duplicate is collapsed into the oldest, an oversize summary
+is cut to fit and accepted, a run for another commit writes nothing, and
+a clean run turns it all clear. After each step it checks the raw comment
+list. Its fence, `OwnCommentsMiddleware`, is tighter than
+`SandboxOnlyMiddleware`: it lets through only reads of the pull request
+and its comments, comments on it, and edits or deletes of comments
+created through it. It deletes its comments at the end, or when a step
+fails.
+
+When either fails, GitHub changed something. Run it again with
 `STEWARD_LIVE_GITHUB_RECORD_DIR` set and compare the recording with
 `Specs/github/openapi.yaml`. If the description is wrong, the recording
 becomes the fixture for a new fix (rename its scenario after who recorded

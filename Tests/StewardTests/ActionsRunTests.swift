@@ -73,6 +73,8 @@ struct ActionsRunTests {
         // findings, failures included, on a green run.
         var environment = Self.environment
         environment["GITHUB_STEP_SUMMARY"] = summaryURL.path
+        // Nor this pull request's comments: the fixture posts nothing.
+        environment["GITHUB_TOKEN"] = nil
         let outcome = try FixtureDangerfile.run(["--report", "report.json"], environment: environment, in: directory)
 
         let repository = try #require(Self.environment["GITHUB_REPOSITORY"])
@@ -93,6 +95,11 @@ struct ActionsRunTests {
             unlinkedPaths: expectation.unlinkedPaths
         )
         #expect(String(decoding: try Data(contentsOf: summaryURL), as: UTF8.self) == summary.text)
+        // A fork's pull request is skipped before the token is looked at.
+        let isFromFork = payload.repository(of: "head") != payload.repository(of: "base")
+        #expect(outcome.log.contains(isFromFork
+            ? "::notice title=Steward::The pull request comes from \(payload.repository(of: "head") ?? ""), a fork"
+            : "::warning title=Steward::GITHUB_TOKEN isn't set"))
     }
 
     @Test("a depth-1 checkout is refused with the history it lacks", .enabled(if: isShallow))

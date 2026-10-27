@@ -5,8 +5,9 @@ enum ExitStatus: Int32, Sendable, Comparable {
     case clean = 0
     /// At least one finding is a failure, a rule that threw included.
     case failures = 1
-    /// Steward couldn't do its job: bad options, no context, or a report
-    /// it couldn't write.
+    /// Steward couldn't do its job: bad options, no context, a report it
+    /// couldn't write, a cancelled run, or, with `--fail-on-post-error`, a
+    /// summary it couldn't post.
     case broken = 2
 
     static func < (lhs: ExitStatus, rhs: ExitStatus) -> Bool {

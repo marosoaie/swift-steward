@@ -10,14 +10,21 @@ import StewardVersion
 /// Its inputs are values, so tests run it in-process against fixture
 /// repositories, payloads, and hosts.
 struct Runner: Sendable {
-    /// Makes the host a run reads a pull request through: the API's root,
-    /// the repository's owner and name, and a token, if any.
+    /// Makes the host a run reads a pull request and posts its summary
+    /// through: the API's root, the repository's owner and name, a token,
+    /// if any, and the login whose summary comments count, if only one's
+    /// do.
     typealias HostFactory = @Sendable (
         _ apiURL: URL,
         _ owner: String,
         _ repository: String,
-        _ token: String?
+        _ token: String?,
+        _ summaryAuthor: String?
     ) -> any PullRequestHost
+
+    /// The most UTF-8 bytes GitHub takes in a step's job summary: it drops
+    /// a larger one entirely instead of truncating it.
+    static let jobSummaryLimit = 1 << 20
 
     /// The arguments after the program's name.
     var arguments: [String]
@@ -30,6 +37,8 @@ struct Runner: Sendable {
     var console: Console
     var makeHost: HostFactory
     var makeToken: @Sendable () -> String = { UUID().uuidString }
+    /// Pauses before a request is retried.
+    var sleep: @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
 
     /// What a run's report names as its generator: Steward and the release
     /// `steward --version` prints.
@@ -45,8 +54,14 @@ struct Runner: Sendable {
             environment: ProcessInfo.processInfo.environment,
             currentDirectory: FileManager.default.currentDirectoryPath,
             console: .standard,
-            makeHost: { apiURL, owner, repository, token in
-                GitHubHost(owner: owner, repository: repository, token: token, apiURL: apiURL)
+            makeHost: { apiURL, owner, repository, token, summaryAuthor in
+                GitHubHost(
+                    owner: owner,
+                    repository: repository,
+                    token: token,
+                    apiURL: apiURL,
+                    summaryAuthor: summaryAuthor
+                )
             }
         )
     }
@@ -86,8 +101,16 @@ struct Runner: Sendable {
             generator: Self.generator
         )
         let wroteReport = options.reportPath.map { write(report, to: $0, log: log) } ?? true
-        await publish(summary(of: report, in: context, options: options), mode: mode, log: log)
-        return max(report.hasFailures ? .failures : .clean, wroteReport ? .clean : .broken)
+        let summary = summary(of: report, in: context, options: options)
+        let published = await publish(
+            summary,
+            in: context,
+            options: options,
+            // The report holds everything a summary cut short leaves out.
+            fallback: options.reportPath != nil && wroteReport ? .reportArtifact : .log,
+            log: log
+        )
+        return max(report.hasFailures ? .failures : .clean, wroteReport ? .clean : .broken, published)
     }
 
     /// The run's context, with what it's made of and the diff's damage
@@ -176,43 +199,5 @@ struct Runner: Sendable {
             : serverURL.absoluteString
         let repository = parts.map { Markdown.percentEncoded(String($0)) }.joined(separator: "/")
         return URL(string: "\(server)/\(repository)/actions/runs/\(runID)")
-    }
-
-    /// Shows the summary: in CI, in the log and appended to the job
-    /// summary; in a dry run, on standard output.
-    private func publish(_ summary: Summary, mode: Run.Mode, log: Log) async {
-        let text = summary.text
-        switch mode {
-        case .dryRun:
-            console.writeOutput(text)
-        case .actions:
-            await log.group("Summary") { log.write(text) }
-            appendToJobSummary(text, log: log)
-        }
-    }
-
-    /// Appends `text` to the file at `GITHUB_STEP_SUMMARY`, which GitHub
-    /// shows on the run's page. Without it, the findings are still in the
-    /// log, so a failure here is only a warning.
-    private func appendToJobSummary(_ text: String, log: Log) {
-        guard let path = environment["GITHUB_STEP_SUMMARY"], !path.isEmpty else {
-            log.warning("GITHUB_STEP_SUMMARY isn't set, so the findings are in this log only.")
-            return
-        }
-        do {
-            if !FileManager.default.fileExists(atPath: path) {
-                guard FileManager.default.createFile(atPath: path, contents: nil) else {
-                    throw CocoaError(.fileWriteUnknown, userInfo: [NSFilePathErrorKey: path])
-                }
-            }
-            let handle = try FileHandle(forWritingTo: URL(fileURLWithPath: path))
-            defer { try? handle.close() }
-            // A blank line ends whatever came before, even a table whose
-            // last line has no line break.
-            let separator = try handle.seekToEnd() > 0 ? "\n\n" : ""
-            try handle.write(contentsOf: Data((separator + text).utf8))
-        } catch {
-            log.warning("Couldn't write the job summary to \(path): \(String(errorDescription: error))")
-        }
     }
 }

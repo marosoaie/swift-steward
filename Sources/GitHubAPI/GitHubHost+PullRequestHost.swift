@@ -111,19 +111,22 @@ extension GitHubHost {
         }
     }
 
-    public func deleteSummaryComment(_ id: SummaryComment.ID) async throws {
+    @discardableResult
+    public func deleteSummaryComment(_ id: SummaryComment.ID) async throws -> Bool {
         let operation = "issues/delete-comment"
-        try await perform(operation) {
+        return try await perform(operation) {
             let output = try await client.issuesDeleteComment(
                 path: .init(owner: owner, repo: repository, commentId: id.rawValue)
             )
             switch output {
+            case .noContent:
+                return true
             // A 404 means already gone (declared by the delete-comment-404
             // spec fix). It would also be GitHub's answer to a token that
             // can't see the repository, but then finding the comment would
             // have failed first.
-            case .noContent, .notFound:
-                return
+            case .notFound:
+                return false
             case let .undocumented(status, payload):
                 throw await PullRequestHostError(operation: operation, status: status, undocumented: payload)
             }

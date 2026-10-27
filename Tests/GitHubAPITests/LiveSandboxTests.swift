@@ -60,15 +60,15 @@ struct LiveSandboxTests {
             #expect(try await rawText(of: created.id, in: sandbox) == marker.marking(second))
             #expect(try await host.summaryComments(onPullRequest: sandbox.pullRequest) == [updated])
         } catch {
-            try? await host.deleteSummaryComment(created.id)
+            _ = try? await host.deleteSummaryComment(created.id)
             throw error
         }
 
-        try await host.deleteSummaryComment(created.id)
+        #expect(try await host.deleteSummaryComment(created.id))
         #expect(try await rawText(of: created.id, in: sandbox) == nil)
         #expect(try await host.summaryComments(onPullRequest: sandbox.pullRequest).isEmpty)
         // GitHub's 404s for a comment that's gone, live.
-        try await host.deleteSummaryComment(created.id)
+        #expect(try await !host.deleteSummaryComment(created.id))
         let error = await #expect(throws: PullRequestHostError.self) {
             _ = try await host.updateSummaryComment(created.id, body: "gone")
         }

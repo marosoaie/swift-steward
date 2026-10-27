@@ -1,7 +1,8 @@
 /// A host failed or refused a request.
 ///
-/// `kind` says what a caller can do about it; `status` and `message` say
-/// what the host answered, for the log.
+/// `kind` says what a caller can do about it, and `retryAfter` when it may
+/// try again; `status` and `message` say what the host answered, for the
+/// log.
 public struct PullRequestHostError: Error, Sendable, Hashable, CustomStringConvertible {
     /// What went wrong, in the terms a caller acts on.
     public enum Kind: Sendable, Hashable {
@@ -38,13 +39,24 @@ public struct PullRequestHostError: Error, Sendable, Hashable, CustomStringConve
     /// The host's explanation, such as "Bad credentials", or the cause when
     /// no usable response arrived.
     public var message: String?
+    /// How long the host asked callers to wait before trying again, when it
+    /// said; nil when it didn't. Set for some `rateLimited` and
+    /// `serverError` errors.
+    public var retryAfter: Duration?
 
     /// Creates an error from what went wrong and what the host answered.
-    public init(kind: Kind, operation: String, status: Int? = nil, message: String? = nil) {
+    public init(
+        kind: Kind,
+        operation: String,
+        status: Int? = nil,
+        message: String? = nil,
+        retryAfter: Duration? = nil
+    ) {
         self.kind = kind
         self.operation = operation
         self.status = status
         self.message = message
+        self.retryAfter = retryAfter
     }
 
     /// The operation, the status, and the message, on one line.

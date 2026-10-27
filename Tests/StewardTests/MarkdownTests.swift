@@ -46,6 +46,13 @@ struct MarkdownTests {
         #expect(Markdown.codeSpan(pair[0]) == pair[1])
     }
 
+    @Test("a code block fences past the text's backticks, with three at least", arguments: [
+        ("", "```"), ("plain", "```"), ("``", "```"), ("a ``` b", "````"), ("`````\n```", "``````"),
+    ])
+    func codeBlock(text: String, fence: String) {
+        #expect(Markdown.codeBlock(text) == "\(fence)\n\(text)\n\(fence)")
+    }
+
     @Test("a URL path segment keeps only unreserved characters unencoded")
     func percentEncoding() {
         #expect(Markdown.percentEncoded("A-z_0.9~") == "A-z_0.9~")
