@@ -1,16 +1,19 @@
 # Steward: a pure-Swift Danger
 
-**Status: reviewed (plan step 4.1).** Step 4.2 built the context, and
-step 4.3 the DSL, the runner, and the dry run, and step 4.4 the sticky
-comment; steps 4.5–4.10 build on what this document settles. Each section ends with
+**Status: reviewed (plan step 4.1).** Step 4.2 built the context,
+step 4.3 the DSL, the runner, and the dry run, step 4.4 the sticky
+comment, and step 4.5 the built-in diagnostics rule; steps 4.6–4.10
+build on what this document settles. Each section ends with
 a recommendation and the alternatives weighed. The maintainer answered
 all ten [questions](#answered-questions) on 2026-10-26, each as
 recommended (7 with a documentation requirement added), the four
 step 4.2 raised in swift-steward#27 the same day, each as recommended,
 the seven step 4.3 raised in swift-steward#28, also that day and as
-recommended, and the four step 4.4 raised in swift-steward#29 on
-2026-10-27, as recommended too. The sections reflect the answers. Claims about danger-swift, GitHub, and
-SwiftPM were checked against their sources or by experiment;
+recommended, the four step 4.4 raised in swift-steward#29 on
+2026-10-27, as recommended too, and the ten step 4.5 raised in
+swift-steward#30 the same day, as recommended (six as built, four
+changed). The sections reflect the answers. Claims about danger-swift,
+GitHub, and SwiftPM were checked against their sources or by experiment;
 [Checks](#checks) lists how.
 
 ## Decisions at a glance
@@ -19,7 +22,7 @@ SwiftPM were checked against their sources or by experiment;
 |---|---|---|---|
 | S1 | Rule shape | **Decided 2026-10-26.** `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
 | S2 | Context | **Paths, the dry-run placeholder, `Run`'s fields, and the activity types decided 2026-10-26.** One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; a placeholder pull request in a local dry run without `--pull-request`; `Run` carries the line map and the API and server URLs; `ready_for_review` joins the accepted activity types | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
-| S3 | Line numbers | **Decided 2026-10-26.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default, or the head when only the head is checked out) to the head before matching; Steward leaves `safe.directory` to the workflow | Merge coordinates throughout; build the head instead; two diffs |
+| S3 | Line numbers | **Decided 2026-10-26; the built-in rule's paths and severities 2026-10-27.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default, or the head when only the head is checked out) to the head before matching; Steward leaves `safe.directory` to the workflow. The built-in rule resolves a path the checkout has exactly before trying suffixes, and fails on diagnostics at or above a severity, errors by default | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | **Generator decided 2026-10-26:** `Steward <version>`, the version the CLI prints. A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26; the author option and the budget's API 2026-10-27.** The 3.5 marker on the first line, only the token's own comments (`--summary-author` names another account); danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice | Always fail; fail on configuration errors only; refusing to run on forks |
@@ -141,7 +144,7 @@ import Steward
 @main
 struct PullRequestChecks: Dangerfile {
     static var rules: [Rule] {
-        Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log"), .swiftLint("swiftlint.json")])
+        Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log"), .swiftLint("swiftlint.log")])
 
         Rule("Changelog") { context in
             guard !context.git.modifiedFiles.contains("CHANGELOG.md") else { return [] }
@@ -414,6 +417,29 @@ at the edge:
   exist in the head), and matches the rest against `context.git` with
   `DiagnosticMatcher`. Dropped diagnostics are counted in the log.
 
+  As built, a `DiagnosticSource` is `.xcodebuild`, `.swiftLint`,
+  `.swiftFormat`, or `.sonar`, each with a path and an optional
+  `builtAt:`: a struct with static factories, so kinds and options can
+  be added without breaking a `switch` (decided 2026-10-27, question
+  26). `.swiftLint` reads the default `xcode` reporter, as
+  `steward filter --tool swiftlint` does; a parser for SwiftLint's JSON
+  reporter is a later addition (question 27). A relative path starts
+  from the workspace (question 28). Log paths resolve against the pull
+  request's paths and the built paths the map knows. Once the workspace
+  is stripped, a path naming a file in the checkout is that file, so a
+  diagnostic in an untouched `Other/Foo.swift` never lands on a changed
+  `Foo.swift`; any other path resolves as `filter --repo-root
+  <workspace>` resolves it, by its longest known suffix (question 32).
+  A diagnostic at or above `failingOn:` is a failure, as one fails
+  `filter --fail-on`; below it, a warning is a warning and a note a
+  message. The default, `.error`, fails on errors alone, and `.warning`
+  is what a workflow that gates on warnings wants (question 29). There's
+  no cap on findings (question 30). The log says, for each report, how
+  many diagnostics it held, matched, and dropped. A report that can't
+  be read, or whose `builtAt:` commit the checkout lacks, is one failure
+  of the rule, and the other reports are still read; content the parser
+  doesn't recognize gives no diagnostics (question 31).
+
 Why not the others: B makes the summary disagree with the Files changed
 tab, and its links rot as soon as the merge ref moves. B is also what
 `pr.yml` does today: its `filter` step diffs `origin/<base>...HEAD` on the
@@ -605,8 +631,10 @@ when non-empty, then the `markdown` findings as they are, then a footer:
   block, or its own table returns a `markdown` finding instead.
 - **Finding text is Markdown by contract**, and rules may mention people
   on purpose. Text from tools is plain text, so the built-in rule escapes
-  it (Markdown punctuation, and `@` so a compiler message can't ping
-  anyone) before it becomes a finding.
+  it (Markdown punctuation, `@` so a compiler message can't ping
+  anyone, and the `#` or `GH-` before an issue number, so it can't
+  cross-reference an issue: decided 2026-10-27, question 34) before it
+  becomes a finding. Bare URLs stay links.
 - **The headline counts everything**, even when the body is cut short.
   `markdown` findings count as notes:
   `**1 failure, 2 warnings, 1 message, 1 note**` (decided 2026-10-26,
@@ -811,7 +839,7 @@ of it. `context` is the rule closure's parameter.
 | `danger.github.reviews`, `.requestedReviewers` | – | Would need the API from rules; not in v1 |
 | `danger.github.api` (OctoKit) | – | The host isn't exposed to rules in v1 |
 | `danger.gitLab`, `.bitbucketCloud`, `.bitbucketServer` | – | GitHub only, behind the seam (backlog) |
-| `SwiftLint.lint(inline: true, …)` | `Rule.diagnosticsOnChangedLines(in: [.swiftLint("swiftlint.json")])` | Reads a report the workflow already produced instead of running SwiftLint, and keeps only changed lines (4.5); also xcodebuild, SwiftFormat, Sonar |
+| `SwiftLint.lint(inline: true, …)` | `Rule.diagnosticsOnChangedLines(in: [.swiftLint("swiftlint.log")])` | Reads a report the workflow already produced instead of running SwiftLint, and keeps only changed lines (4.5); also xcodebuild, SwiftFormat, Sonar. `strict: true`, which makes every violation an error, is `failingOn: .warning` |
 | `// fileImport: Other.swift` | Another file in the `Dangerfile` target | It's an ordinary package |
 | `import X // package: <url>`, or a `DangerDeps` library product | `dependencies:` in `Dangerfile/Package.swift` | |
 | `danger-swift ci` | The composite Action (4.8), which runs `swift run` in `Dangerfile/` | |
@@ -919,7 +947,7 @@ tag.
 | 4.6 `StewardTesting` | Section 8 (fixtures, the fake host) and section 1 (rules as values) |
 | 4.7 Template and quickstart | Section 8 (the package's layout), section 2 (the merge-tree caveat, `edited` and `ready_for_review` events), section 6 (`permissions:`), section 5 (several Dangerfiles per pull request are unsupported), section 3 (`safe.directory` in container jobs without the Action) |
 | 4.8 Action | Section 8 (decision 3: a separate `steward-action` repository), section 3 (fetching history, `safe.directory` for the workspace), section 5 (the `concurrency` group) |
-| 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step works in merge coordinates) |
+| 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step works in merge coordinates; `failingOn: .warning` replaces its gate on warnings, question 29) |
 | 4.10 Docs | Section 7 (the mapping table, the start of the migration guide), section 5 (several Dangerfiles per pull request are unsupported), and section 3 (`safe.directory` in container jobs without the Action) |
 | Backlog: fork pull requests | Section 4 (the report and the rules for an untrusted one) |
 
@@ -928,9 +956,10 @@ tag.
 The maintainer answered all ten on 2026-10-26, the four that step 4.2
 raised in swift-steward#27 (numbered on from 11) the same day, and the
 seven that step 4.3 raised in swift-steward#28 (numbered on from 15) that
-day too, and the four that step 4.4 raised in swift-steward#29 (numbered
-on from 22) on 2026-10-27. The sections refer to them by number, and each
-section above already reflects its answer.
+day too, the four that step 4.4 raised in swift-steward#29 (numbered
+on from 22) on 2026-10-27, and the ten that step 4.5 raised in
+swift-steward#30 (numbered on from 26) the same day. The sections refer
+to them by number, and each section above already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1040,6 +1069,48 @@ section above already reflects its answer.
     request's skipped post is a `::notice title=Steward::` annotation, not
     a warning: nothing is wrong, and a warning on every fork pull request
     would teach people to ignore Steward's warnings.
+26. **Diagnostic sources (S3). Answered 2026-10-27: a struct, as built**
+    ("ok, go with the recommendations", for all ten of #30's questions).
+    `DiagnosticSource` has static factories, not public cases, so kinds
+    and options can be added without breaking a `switch`.
+27. **SwiftLint's reporter (S3). Answered 2026-10-27: the default
+    `xcode` reporter for v1.** `.swiftLint` reads what
+    `steward filter --tool swiftlint` reads, so the examples read
+    `swiftlint.log`. A parser for the JSON reporter is a later addition.
+28. **Relative report paths (S3). Answered 2026-10-27: from the
+    workspace**, the checkout's root, not the current directory.
+29. **Failing on warnings (S3, S7). Answered 2026-10-27: add it now.**
+    `Rule.diagnosticsOnChangedLines(in:failingOn:)` fails on diagnostics
+    at or above a `DiagnosticSeverity`, as `steward filter --fail-on`
+    does. The default, `.error`, keeps errors as failures, warnings as
+    warnings, and notes as messages. Dogfooding (4.9) needs `.warning` to
+    replace `pr.yml`'s gate on warnings on changed lines. The severity
+    is Steward's own type, since Steward doesn't re-export `BuildLogKit`
+    (question 16).
+30. **A cap on findings (S5). Answered 2026-10-27: none.** The summary's
+    size budget (question 21) cuts them.
+31. **Unreadable reports (S3). Answered 2026-10-27: one failure each.**
+    A report that can't be read, or whose `builtAt:` commit the checkout
+    lacks, is one failure of the rule, and the other reports are still
+    read. Malformed content gives no diagnostics, and the log says how
+    many each report held.
+32. **Resolving paths (S3). Answered 2026-10-27: exact paths before
+    suffixes.** Once the workspace is stripped, a path naming a file in
+    the checkout is that file, and is dropped if the pull request didn't
+    touch it; only a path with no file there, or one not in plain form
+    (`./Foo.swift`), falls back to the longest known suffix.
+    `steward filter` is unchanged.
+33. **`Rule.evaluate` (S1). Answered 2026-10-27: computed, as built**,
+    over the internal check that also takes the run's log, so the
+    built-in rule logs without a change to the runner.
+34. **Issue references in tool text (S5). Answered 2026-10-27: break
+    them.** `Markdown.escaped` puts a zero-width space between an issue
+    number and the `#` or `GH-` before it, where `gh api markdown`
+    showed it stops the link; `#if` and the like are unchanged. Bare
+    URLs stay links, so a pull request's URL still renders as a
+    reference to it.
+35. **`DiagnosticPathResolver` (S3). Answered 2026-10-27: `package`**,
+    shared by `DiagnosticMatcher` and Steward, not DiffDiagnostics API.
 
 ## Checks
 
@@ -1100,3 +1171,13 @@ How the factual claims were verified (2026-10-25/26):
 - **The rule-shape example**: section 1's two hand-written rules, the
   builder, and stub types type-check with `swiftc -swift-version 6
   -typecheck` under Swift 6.4.
+- **Issue references in escaped text** (2026-10-27), with
+  `gh api markdown` in GFM mode and this repository as context:
+  - A zero-width space after the `#` stops `#12` and `owner/repo#12`
+    from linking. One before the `#` doesn't.
+  - One anywhere inside `GH-12` stops it.
+  - GitHub links `GH-N` in any case, but not after a letter, a digit or
+    `_`.
+  - It reads issue numbers in ASCII digits only.
+  - A dry run's summary with every form rendered no issue link except
+    the one GitHub makes from a bare pull-request URL.

@@ -39,11 +39,15 @@ spec fixes, and how to update them.
 
 `Steward` (not a product yet) is the pure-Swift Danger replacement that
 [docs/danger.md](docs/danger.md) designs, on top of `GitDiffKit`,
-`PullRequestHosting` and `GitHubAPI`. So far it has the DSL (`Rule`,
-`Finding`, the `Dangerfile` protocol), the `Context` it builds from the
-GitHub Actions variables, the event payload and the local checkout, and
-the runner: in CI it writes the report and the job summary, and anywhere
-else it's a dry run that prints the summary. It doesn't post yet. It runs
+`PullRequestHosting`, `GitHubAPI`, `BuildLogKit` and `DiffDiagnostics`.
+So far it has the DSL (`Rule`, `Finding`, the `Dangerfile` protocol), the
+`Context` it builds from the GitHub Actions variables, the event payload
+and the local checkout, the runner, and the built-in rule
+`Rule.diagnosticsOnChangedLines(in:failingOn:)`, which maps a build's
+diagnostics to the head and keeps the ones on changed lines, as
+`steward filter` does. In CI the runner writes the report and the job summary, and
+anywhere else it's a dry run that prints the summary. It doesn't post
+yet. It runs
 git with every output-shaping option pinned, so a user's configuration
 can't change what it parses. It re-exports `GitDiffKit` and
 `PullRequestHosting`, so a Dangerfile imports only `Steward`.

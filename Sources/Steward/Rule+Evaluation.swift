@@ -5,10 +5,10 @@ extension Rule {
     /// Throws only when the run's task is cancelled: a rule can't stop the
     /// run, and an error it throws for any other reason, a
     /// `CancellationError` of its own included, is its failure.
-    func findings(in context: Context) async throws(CancellationError) -> [Finding] {
+    func findings(in context: Context, log: Log) async throws(CancellationError) -> [Finding] {
         let findings: [Finding]
         do {
-            findings = try await evaluate(context)
+            findings = try await check(context, log)
         } catch {
             guard !Task.isCancelled else { throw CancellationError() }
             let description = String(errorDescription: error)
@@ -32,7 +32,7 @@ extension [Rule] {
         // section 1), which `reduce` can't.
         for rule in self {
             guard !Task.isCancelled else { throw CancellationError() }
-            let ruleFindings = try await rule.findings(in: context)
+            let ruleFindings = try await rule.findings(in: context, log: log)
             log.write(Self.logLine(for: rule, findings: ruleFindings))
             findings += ruleFindings
         }
