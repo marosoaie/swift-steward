@@ -77,9 +77,11 @@ even when they fail, so it reports a broken build's errors:
 
 ```yaml
 - name: Build
-  run: |
-    set -o pipefail
-    swift build 2>&1 | tee build.log
+  # Bash, for pipefail: without it a failed build passes the step, and a
+  # container job's default shell, sh, has none. No colours, which Swift
+  # 6.4 writes even into a file, and which Steward can't read.
+  shell: bash
+  run: swift build --no-color-diagnostics 2>&1 | tee build.log
 - name: Steward
   if: ${{ !cancelled() }}
   run: swift run --package-path Dangerfile
