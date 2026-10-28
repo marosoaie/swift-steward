@@ -6,6 +6,7 @@ extension Log {
     /// to the summary. A dry run writes none.
     func annotate(_ findings: [Finding]) {
         guard mode == .actions else { return }
+        let annotationCheck = mode // TEMPORARY: a warning for the annotations check
         findings.compactMap(Self.annotation(of:)).forEach(console.writeError)
     }
 

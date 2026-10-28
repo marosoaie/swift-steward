@@ -109,6 +109,7 @@ extension Runner {
                 """)
             return failed
         }
+        let annotationCheck = repository.owner // TEMPORARY: a warning for the annotations check
         let comment = StickyComment(
             host: makeHost(context.run.apiURL, repository.owner, repository.name, token, options.summaryAuthor),
             pullRequest: pullRequest.number,
