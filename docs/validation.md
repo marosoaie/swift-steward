@@ -144,8 +144,9 @@ Not Steward's:
 - The tap's formula has no bottle, so `brew install` builds from source
   (39 s on macos-26).
 
-Open for step 5.1: [B2](#b2-annotations-without-a-column) and
-[B3](#b3-report-formats-other-than-sonarqubes-api).
+Open for step 5.1: [B2](#b2-annotations-without-a-column),
+[B3](#b3-report-formats-other-than-sonarqubes-api) and
+[B4](#b4-a-broken-build-whose-errors-have-no-location).
 
 ## Questions
 
@@ -165,3 +166,16 @@ returns. Linters that write a report themselves use other shapes, SARIF
 reads neither, so the playground converts ruff's JSON with an eight-line
 `jq` filter. A SARIF source would need no converter. A new source is
 public API, so it waits for step 5.1.
+
+### B4: a broken build whose errors have no location
+
+The build sources read diagnostics written as `file:line: severity:`. An
+error without a location, such as Xcode's "Multiple commands produce …",
+a linker's undefined symbol, or a package that won't resolve, isn't one,
+so a build that fails only on those gives Steward nothing. NetNewsWire
+replay 04's first run reported "2 warnings", SwiftLint's, while both of
+its builds had failed: "0 diagnostics" in each log, and only the failed
+build steps showed the breakage. The quickstart now says so. Steward
+could also say, in the summary, that a log holds errors it can't place,
+which changes what the built-in rule reports, so it's a question for
+step 5.1.
