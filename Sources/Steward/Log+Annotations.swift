@@ -6,7 +6,7 @@ extension Log {
     /// to the summary. A dry run writes none.
     func annotate(_ findings: [Finding]) {
         guard mode == .actions else { return }
-        findings.compactMap(Self.annotation(of:)).forEach(console.writeError)
+        findings.lazy.compactMap(Self.annotation(of:)).forEach(console.writeError)
     }
 
     /// The workflow command that annotates `finding`, or nil when it gets
