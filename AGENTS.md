@@ -222,3 +222,5 @@ iteration), never narration of the next line.
   `Templates/Dangerfile/Package.swift`, `docs/quickstart.md` (and its
   tarball URL), `docs/rule-tests.md`, and the README, and in the
   `Dangerfile/Package.swift` of git-diff-parser and of steward-action.
+  Once steward-action has a `v1` tag, the quickstart's two pins of it by
+  commit SHA become `@v1`, and so does `pr.yml`'s.

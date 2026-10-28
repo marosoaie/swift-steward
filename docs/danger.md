@@ -16,9 +16,10 @@ recommended, the four step 4.4 raised in swift-steward#29 on
 swift-steward#30 the same day, as recommended (six as built, four
 changed), the nine step 4.6 raised in swift-steward#31 the same
 day, as recommended and as built, the seven step 4.7 raised in
-swift-steward#32 that day too, also as recommended and as built, and
-the nine step 4.9 raised in swift-steward#36 on 2026-10-28, as
-recommended and as built. The sections reflect the answers.
+swift-steward#32 that day too, also as recommended and as built, the
+nine step 4.9 raised in swift-steward#36 on 2026-10-28, as recommended
+and as built, and the two step 4.10 raised in swift-steward#37 the same
+day, as recommended. The sections reflect the answers.
 Claims about danger-swift, GitHub, and SwiftPM were checked against
 their sources or by experiment; [Checks](#checks) lists how.
 
@@ -203,7 +204,7 @@ rules. The second is usually better anyway: each finding names its rule
 in the report. The maintainer chose this shape and this error and order
 behavior on 2026-10-26 (questions 1 and 2). **Decided 2026-10-26
 (question 20):** `markdown(_:at:)` takes a location like the other three
-factories, since section 7 maps danger-swift's `markdown(_:file:line:)`
+factories, since section 7 maps danger-swift's `markdown(message:file:line:)`
 to it.
 
 ## 2. The context (S2)
@@ -387,7 +388,7 @@ diagnostics.
 | Option | `context.git` | Diagnostics matched in | Links point at |
 |---|---|---|---|
 | **A. Head coordinates, logs translated** | `base...head` | head coordinates, after mapping each log line from the built tree to the head | `blob/<head>` |
-| B. Merge coordinates throughout | `base-tip...merge`, as `pr.yml` diffs today | merge coordinates | `blob/<merge>`, which GitHub recomputes and replaces on every push to either branch |
+| B. Merge coordinates throughout | `base-tip...merge`, as `pr.yml`'s `filter` step did until 4.9 | merge coordinates | `blob/<merge>`, which GitHub recomputes and replaces on every push to either branch |
 | C. Build the head instead | `base...head` | head coordinates; nothing to map | `blob/<head>` |
 | D. Two diffs | `base...head` | merge coordinates against `base-tip...merge`, findings mapped to the head afterwards | `blob/<head>` |
 
@@ -448,29 +449,33 @@ at the edge:
 
 Why not the others: B makes the summary disagree with the Files changed
 tab, and its links rot as soon as the merge ref moves. B is also what
-`pr.yml` does today: its `filter` step diffs `origin/<base>...HEAD` on the
-merge commit. The check runs it annotates sit on the head commit (this
-repository's `pull_request` runs report the head SHA), so in the shifted
-case its annotations probably land on the wrong lines; GitHub doesn't
-document how it places them. 4.9 replaces that step. C is consistent
-and free, and Steward supports it (it's the identity case), but the build
-then stops testing what will actually merge, and the build job is the
-user's to configure, not Steward's. D gives the same answers as A with
-two diffs and two coordinate systems to keep straight.
+`pr.yml` did until 4.9 replaced its `filter` step with Steward (question
+56): the step diffed `origin/<base>...HEAD` on the merge commit, and the
+check runs it annotated sit on the head commit (this repository's
+`pull_request` runs report the head SHA), so in the shifted case its
+annotations probably landed on the wrong lines; GitHub doesn't document
+how it places them. C is consistent and free, and Steward supports it
+(it's the identity case), but the build then stops testing what will
+actually merge, and the build job is the user's to configure, not
+Steward's. D gives the same answers as A with two diffs and two
+coordinate systems to keep straight.
 
 Constraints this puts on the workflow:
 
 - **History.** The mapping and the merge base need the head, the base
   tip, their merge base, and the built commit in the local repository.
   `actions/checkout`'s default depth of 1 has only the merge commit. The
-  quickstart can say `fetch-depth: 0`; the composite Action (4.8) should
-  fetch just what it needs (the two SHAs, with history back to their
-  merge base) so large repositories don't pay for a full clone. Back to
-  the merge base on every path, that is: a shallow cut the base reaches
-  above a commit the pull request's commits start from can move shared
-  history into `base..head`, so Steward refuses a clone with one. For a
-  branch that merged the base, that means back past the branch's fork
-  point, not only the last merge.
+  quickstart's workflow without the Action says `fetch-depth: 0`. The
+  composite Action (4.8) fetches the whole history of the base and head
+  commits when the checkout is shallow, and nothing on a full clone:
+  fetching just enough, back to the merge base, was weighed and dropped
+  as more code than the time it saves is worth (steward-action's
+  decision 6, section 8). The history has to reach the merge base on
+  every path: a shallow cut the base reaches above a commit the pull
+  request's commits start from can move shared history into
+  `base..head`, so Steward refuses a clone with one. For a branch that
+  merged the base, that means back past the branch's fork point, not
+  only the last merge.
 - **Conflicts.** A pull request with conflicts has no test merge commit,
   so there's no merge tree to map from; GitHub doesn't run `pull_request`
   workflows for it then (see [Checks](#checks)).
@@ -819,8 +824,9 @@ danger-swift 3.23.1 (the latest release, 2026-10-18) evaluates the
 Dangerfile, writes its results as JSON, and hands them to danger-js,
 which needs Node and does all the posting. Steward replaces both halves.
 The table maps every call a Dangerfile commonly makes, read from
-danger-swift's source at that tag; the migration guide (4.10) grows out
-of it. `context` is the rule closure's parameter.
+danger-swift's source at that tag; the
+[migration guide](migrating-from-danger-swift.md) (4.10) grew out of it.
+`context` is the rule closure's parameter.
 
 | danger-swift | Steward v1 | Notes |
 |---|---|---|
@@ -936,14 +942,22 @@ the Action's workflow (50) and keys the raw workflow's cache on
 
 ### The Action (decision 3, decided 2026-10-26)
 
-The composite Action (4.8) is glue: install a Swift toolchain on Ubuntu,
-restore a cache of `Dangerfile/.build` keyed on `Package.resolved`, the
-Swift version, and the OS, fetch the history section 3 needs, and run
-`swift run --package-path Dangerfile`. It needs `contents: read` and
-`pull-requests: write` (the REST docs list either `issues: write` or
-`pull-requests: write` as enough to create, update, and delete issue
-comments, and an Actions token is an installation token). Where it lives
-was plan decision 3:
+The composite Action (4.8,
+[marosoaie/steward-action](https://github.com/marosoaie/steward-action))
+is glue: use the runner's Swift, or install one with swiftly on a Linux
+runner that has none, trust the workspace for git, fetch the history
+section 3 needs, restore a cache of the Dangerfile's `.build`, run it
+with `swift run`, and upload the report. Its design decisions, with the
+alternatives weighed, are in its
+[docs/decisions.md](https://github.com/marosoaie/steward-action/blob/main/docs/decisions.md).
+It needs `contents: read` and `pull-requests: write`, and
+`pull-requests: write` is the only permission that lets the token
+comment on a pull request. The REST docs list `issues: write` as enough
+for issue comments too, but on a pull request it isn't: with it alone,
+creating a comment failed with 403, "Resource not accessible by
+integration", in steward-action#1's CI, while `pull-requests: write`
+alone created, updated, and deleted one (see [Checks](#checks)). Where
+it lives was plan decision 3:
 
 | | A. `action.yml` at swift-steward's root | B. A separate `marosoaie/steward-action` |
 |---|---|---|
@@ -974,7 +988,7 @@ tag.
 | 4.6 `StewardTesting` | Section 8 (fixtures, the fake host) and section 1 (rules as values) |
 | 4.7 Template and quickstart | Section 8 (the package's layout), section 2 (the merge-tree caveat, `edited` and `ready_for_review` events), section 6 (`permissions:`), section 5 (several Dangerfiles per pull request are unsupported), section 3 (`safe.directory` in container jobs without the Action) |
 | 4.8 Action | Section 8 (decision 3: a separate `steward-action` repository), section 3 (fetching history, `safe.directory` for the workspace), section 5 (the `concurrency` group) |
-| 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step works in merge coordinates; `failingOn: .warning` replaces its gate on warnings, question 29) |
+| 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step worked in merge coordinates; `failingOn: .warning` replaces its gate on warnings, question 29) |
 | 4.10 Docs | Section 7 (the mapping table, the start of the migration guide), section 5 (several Dangerfiles per pull request are unsupported), and section 3 (`safe.directory` in container jobs without the Action) |
 | Backlog: fork pull requests | Section 4 (the report and the rules for an untrusted one) |
 
@@ -988,10 +1002,11 @@ on from 22) on 2026-10-27, the ten that step 4.5 raised in
 swift-steward#30 (numbered on from 26) the same day, the nine that
 step 4.6 raised in swift-steward#31 (numbered on from 35) that day too,
 the seven that step 4.7 raised in swift-steward#32 (numbered on from
-44) that day as well, and the nine that step 4.9 raised in
-swift-steward#36 (numbered on from 51) on 2026-10-28. The sections
-refer to them by number, and each section above already reflects its
-answer.
+44) that day as well, the nine that step 4.9 raised in
+swift-steward#36 (numbered on from 51) on 2026-10-28, and the two that
+step 4.10 raised in swift-steward#37 (62 and 63) the same day. The
+sections refer to them by number, and each section above already
+reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1078,7 +1093,7 @@ answer.
     declaration say.
 20. **A location for `markdown` (S1, S7). Answered 2026-10-26: accepted.**
     `markdown(_:at:)` takes a location like the other three factories, as
-    section 7's mapping of danger-swift's `markdown(_:file:line:)` needs.
+    section 7's mapping of danger-swift's `markdown(message:file:line:)` needs.
 21. **The size budget (S5). Answered 2026-10-26: step 4.4's.** The
     65,536-byte cut comes with the sticky comment; until then, the job
     summary isn't cut. (Step 4.4 built both cuts.)
@@ -1273,6 +1288,18 @@ answer.
     macOS build and suite on every description edit, so the workflows
     keep `pull_request`'s defaults and no rule reads the title or
     description.
+62. **Pinning the Action before `v1` (S8). Answered 2026-10-28: by
+    commit SHA, in steward-action's README too** ("can you go with the
+    recommended answers and continue?", for both of #37's questions).
+    The quickstart pins the Action by the full SHA of a commit on its
+    `main` branch until `v1` exists, so the Action's workflow works
+    before the tag, not only the one without it (question 50).
+    steward-action#2 makes its README say the same.
+63. **A durable snippet check (S8). Answered 2026-10-28: not now.** #37
+    compiled the docs' Swift snippets once, with a local script, and the
+    template's CI jobs keep building the quickstart's package. A test or
+    CI job that compiles them on every pull request waits until a
+    snippet breaks.
 
 ## Checks
 
@@ -1294,7 +1321,8 @@ How the factual claims were verified (2026-10-25/26):
   merge commit; no `pull_request` runs while a pull request has conflicts
   (quote checked directly); three-dot diffs in pull requests (comparing
   branches); either `issues: write` or `pull-requests: write` for issue
-  comments (REST issue comments); 1 MiB per step and 20 job summaries per
+  comments (REST issue comments), which doesn't hold for a pull request's
+  comments (the next bullet); 1 MiB per step and 20 job summaries per
   job (workflow commands, checked directly); 10 warning and 10 error
   annotations per step (checks API); `pull_request_target` running in the
   default branch's context (checked directly), and its announced default
@@ -1308,6 +1336,13 @@ How the factual claims were verified (2026-10-25/26):
   This repository's last three `pull_request` runs report the branch tip
   as their head SHA (for example run 40203970914 on `d40497b`), not the
   merge commit.
+- **Permissions for the comment** (2026-10-27), by steward-action#1's
+  CI, whose jobs each ran with one permission: with `issues: write`
+  alone, creating a pull request's comment answered 403, "Resource not
+  accessible by integration" (Steward runs 40567615423 and 40571827904,
+  job `issues-write`); with `pull-requests: write` alone, the token
+  created, updated, and deleted one, and Steward deleted a planted
+  second summary (job `pull-requests-write`, the same runs).
 - **Line numbers**, on both repositories' history: every merge commit
   `M` on `main` whose base had moved (`merge-base(M^1, M^2) != M^1`; six
   of them), with the files both sides changed. Two shared a file, and in
