@@ -1,7 +1,7 @@
 # Validation record
 
 What was run to check Steward, the Dangerfile runner, in real
-repositories and on real runners, as of 2026-10-28 (plan step 5.0,
+repositories and on real runners, as of 2026-10-29 (plan step 5.0,
 Track B). Every pull request listed here ran Steward through
 [steward-action](https://github.com/marosoaie/steward-action), and every
 comment and annotation it left was checked by hand against the log it came
@@ -10,6 +10,11 @@ changed line, nothing reported off one. GitDiffKit's own validation, the
 diff parser underneath, is in
 [git-diff-parser's record](https://github.com/marosoaie/git-diff-parser/blob/main/docs/validation.md).
 
+Steward ran in two outside repositories, the playground and a fork of
+NetNewsWire, on 23 pull requests between them; Track C of the same step
+adds a third, a fork of danger-swift. The maintainer's private app was
+skipped.
+
 ## At a glance
 
 | Where | What ran | Pull requests | Result |
@@ -17,7 +22,7 @@ diff parser underneath, is in
 | [steward-playground](#steward-playground) | A Python package, ruff converted to a SonarQube report, on 5 kinds of runner | 7, 14 runs | Every finding on its line; none off changed lines |
 | [Clean installs](#clean-installs) | Homebrew, the release binary, a source build on Linux | – | All print `2.0.0` |
 | [The maintainer's private app](#the-maintainers-private-app) | Xcode and SwiftLint logs | 1, no run of Steward | Skipped: its macOS job never got a runner |
-| [NetNewsWire](#netnewswire) | | | |
+| [NetNewsWire](#netnewswire) | A Mac and iOS app, 16 changes merged upstream replayed: two `xcodebuild` logs and SwiftLint | 16, 38 runs | 406 findings, each on its line; none off changed lines |
 
 ## How each run was checked
 
@@ -109,6 +114,97 @@ either, since only that job would have checked it.
 
 ## NetNewsWire
 
+[marosoaie/NetNewsWire](https://github.com/marosoaie/NetNewsWire), the
+maintainer's public fork of the NetNewsWire feed reader: a Mac and iOS
+app built from an Xcode project and local Swift packages, with SwiftLint
+and warnings as errors. Sixteen changes merged upstream were replayed
+unchanged as draft pull requests. Each base branch is the merge's first
+parent plus one commit that adds Steward's workflow and Dangerfile, and
+each head is the merged change on top, so a pull request's diff is
+exactly what upstream merged and its test merge has the head's tree.
+Every pull request's one job, on `macos-26`, builds the Mac app and the
+iOS app for the simulator with `xcodebuild`, runs SwiftLint, and runs
+Steward through the Action with one rule,
+`Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build-macos.log"), .xcodebuild("build-ios.log"), .swiftLint("swiftlint.log")])`:
+errors fail (the default), warnings warn.
+
+At those commits the project needs three things to build unsigned on a
+runner, all of which it changed later, so the workflow does them in the
+working tree only and the diff Steward reads is untouched. Its resources
+come from synchronized folders, and Xcode knows a `.nnwtheme` folder as
+a bundle only where NetNewsWire is installed, so on a runner it copies
+the themes' files flat and they collide ("Multiple commands produce"):
+their files go. Two script phases re-sign with the build's identity,
+which an unsigned build hasn't got: their `codesign` calls become
+no-ops. And the Debug flags warn on code that takes over 300 ms to
+type-check, which warnings as errors turns into a failed build on a busy
+runner: those two flags go. Finding them took four runs of PR 1 and a
+second round of PRs 6–16; the table has each pull request's last run.
+All 38 runs on the fork were Steward's: upstream's CI workflow isn't in
+these old bases.
+
+Versions: runner image macos-26-arm64 20261013.0424.1 and
+20261021.0445.8 (8 jobs each), macOS 26.6.2, Xcode 26.6 with the macOS
+and iOS Simulator 26.5 SDKs, SwiftLint 0.65.1 from Homebrew, and Swift
+6.3.3 building the Dangerfile.
+
+Checked as for the playground, with a script: each log's diagnostics,
+deduplicated as BuildLogKit does, on the lines the head adds over the
+base, using git's rename detection as Steward does; against the comment's
+rows and the annotations, as (severity, path, line) multisets; then
+every finding's line in the head commit, each of the 309 whitespace
+findings by its text, the 94 of other rules by the construct the rule
+names (a comma's spacing, `String(decoding:as:)`, an `override`), and
+the 3 compiler findings by reading them.
+
+| PR | Change | Files, lines | Log diagnostics (Mac, iOS, SwiftLint) | On changed lines | Comment, annotations | Result |
+|---|---|---|---|---|---|---|
+| [1](https://github.com/marosoaie/NetNewsWire/pull/1) | Import OPML files into FreshRSS accounts | 2, +25 −1 | 3, 5, 10 | The same compiler warning from each build; `trailing_whitespace`, `vertical_whitespace` | 4 and 4 | ✓, see [B5](#b5-one-diagnostic-from-two-logs) |
+| [2](https://github.com/marosoaie/NetNewsWire/pull/2) | Share from the Mac timeline's context menu through a sharing service picker | 2, +25 −30 | 2, 4, 36 | 5: `trailing_whitespace` 4, `trailing_newline` 1 | 5 and 5 | ✓ |
+| [3](https://github.com/marosoaie/NetNewsWire/pull/3) | Remember the iOS split view's display mode across launches | 4, +41 −17 | 2, 4, 17 | 10: `trailing_whitespace` 9, `vertical_whitespace` 1 | 10 and 10 | ✓ |
+| [4](https://github.com/marosoaie/NetNewsWire/pull/4) | Fix widget truncation and alignment | 12, +168 −91 | 2, 4, 22 | 11: `trailing_whitespace` 10, `trailing_newline` 1 | 11; GitHub kept 10 annotations | ✓ |
+| [5](https://github.com/marosoaie/NetNewsWire/pull/5) | Fix truncation in the iOS timeline's feed cells | 4, +109 −71 | 2, 4, 19 | 10: `trailing_whitespace` 9, `vertical_whitespace` 1 | 10 and 10 | ✓ |
+| [6](https://github.com/marosoaie/NetNewsWire/pull/6) | Fix layout issues in the iOS timeline's cells | 5, +142 −123 | 2, 4, 45 | 37 `trailing_whitespace` | 37; 10 | ✓ |
+| [7](https://github.com/marosoaie/NetNewsWire/pull/7) | Merge the iOS timeline's cell types into one | 7, +677 −685 | 2, 8, 57 | 48: `trailing_whitespace` 44, `vertical_whitespace` 2, `unneeded_override` 1, `trailing_newline` 1 | 48; 10; the iOS build fails | ✓, see below |
+| [8](https://github.com/marosoaie/NetNewsWire/pull/8) | Rebuild the iOS timeline on a collection view | 7 (1 renamed), +1218 −843 | 2, 4, 125 | 117: `trailing_whitespace` 101, `vertical_whitespace` 9, 7 of five other rules | 117; 10 | ✓, see below |
+| [9](https://github.com/marosoaie/NetNewsWire/pull/9) | Use hierarchical text colours in the iOS timeline's cells | 2, +213 −155 | 2, 4, 171 | 46: `trailing_whitespace` 42, `statement_position` 2, `unneeded_override` 1, `trailing_newline` 1 | 46; 10 | ✓ |
+| [10](https://github.com/marosoaie/NetNewsWire/pull/10) | Fix light and dark backgrounds in the iOS timeline and settings | 8 (1 renamed), +421 −331 | 2, 4, 38 | 31: `trailing_whitespace` 25, `vertical_whitespace` 3, `comma`, `unused_optional_binding` and `trailing_newline` 1 each | 31; 10 | ✓ |
+| [11](https://github.com/marosoaie/NetNewsWire/pull/11) | Simplify the iOS timeline's cells and fix their context menu previews | 6, +157 −359 | 2, 4, 7 | None | No comment, no annotations | ✓ |
+| [12](https://github.com/marosoaie/NetNewsWire/pull/12) | Tweak the iOS cell previews and remove unused code | 5, +40 −33 | 2, 4, 8 | 1 `trailing_whitespace` | 1 and 1 | ✓ |
+| [13](https://github.com/marosoaie/NetNewsWire/pull/13) | Manage notifications per account on iOS | 4, +195 | 2, 5, 108 | 1 error from the iOS build | 1 failure, an error annotation, job fails | ✓, see below |
+| [14](https://github.com/marosoaie/NetNewsWire/pull/14) | Show paths for browsers with the same name in Mac settings | 2, +65 −4 | 2, 4, 110 | None | No comment, no annotations | ✓ |
+| [15](https://github.com/marosoaie/NetNewsWire/pull/15) | Fix the full-screen article view on iOS | 2, +1 −9 | 2, 4, 20 | None | No comment, no annotations | ✓ |
+| [16](https://github.com/marosoaie/NetNewsWire/pull/16) | Replace the XML parser with one written in Swift | 155 (14 renamed), +9186 −7033 | 2, 4, 103 | 85: `comma` 46, `optional_data_string_conversion` 36, `trailing_newline` 2, `implicit_optional_initialization` 1 | 85; 10 | ✓ |
+
+No run reported anything off a changed line or dropped a line the head
+doesn't have. Each pull request with findings has one comment, which
+later runs edited in place; the three without findings got none ("nothing
+to post"). Every finding was also an annotation, and GitHub kept the
+first 10 per step. The annotations API returns GitHub's own too, on the
+path `.github`: a failed step's exit code, and on every job here a notice
+that macOS arm64 jobs may queue longer.
+
+Three pull requests are worth a closer look:
+
+- **PR 8**: SwiftLint warns about a second blank line in
+  `MainTimelineModernViewController.swift` on a line the change didn't
+  touch. Git sees the file as a 67% rename of
+  `MainTimelineViewController.swift`, and the blank lines came with it,
+  so Steward, which diffs with rename detection as the Files tab shows
+  the file, left the warning out. A check without rename detection
+  expects it; the quickstart now says what a renamed file's changed lines
+  are.
+- **PR 7**: the change as merged upstream doesn't build for iOS. It
+  removes two cell types that four unchanged lines elsewhere in the
+  timeline still name, and the build fails on four "cannot find type"
+  errors. None is on a changed line, so Steward reports none of them, and
+  its comment says "48 warnings" while the job fails on the build step:
+  see [B4](#b4-a-broken-build-whose-errors-arent-on-changed-lines).
+- **PR 13**: Xcode 26.6 can't type-check an expression on an added line
+  (`AccountNotificationInspectorView.swift:51`) in reasonable time, a
+  real error with this compiler. Steward reports it as a failure with an
+  error annotation and fails the job.
+
 ## Findings
 
 Fixed:
@@ -120,6 +216,10 @@ Fixed:
   README said the same, and is fixed by
   [steward-action#3](https://github.com/marosoaie/steward-action/pull/3)
   (`e012627`).
+- The quickstart didn't say which lines of a renamed file count as
+  changed (NetNewsWire PR 8), or that errors without a location, or on a
+  line the pull request broke without changing it (PR 7), show only as
+  the build step's failure. It does now.
 
 Intended, and documented:
 
@@ -143,10 +243,17 @@ Not Steward's:
 - GitHub shows job summaries only to signed-in viewers.
 - The tap's formula has no bottle, so `brew install` builds from source
   (39 s on macos-26).
+- NetNewsWire at the replayed commits needs three working-tree changes
+  to build unsigned on a runner, and one replayed change doesn't build
+  for iOS (PR 7).
+- The check run's annotations include GitHub's own, on the path
+  `.github`.
 
 Open for step 5.1: [B2](#b2-annotations-without-a-column),
 [B3](#b3-report-formats-other-than-sonarqubes-api) and
-[B4](#b4-a-broken-build-whose-errors-have-no-location).
+[B4](#b4-a-broken-build-whose-errors-arent-on-changed-lines). Open for
+the maintainer: [B5](#b5-one-diagnostic-from-two-logs), which changes no
+API.
 
 ## Questions
 
@@ -167,15 +274,29 @@ reads neither, so the playground converts ruff's JSON with an eight-line
 `jq` filter. A SARIF source would need no converter. A new source is
 public API, so it waits for step 5.1.
 
-### B4: a broken build whose errors have no location
+### B4: a broken build whose errors aren't on changed lines
 
-The build sources read diagnostics written as `file:line: severity:`. An
-error without a location, such as Xcode's "Multiple commands produce …",
-a linker's undefined symbol, or a package that won't resolve, isn't one,
-so a build that fails only on those gives Steward nothing. NetNewsWire
-replay 04's first run reported "2 warnings", SwiftLint's, while both of
-its builds had failed: "0 diagnostics" in each log, and only the failed
-build steps showed the breakage. The quickstart now says so. Steward
-could also say, in the summary, that a log holds errors it can't place,
-which changes what the built-in rule reports, so it's a question for
-step 5.1.
+The build sources read diagnostics written as `file:line: severity:`,
+and the rule keeps the ones on changed lines. A build can fail with none
+there: on errors without a location, such as Xcode's "Multiple commands
+produce …", a linker's undefined symbol, or a package that won't
+resolve; or on lines the pull request broke without changing them.
+Steward's summary then lists what it did find and says nothing of the
+failure. NetNewsWire PR 1's first run reported "2 warnings", SwiftLint's,
+while both of its builds had failed with "0 diagnostics" in each log;
+PR 7's comment says "48 warnings" while its iOS build fails on four
+errors on unchanged lines. Only the failed build steps show the
+breakage, and the quickstart now says so. Steward could also say, in the
+summary, that a log holds errors it didn't report, which changes what
+the built-in rule reports, so it's a question for step 5.1.
+
+### B5: one diagnostic from two logs
+
+BuildLogKit drops a log's repeated diagnostics, but nothing merges one
+diagnostic that two sources report. In NetNewsWire PR 1 both builds
+compile the shared Account package and warn about the same unused value
+on the same line, so the comment lists it twice and it has two
+annotations. Merging findings with the same severity, location and
+message across sources would change what the built-in rule reports,
+though not its API; whether to, and in which step, is the maintainer's
+call.

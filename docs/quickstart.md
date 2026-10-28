@@ -95,9 +95,11 @@ output of `xcodebuild`, `swift build`, or `swiftc`; `.swiftLint` the
 output of `swiftlint lint`; `.swiftFormat` that of `swiftformat --lint`;
 and `.sonar` a SonarQube issues report. A diagnostic at or above
 `failingOn:` (errors, by default) is a failure; below it, a warning or a
-message. Only a diagnostic with a file and a line can land on a changed
-line, so an error without them, such as a linker's, shows only as the
-build step's failure.
+message. Changed lines are the ones the pull request's Files tab marks
+as added, so a renamed file's are only its edits. A diagnostic needs a
+file and a line to land on one: an error without them, such as a
+linker's, or one on a line the pull request broke without changing it,
+shows only as the build step's failure.
 
 ## 3. Run it on pull requests
 
