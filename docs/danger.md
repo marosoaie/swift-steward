@@ -454,10 +454,13 @@ tab, and its links rot as soon as the merge ref moves. B is also what
 check runs it annotated sit on the head commit (this repository's
 `pull_request` runs report the head SHA), so in the shifted case its
 annotations probably landed on the wrong lines; GitHub doesn't document
-how it places them. C is consistent and free, and Steward supports it
-(it's the identity case), but the build then stops testing what will
-actually merge, and the build job is the user's to configure, not
-Steward's. D gives the same answers as A with two diffs and two
+how it places them. Steward's annotations (section 6) give head lines,
+and GitHub shows them there: on #38's run, a build warning on line 113
+of the merge commit, in a file whose base had moved, is on line 112 of
+the head, and that's where Files changed showed it. C is consistent
+and free, and Steward supports it (it's the identity case), but the
+build then stops testing what will actually merge, and the build job is
+the user's to configure, not Steward's. D gives the same answers as A with two diffs and two
 coordinate systems to keep straight.
 
 Constraints this puts on the workflow:
@@ -749,10 +752,10 @@ posts. That's why the Action's documentation (4.8) sets the group.
 6. **Annotate**, in CI only: each finding with a location becomes a
    workflow command at its path and head line, titled `Steward`, so it
    shows on that line in Files changed. A failure is an `::error`, a
-   warning a `::warning`, and a message a `::notice`; a location
-   without a line annotates the file, which GitHub puts on its first
-   line. Findings without a location, and `markdown` ones, are in the
-   summary only. Annotations need no token, so a fork's pull request,
+   warning a `::warning`, and a message a `::notice`. A location
+   without a line annotates the whole file, which the check run lists
+   but Files changed doesn't show. Findings without a location, and
+   `markdown` ones, are in the summary only. Annotations need no token, so a fork's pull request,
    which skips posting, gets them too. The text is plain: an annotation
    shows Markdown as written, so the escapes a finding's text carries
    (section 5's backslashes and zero-width spaces) are taken out, and
@@ -1344,8 +1347,7 @@ How the factual claims were verified (2026-10-25/26):
   comments (REST issue comments), which doesn't hold for a pull request's
   comments (the next bullet); 1 MiB per step and 20 job summaries per
   job (workflow commands, checked directly); 10 warning and 10 error
-  annotations per step (checks API), and an annotation without a `line`
-  on the file's first (workflow commands); `pull_request_target` running in the
+  annotations per step (checks API); `pull_request_target` running in the
   default branch's context (checked directly), and its announced default
   block for public repositories; `workflow_run` artifacts as untrusted
   data; read-only default tokens for new repositories; 1,000 requests an
@@ -1409,3 +1411,15 @@ How the factual claims were verified (2026-10-25/26):
   notices, a composite action's steps counting toward the step that
   uses it, and cuts a message at 4,096 characters. A relative `file`
   passes through as it is.
+- **Annotations on a shifted base** (2026-10-28), on #38's run of a
+  temporary commit (`50b3a0b`, built as the merge commit `ce0e25b`):
+  `GET /repos/{owner}/{repo}/check-runs/{id}/annotations` gave the
+  build's warning in `Runner+Posting.swift` on head line 112, which
+  build.log had on 113, below a line that `main` had replaced with two
+  after the branch started; the control, in a file `main` hadn't moved,
+  on 9 in both. The rule's findings were on the lines they gave, and
+  Files changed showed all five there. A hostile message and a hostile
+  path each made exactly one annotation, which read as written; the
+  finding without a location and the `markdown` one made none. The one
+  without a line came back with `start_line` 0, and Files changed didn't
+  show it.

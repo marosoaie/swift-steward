@@ -1,8 +1,8 @@
 # swift-steward
 
 **Steward** checks your pull requests with rules written in Swift, and
-posts what they find as one comment on the pull request; a finding with a
-location also shows on its line in Files changed. It's a pure-Swift
+posts what they find as one comment on the pull request; a finding on a
+line also shows there in Files changed. It's a pure-Swift
 [Danger](https://danger.systems):
 
 - **No Node, no danger-js.** The rules are a SwiftPM package beside your

@@ -2,9 +2,9 @@
 
 Steward checks a pull request with rules written in Swift, in a package
 beside your own, and posts what they find as one comment on the pull
-request; a finding with a location also shows on its line in Files
-changed. There's no Node and no separate binary: the package's executable
-is the runner. This page sets one up for GitHub Actions.
+request; a finding on a line also shows there in Files changed.
+There's no Node and no separate binary: the package's executable is the
+runner. This page sets one up for GitHub Actions.
 [danger.md](danger.md) is the design behind it.
 
 You need Swift 6.2 or later, on macOS 26 or Linux, and GitHub Actions
@@ -223,8 +223,8 @@ as it was when the event fired.
   way. The Action's `fail-on-post-error: true`, or
   `--fail-on-post-error` without it, makes a failed post fail the job.
 - A pull request from a fork gets a read-only token: the rules run, and
-  Steward posts nothing, with a notice that says so. Findings with a
-  location still show in Files changed, since annotations need no token.
+  Steward posts nothing, with a notice that says so. Findings on a line
+  still show in Files changed, since annotations need no token.
   A Dependabot pull request gets a read-only token too, and the post
   fails with a warning.
 - With a personal access token or a GitHub App's token instead of the
