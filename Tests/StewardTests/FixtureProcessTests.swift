@@ -45,9 +45,20 @@ struct FixtureProcessTests {
         #expect(report.hasFailures == asksToThrow)
         #expect(outcome.log.hasPrefix("::group::Context\nPull request #21 in marosoaie/swift-steward: "))
         // No token: the process, whose host would go to GitHub, posts nothing.
-        #expect(outcome.log.hasSuffix("""
+        #expect(outcome.log.contains("""
             ::warning title=Steward::GITHUB_TOKEN isn't set, so Steward can't post the summary comment: give the \
             step `env: GITHUB_TOKEN: ${{ github.token }}`. The findings are in this run's log and job summary.
+
+            """))
+        // Then, last, each located finding's annotation, in rule order:
+        // not the size message or the thrown rule's failure, which have no
+        // location, nor the commits' markdown.
+        #expect(outcome.log.hasSuffix("""
+            ::notice file=\(PullRequestFixture.quotedPath),title=Steward::New file
+            ::notice file=image.png,title=Steward::New file
+            ::warning file=gone.swift,title=Steward::Deleted
+            ::notice file=a.swift,line=10,title=Steward::First added line
+            ::notice file=moved.swift,line=5,title=Steward::First added line
 
             """))
     }

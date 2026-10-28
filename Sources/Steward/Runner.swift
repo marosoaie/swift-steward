@@ -122,6 +122,9 @@ struct Runner: Sendable {
             fallback: options.reportPath != nil && wroteReport ? .reportArtifact : .log,
             log: log
         )
+        // Last: GitHub keeps only a step's first 10 annotations of each
+        // kind, and the run's own warnings, about posting say, come first.
+        log.annotate(report.findings)
         let status = max(report.hasFailures ? .failures : .clean, wroteReport ? .clean : .broken, published)
         return Checked(status: status, report: report)
     }
