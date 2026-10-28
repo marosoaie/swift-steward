@@ -20,7 +20,8 @@ extension Log {
         case .markdown: nil
         }
         guard let command, let location = finding.location else { return nil }
-        // Without a line, GitHub puts the annotation on the file's first.
+        // Without a line, it's the whole file's: the check run lists it,
+        // but Files changed doesn't show it (docs/danger.md, Checks).
         let line = location.line.map { ",line=\($0)" } ?? ""
         return """
             ::\(command) file=\(escapedProperty(location.path))\(line),title=Steward::\
