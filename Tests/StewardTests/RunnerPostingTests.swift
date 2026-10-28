@@ -69,7 +69,12 @@ struct RunnerPostingTests {
         #expect(outcome.requests == [Self.list, Self.read, Self.create])
         let comment = FakeGitHub.Comment(id: 1_001, body: Self.marker + summary, login: "github-actions[bot]")
         #expect(outcome.comments == [comment])
-        #expect(!outcome.log.contains("::warning") && !outcome.log.contains("::error"))
+        // Posting warned of nothing: the log's only commands of either
+        // kind are the located findings' annotations, which come last.
+        let annotations = report.findings.compactMap(Log.annotation(of:)).joined()
+        #expect(outcome.log.hasSuffix(annotations))
+        let log = outcome.log.dropLast(annotations.count)
+        #expect(!log.contains("::warning") && !log.contains("::error"))
     }
 
     @Test("a pull request from a fork gets a notice instead of a comment, and its findings still decide the exit")
