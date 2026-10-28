@@ -3,7 +3,8 @@ name: PR checks
 on:
   pull_request:
 
-# Read-only token for both jobs: annotations are workflow commands in the
+# Read-only token for every job but tests-and-diagnostics, whose Steward
+# step posts the summary comment: annotations are workflow commands in the
 # log, and actions/cache authenticates with its own runtime token.
 permissions:
   contents: read
@@ -16,6 +17,10 @@ jobs:
   tests-and-diagnostics:
     runs-on: macos-26
     timeout-minutes: 30
+    # Steward creates, updates and deletes its summary comment.
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - uses: actions/checkout@v7
         with:
@@ -25,12 +30,6 @@ jobs:
         run: |
           sudo xcode-select -s "$(printf '%s\n' /Applications/Xcode*.app | sort -V | tail -1)"
           swift --version
-
-      # Same tree for diff and build, so line numbers can't drift.
-      - name: Diff against base
-        run: |
-          git fetch origin "${{ github.base_ref }}"
-          git diff "origin/${{ github.base_ref }}...HEAD" > /tmp/pr.diff
 
       - uses: actions/cache@v6
         with:
@@ -49,7 +48,7 @@ jobs:
       - name: Build (capture compiler diagnostics)
         run: |
           set -o pipefail
-          swift build --build-tests 2>&1 | tee /tmp/build.log
+          swift build --build-tests 2>&1 | tee build.log
 
       - name: Run tests
         run: swift test --skip-build
@@ -73,25 +72,20 @@ jobs:
         run: |
           set -o pipefail
           which swiftlint || brew install swiftlint
-          swiftlint lint --quiet | tee /tmp/swiftlint.log
+          swiftlint lint --quiet | tee swiftlint.log
 
-      # Annotate diagnostics on PR-touched lines; fail on new warnings there.
-      - name: Fail on new warnings in changed lines
-        if: always()
-        run: |
-          touch /tmp/build.log /tmp/swiftlint.log
-          status=0
-          .build/debug/steward filter /tmp/build.log \
-            --diff /tmp/pr.diff \
-            --tool xcodebuild \
-            --format github \
-            --fail-on warning || status=1
-          .build/debug/steward filter /tmp/swiftlint.log \
-            --diff /tmp/pr.diff \
-            --tool swiftlint \
-            --format github \
-            --fail-on warning || status=1
-          exit $status
+      # This repository's own Dangerfile/, which depends on this checkout, so
+      # the pull request is checked by its own Steward. Its diagnostics rule
+      # reads the two logs above, maps them from the merge commit to the
+      # head, and fails on warnings on changed lines, as the `steward filter`
+      # step it replaced did. Pinned to a commit until steward-action tags v1.
+      - name: Steward
+        if: ${{ !cancelled() }}
+        uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
+
+      - name: Test the Dangerfile's rules
+        if: ${{ !cancelled() }}
+        run: swift test --package-path Dangerfile
   # Not a required check. The "Command line output" suite pins outputs taken
   # from the macOS build, so a pass here means Linux prints the same bytes.
   linux-tests:
