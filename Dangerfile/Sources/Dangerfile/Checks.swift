@@ -12,7 +12,6 @@ struct Checks: Dangerfile {
         diagnostics
         releaseVersion
         thirdPartyNotices
-        annotationCheck
     }
 
     /// The build's and SwiftLint's diagnostics on the lines the pull request
@@ -56,23 +55,5 @@ struct Checks: Dangerfile {
     static func isLicence(_ path: String) -> Bool {
         let name = path.split(separator: "/", omittingEmptySubsequences: false).last.map { $0.uppercased() } ?? ""
         return ["LICENSE", "LICENCE", "COPYING", "NOTICE"].contains { name.hasPrefix($0) }
-    }
-
-    /// TEMPORARY, for the annotations check on this pull request (reverted
-    /// before it merges): a finding of each kind, hostile ones included.
-    static let annotationCheck = Rule("Annotation check") { _ in
-        let posting = "Sources/Steward/Runner+Posting.swift"
-        return [
-            .warning("Annotation check: a warning on head line 100", at: Location(path: posting, line: 100)),
-            .message("Annotation check: a message on head line 105", at: Location(path: posting, line: 105)),
-            .warning("Annotation check: the file as a whole", at: Location(path: "Sources/Steward/Log.swift")),
-            .warning("""
-                Annotation check: 50% %0A done\r\n::error file=README.md,line=1::injected\r##[error]legacy \
-                \\*escaped\\* @\u{200B}ada #\u{200B}12 `code \\*span`
-                """, at: Location(path: "Sources/Steward/Log+Annotations.swift", line: 2)),
-            .warning("Annotation check: a hostile path", at: Location(path: "x,line=1,title=Evil::y:z\nw", line: 3)),
-            .failure("Annotation check: no location, so no annotation"),
-            .markdown("Annotation check: markdown, so no annotation", at: Location(path: posting, line: 102)),
-        ]
     }
 }
