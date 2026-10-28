@@ -386,7 +386,7 @@ diagnostics.
 | Option | `context.git` | Diagnostics matched in | Links point at |
 |---|---|---|---|
 | **A. Head coordinates, logs translated** | `base...head` | head coordinates, after mapping each log line from the built tree to the head | `blob/<head>` |
-| B. Merge coordinates throughout | `base-tip...merge`, as `pr.yml` diffs today | merge coordinates | `blob/<merge>`, which GitHub recomputes and replaces on every push to either branch |
+| B. Merge coordinates throughout | `base-tip...merge`, as `pr.yml`'s `filter` step did until 4.9 | merge coordinates | `blob/<merge>`, which GitHub recomputes and replaces on every push to either branch |
 | C. Build the head instead | `base...head` | head coordinates; nothing to map | `blob/<head>` |
 | D. Two diffs | `base...head` | merge coordinates against `base-tip...merge`, findings mapped to the head afterwards | `blob/<head>` |
 
@@ -447,15 +447,16 @@ at the edge:
 
 Why not the others: B makes the summary disagree with the Files changed
 tab, and its links rot as soon as the merge ref moves. B is also what
-`pr.yml` does today: its `filter` step diffs `origin/<base>...HEAD` on the
-merge commit. The check runs it annotates sit on the head commit (this
-repository's `pull_request` runs report the head SHA), so in the shifted
-case its annotations probably land on the wrong lines; GitHub doesn't
-document how it places them. 4.9 replaces that step. C is consistent
-and free, and Steward supports it (it's the identity case), but the build
-then stops testing what will actually merge, and the build job is the
-user's to configure, not Steward's. D gives the same answers as A with
-two diffs and two coordinate systems to keep straight.
+`pr.yml` did until 4.9 replaced its `filter` step with Steward (question
+56): the step diffed `origin/<base>...HEAD` on the merge commit, and the
+check runs it annotated sit on the head commit (this repository's
+`pull_request` runs report the head SHA), so in the shifted case its
+annotations probably landed on the wrong lines; GitHub doesn't document
+how it places them. C is consistent and free, and Steward supports it
+(it's the identity case), but the build then stops testing what will
+actually merge, and the build job is the user's to configure, not
+Steward's. D gives the same answers as A with two diffs and two
+coordinate systems to keep straight.
 
 Constraints this puts on the workflow:
 
@@ -985,7 +986,7 @@ tag.
 | 4.6 `StewardTesting` | Section 8 (fixtures, the fake host) and section 1 (rules as values) |
 | 4.7 Template and quickstart | Section 8 (the package's layout), section 2 (the merge-tree caveat, `edited` and `ready_for_review` events), section 6 (`permissions:`), section 5 (several Dangerfiles per pull request are unsupported), section 3 (`safe.directory` in container jobs without the Action) |
 | 4.8 Action | Section 8 (decision 3: a separate `steward-action` repository), section 3 (fetching history, `safe.directory` for the workspace), section 5 (the `concurrency` group) |
-| 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step works in merge coordinates; `failingOn: .warning` replaces its gate on warnings, question 29) |
+| 4.9 Dogfood | Section 3 (`pr.yml`'s `filter` step worked in merge coordinates; `failingOn: .warning` replaces its gate on warnings, question 29) |
 | 4.10 Docs | Section 7 (the mapping table, the start of the migration guide), section 5 (several Dangerfiles per pull request are unsupported), and section 3 (`safe.directory` in container jobs without the Action) |
 | Backlog: fork pull requests | Section 4 (the report and the rules for an untrusted one) |
 
@@ -998,9 +999,10 @@ day too, the four that step 4.4 raised in swift-steward#29 (numbered
 on from 22) on 2026-10-27, the ten that step 4.5 raised in
 swift-steward#30 (numbered on from 26) the same day, the nine that
 step 4.6 raised in swift-steward#31 (numbered on from 35) that day too,
-and the seven that step 4.7 raised in swift-steward#32 (numbered on from
-44) that day as well. The sections refer to them by number, and each
-section above already reflects its answer.
+the seven that step 4.7 raised in swift-steward#32 (numbered on from
+44) that day as well, and the two that step 4.10 raised in
+swift-steward#37 (62 and 63) on 2026-10-28. The sections refer to them by
+number, and each section above already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1232,6 +1234,18 @@ section above already reflects its answer.
     `swift --version` too.** The `swift:6.2` tag moves across patch
     releases, so a key on `Package.resolved` alone would restore modules
     another compiler built.
+62. **Pinning the Action before `v1` (S8). Answered 2026-10-28: by
+    commit SHA, in steward-action's README too** ("can you go with the
+    recommended answers and continue?", for both of #37's questions).
+    The quickstart pins the Action by the full SHA of a commit on its
+    `main` branch until `v1` exists, so the Action's workflow works
+    before the tag, not only the one without it (question 50).
+    steward-action#2 makes its README say the same.
+63. **A durable snippet check (S8). Answered 2026-10-28: not now.** #37
+    compiled the docs' Swift snippets once, with a local script, and the
+    template's CI jobs keep building the quickstart's package. A test or
+    CI job that compiles them on every pull request waits until a
+    snippet breaks.
 
 ## Checks
 

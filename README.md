@@ -183,11 +183,10 @@ GitHub attaches them to the PR's changed lines in the Files tab:
           --format github --fail-on error
 ```
 
-This repository dogfoods exactly that recipe: every PR runs
-[.github/workflows/pr.yml](.github/workflows/pr.yml), which executes the test
-suite, runs SwiftLint, and filters both logs against the PR diff — new
-warnings on changed lines annotate the PR and fail the job
-(`--fail-on warning`).
+This repository's own pull requests use Steward for this:
+[pr.yml](.github/workflows/pr.yml) runs [its Dangerfile](Dangerfile/)
+through steward-action, which fails on build and SwiftLint warnings on the
+lines a pull request changes, and lists them in its comment.
 
 **SonarQube.** The scanner doesn't print per-issue diagnostics, so after
 your pipeline uploads the analysis, fetch the open issues back from the
