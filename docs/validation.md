@@ -16,7 +16,7 @@ diff parser underneath, is in
 |---|---|---|---|
 | [steward-playground](#steward-playground) | A Python package, ruff converted to a SonarQube report, on 5 kinds of runner | 7, 14 runs | Every finding on its line; none off changed lines |
 | [Clean installs](#clean-installs) | Homebrew, the release binary, a source build on Linux | – | All print `2.0.0` |
-| [The maintainer's private app](#the-maintainers-private-app) | | | |
+| [The maintainer's private app](#the-maintainers-private-app) | Xcode and SwiftLint logs | 1, no run of Steward | Skipped: its macOS job never got a runner |
 | [NetNewsWire](#netnewswire) | | | |
 
 ## How each run was checked
@@ -85,8 +85,82 @@ test merge, so the fix reached it only after a rebase.
 
 ## The maintainer's private app
 
+Skipped, because its one job that runs Steward never got a runner.
+
+The trial pull request swapped the workflow's `steward filter` step for
+steward-action and a Dangerfile with one rule,
+`Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log"), .swiftLint("swiftlint.log")], failingOn: .warning)`,
+which checks what `filter --fail-on warning` did (its 5 tests passed
+locally). The rule runs in the workflow's `macos-26` job, the first run
+the workflow ever had, and that job never started:
+
+| Attempt | Queued (UTC) | Outcome |
+|---|---|---|
+| 1 | 14:31 | Cancelled by GitHub at 14:46: "The job was not acquired by Runner of type hosted even after multiple attempts" |
+| 2 | 14:47 | The same at 15:02 |
+| 3 | 15:03 | The same at 15:18 |
+
+During the first attempt, four `macos-26` jobs in the public playground
+got a runner within 5 s each. The run's timing API reports 0 billable
+milliseconds for every job. The cause wasn't looked into: the
+maintainer chose to skip the job. So the one commit planned as a replay
+(a SwiftLint `line_length` warning on a changed test line) wasn't pushed
+either, since only that job would have checked it.
+
 ## NetNewsWire
 
 ## Findings
 
+Fixed:
+
+- The quickstart told users to turn colours off, saying Steward can't
+  read them. That stopped being true with
+  [#34](https://github.com/marosoaie/swift-steward/pull/34), so its build
+  step now keeps them (this record's pull request). steward-action's
+  README said the same:
+  [steward-action#3](https://github.com/marosoaie/steward-action/pull/3).
+
+Intended, and documented:
+
+- GitHub keeps 10 annotations per type per step (PR 4), and the summary
+  comment keeps every finding.
+- A tool's message is escaped in the summary, so nothing in a log can
+  change how the comment renders; ruff's code spans show their backticks
+  there.
+- With a read-only token Steward can't post. It warns, naming the
+  permission to grant, and the annotations and the job summary still
+  carry the findings (PR 6).
+
+Not Steward's:
+
+- On the Ubuntu runners (Swift 6.4), `swift run` prints "warning:
+  safeExec: signal(32, SIG_DFL) failed: Invalid argument", and the same
+  for 33, before Steward starts. Swift 6.2.4 in the container and macOS
+  print neither. Harmless.
+- Reopening a pull request reruns its old test merge commit, even after
+  the base has moved; a push or a rebase makes a new one (PR 5).
+- GitHub shows job summaries only to signed-in viewers.
+- The tap's formula has no bottle, so `brew install` builds from source
+  (39 s on macos-26).
+
+Open for step 5.1: [B2](#b2-annotations-without-a-column) and
+[B3](#b3-report-formats-other-than-sonarqubes-api).
+
 ## Questions
+
+### B2: annotations without a column
+
+`Location` has a path and an optional line, so Steward's annotations
+carry no `col=`, although most sources know one: clang-style logs give
+`file:line:column`, and SonarQube's `textRange` a `startOffset`. Two
+findings on one line (PR 5) differ only by their text. A column is a new
+`Location` property, public API, so it waits for step 5.1.
+
+### B3: report formats other than SonarQube's API
+
+`.sonar` reads what a SonarQube server's `GET /api/issues/search`
+returns. Linters that write a report themselves use other shapes, SARIF
+(ruff, SwiftLint) or Sonar's Generic Issue Import format, and Steward
+reads neither, so the playground converts ruff's JSON with an eight-line
+`jq` filter. A SARIF source would need no converter. A new source is
+public API, so it waits for step 5.1.
