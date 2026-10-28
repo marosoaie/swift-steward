@@ -1,0 +1,92 @@
+# Validation record
+
+What was run to check Steward, the Dangerfile runner, in real
+repositories and on real runners, as of 2026-10-28 (plan step 5.0,
+Track B). Every pull request listed here ran Steward through
+[steward-action](https://github.com/marosoaie/steward-action), and every
+comment and annotation it left was checked by hand against the log it came
+from: right file, right line of the head commit, nothing missed on a
+changed line, nothing reported off one. GitDiffKit's own validation, the
+diff parser underneath, is in
+[git-diff-parser's record](https://github.com/marosoaie/git-diff-parser/blob/main/docs/validation.md).
+
+## At a glance
+
+| Where | What ran | Pull requests | Result |
+|---|---|---|---|
+| [steward-playground](#steward-playground) | A Python package, ruff converted to a SonarQube report, on 5 kinds of runner | 7, 14 runs | Every finding on its line; none off changed lines |
+| [Clean installs](#clean-installs) | Homebrew, the release binary, a source build on Linux | – | All print `2.0.0` |
+| [The maintainer's private app](#the-maintainers-private-app) | | | |
+| [NetNewsWire](#netnewswire) | | | |
+
+## How each run was checked
+
+For every run: the tool's own output in the job log (ruff's issues, the
+build's and SwiftLint's diagnostics) against the pull request's diff,
+which gives the findings that belong on changed lines; then Steward's
+summary comment, its job summary, and the annotations GitHub kept, read
+back through the check run's annotations
+(`GET /repos/{owner}/{repo}/check-runs/{id}/annotations`), each line
+against the head commit's file. GitHub shows job summaries only to
+signed-in viewers, so they were read from the log: Steward writes the same
+text to the log's Summary group as to `GITHUB_STEP_SUMMARY`, and warns when
+that write fails or doesn't fit, which no run did.
+
+Versions: Steward 2.0.0 from swift-steward `main` at `d2224d2` (each
+Dangerfile's `Package.resolved`), steward-action at `325c70a`, with
+`actions/checkout@v7`. Local checks: macOS 26.6.2, git 2.54.0, SwiftLint
+0.65.1.
+
+## steward-playground
+
+[marosoaie/steward-playground](https://github.com/marosoaie/steward-playground),
+public, made for this: a small Python package checked by the quickstart's
+template Dangerfile (description, changelog, conflict markers) plus
+`Rule.diagnosticsOnChangedLines(in: [.sonar("ruff-sonar.json")])`. Steward
+reads SonarQube's `GET /api/issues/search` response, so a composite action
+runs ruff 0.11.13 and converts its JSON with one `jq` filter: the path
+becomes the component (`playground:src/…`), syntax errors and undefined
+names are `CRITICAL` (failures), the rest `MAJOR` (warnings). One job per
+pull request, its runner picked by the head branch's prefix, so no two
+jobs post over each other's summary.
+
+| PR | Runner (Swift) | Scenario | Findings on changed lines | Comment, annotations | Result |
+|---|---|---|---|---|---|
+| [1](https://github.com/marosoaie/steward-playground/pull/1) | ubuntu-24.04 (6.4.1) | 3 ruff warnings, then a push that fixes them | `frequencies.py` 4, 12, 14 | 3 and 3, on those lines; after the fix the same comment says **No findings**, 0 annotations | ✓ |
+| [2](https://github.com/marosoaie/steward-playground/pull/2) | ubuntu-22.04 (6.4) | Opened as a draft with no description, then marked ready, then described; no changelog entry | `counting.py` 16, 17; description; changelog | Draft: 3 warnings, no description finding. Ready: plus the description failure, job fails. Described: back to 3 warnings, job passes. Annotations on 16 and 17 only (the others have no location) | ✓ |
+| [3](https://github.com/marosoaie/steward-playground/pull/3) | ubuntu-24.04-arm (6.4.1) | An undefined name, then a fix | `cli.py` 18 (critical) | 1 failure, an error annotation on 18, job fails; after the fix **No findings** | ✓ |
+| [4](https://github.com/marosoaie/steward-playground/pull/4) | macos-26 arm64 (6.3.3) | 12 unused imports, then an edited description | `sentences.py` 3–14 | All 12 in the comment; GitHub kept 10 annotations (3–12), its limit per type per step; the edit reran with the same result | ✓ |
+| [5](https://github.com/marosoaie/steward-playground/pull/5) | `swift:6.2` container (6.2.4) | Two problems on one line | `test_counting.py` 15, twice | 2 warnings, 2 annotations on 15 | ✓ |
+| [6](https://github.com/marosoaie/steward-playground/pull/6) | ubuntu-24.04, read-only token | The workflow's default token | `stopwords.py` 3, 11 | No comment; Steward warns that it couldn't post and says to grant `pull-requests: write`; both annotations; job passes | ✓ |
+| [7](https://github.com/marosoaie/steward-playground/pull/7) | ubuntu-24.04 | Conflict markers committed in the README | `README.md` 23, 27 | 2 failures, 2 error annotations, job fails | ✓ |
+
+In every run ruff's one finding on an unchanged line
+(`counting.py:3`) stayed out. Jobs took 62–127 s when the Action built the
+Dangerfile from scratch, 50–70 s from its cache; GitHub scopes caches to
+a pull request, so every pull request's first run is a cold build, as the
+Action's README says.
+
+Two failures along the way were the playground's own: the swift:6.2
+image has no `curl`, so ruff never installed in PR 5's first runs, and
+Steward rightly failed on the missing report ("Couldn't read the SonarQube
+report `ruff-sonar.json`"); and reopening the pull request reran the old
+test merge, so the fix reached it only after a rebase.
+
+## Clean installs
+
+`install.yml` in the playground, on fresh runners, each ending in
+`steward --version`:
+
+| How | Runner | Result |
+|---|---|---|
+| `brew tap marosoaie/tap`, `brew trust`, `brew install marosoaie/tap/steward` | macos-26 arm64, Homebrew 7.0.9 | Formula 2.0.0 built from source in 39 s; prints `2.0.0` |
+| The latest release's `steward-2.0.0-macos-arm64.zip`, checked with its `.sha256` | macos-26 arm64 | Checksum OK; prints `2.0.0` |
+| `git clone` swift-steward, `swift build -c release` | `swift:6.2` (6.2.4, x86_64) | `main` at `d2224d2` builds; prints `2.0.0` |
+
+## The maintainer's private app
+
+## NetNewsWire
+
+## Findings
+
+## Questions
