@@ -140,11 +140,17 @@ finding with a location:
 .warning("Avoid force unwrapping.", at: Location(path: "Sources/App.swift", line: 12))
 ```
 
-Steward doesn't post review comments on the diff yet. A finding with a
-location is a row of the summary comment that links to that line in the
-pull request's head commit. The line is the head's, as the Files changed
-tab shows it, and the path is repository-relative. `suggestion(code:file:line:)`
-has no equivalent.
+In CI, Steward annotates a finding with a location, so it shows on its
+line in the Files changed tab: a failure as an error, a warning as a
+warning, and a message as a notice. The finding is also a row of the
+summary comment that links to that line in the pull request's head
+commit. The line is the head's, as the Files changed tab shows it, and
+the path is repository-relative. GitHub shows 10 error, 10 warning, and
+10 notice annotations per step; the summary comment keeps every finding.
+A `markdown` finding, or one without a location, is in the summary only.
+
+Steward doesn't post review comments on the diff, so
+`suggestion(code:file:line:)` has no equivalent.
 
 ## Plugins become rules
 

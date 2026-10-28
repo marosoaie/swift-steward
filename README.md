@@ -1,7 +1,8 @@
 # swift-steward
 
 **Steward** checks your pull requests with rules written in Swift, and
-posts what they find as one comment on the pull request. It's a pure-Swift
+posts what they find as one comment on the pull request; a finding with a
+location also shows on its line in Files changed. It's a pure-Swift
 [Danger](https://danger.systems):
 
 - **No Node, no danger-js.** The rules are a SwiftPM package beside your
@@ -186,7 +187,8 @@ GitHub attaches them to the PR's changed lines in the Files tab:
 This repository's own pull requests use Steward for this:
 [pr.yml](.github/workflows/pr.yml) runs [its Dangerfile](Dangerfile/)
 through steward-action, which fails on build and SwiftLint warnings on the
-lines a pull request changes, and lists them in its comment.
+lines a pull request changes, lists them in its comment, and annotates
+each on its line.
 
 **SonarQube.** The scanner doesn't print per-issue diagnostics, so after
 your pipeline uploads the analysis, fetch the open issues back from the
