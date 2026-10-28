@@ -117,8 +117,9 @@ Fixed:
   read them. That stopped being true with
   [#34](https://github.com/marosoaie/swift-steward/pull/34), so its build
   step now keeps them (this record's pull request). steward-action's
-  README said the same:
-  [steward-action#3](https://github.com/marosoaie/steward-action/pull/3).
+  README said the same, and is fixed by
+  [steward-action#3](https://github.com/marosoaie/steward-action/pull/3)
+  (`e012627`).
 
 Intended, and documented:
 
