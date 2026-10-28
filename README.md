@@ -1,9 +1,55 @@
 # swift-steward
 
-`steward` shows only the build/lint diagnostics that a pull request actually
-touches.
+**Steward** checks your pull requests with rules written in Swift, and
+posts what they find as one comment on the pull request. It's a pure-Swift
+[Danger](https://danger.systems):
 
-Two subcommands, matching the two halves of the problem:
+- **No Node, no danger-js.** The rules are a SwiftPM package beside your
+  own, and its executable is the whole runner: it reads the pull request,
+  runs the rules, and posts the comment.
+- **Runs on Linux runners**, and on macOS: in GitHub Actions, a checkout
+  and one Action on `ubuntu-latest`.
+- **Typed, testable rules.** A rule is a value, a name and a closure from
+  the pull request's context to its findings, so a test calls it on a
+  context built from a diff and checks what it returns, with `swift test`.
+
+A built-in rule reports the build and lint diagnostics that land on the
+lines a pull request changes:
+
+```swift
+import Steward
+
+@main
+struct Checks: Dangerfile {
+    static var rules: [Rule] {
+        Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log"), .swiftLint("swiftlint.log")])
+
+        Rule("Changelog") { context in
+            guard !context.git.modifiedFiles.contains("CHANGELOG.md") else { return [] }
+            return [.warning("Add a CHANGELOG entry.")]
+        }
+    }
+}
+```
+
+No release has Steward yet: until one does, a Dangerfile depends on this
+repository's `main` branch, and Steward's API may still change.
+
+## Where to start
+
+- [Quickstart](docs/quickstart.md): add the template `Dangerfile/` package
+  to your repository, write rules, and run them on pull requests.
+- [Testing a Dangerfile's rules](docs/rule-tests.md) with `StewardTesting`.
+- [steward-action](https://github.com/marosoaie/steward-action), the
+  GitHub Action that runs a Dangerfile.
+- [Migrating from danger-swift](docs/migrating-from-danger-swift.md).
+- [The design](docs/danger.md), with the decisions and their alternatives.
+
+## The `steward` command
+
+`steward` shows only the build/lint diagnostics that a pull request actually
+touches, outside a Dangerfile. Two subcommands, matching the two halves of
+the problem:
 
 1. **`changes`** — parse a unified git diff and list every file + line number
    the PR **added or modified** (deleted lines are ignored: they can't carry
@@ -16,7 +62,7 @@ Inputs are streamed, so kernel-sized diffs and gigabyte logs are fine — a
 70 MB diff parses in ~0.2 s with flat memory (see
 [implementation notes](INTERNALS.md)).
 
-## Installation
+### Installation
 
 Via [Homebrew](https://github.com/marosoaie/homebrew-tap):
 
@@ -42,7 +88,7 @@ swift build -c release
 # binary at .build/release/steward
 ```
 
-## `changes` — what lines does the PR touch?
+### `changes` — what lines does the PR touch?
 
 ```sh
 git diff origin/main...HEAD | steward changes -
@@ -56,9 +102,18 @@ how large the edit:
 ```json
 [
   {
-    "path": "Sources/App/Greeter.swift",
-    "lineCount": 3,
-    "ranges": [ { "start": 3, "end": 3 }, { "start": 5, "end": 6 } ]
+    "lineCount" : 3,
+    "path" : "Sources/App/Greeter.swift",
+    "ranges" : [
+      {
+        "end" : 3,
+        "start" : 3
+      },
+      {
+        "end" : 6,
+        "start" : 5
+      }
+    ]
   }
 ]
 ```
@@ -68,7 +123,7 @@ and GitHub's PR view use. Modified lines count as added (git represents a
 modification as remove + add). Deleted and binary files never appear; renames
 appear under their new path, and only if they contain edits.
 
-## `filter` — which diagnostics should the PR show?
+### `filter` — which diagnostics should the PR show?
 
 ```sh
 steward filter build.log --diff pr.diff --format github
@@ -98,7 +153,7 @@ Duplicate diagnostics (same file/line/message, common in multi-target
 `xcodebuild` runs) are collapsed. See `steward help <subcommand>` for
 the full reference.
 
-## Getting the right diff
+### Getting the right diff
 
 Use the **three-dot** diff against the merge base so you only see the PR's own
 changes, not what happened on main since branching:
@@ -112,7 +167,7 @@ On GitHub you can also download the PR's diff directly
 (`https://github.com/OWNER/REPO/pull/N.diff`, or
 `gh pr diff N > pr.diff`) — same format, parses identically.
 
-## CI recipes
+### CI recipes
 
 **GitHub Actions — zero-infrastructure annotations.** Emit workflow commands;
 GitHub attaches them to the PR's changed lines in the Files tab:
@@ -128,11 +183,10 @@ GitHub attaches them to the PR's changed lines in the Files tab:
           --format github --fail-on error
 ```
 
-This repository dogfoods exactly that recipe: every PR runs
-[.github/workflows/pr.yml](.github/workflows/pr.yml), which executes the test
-suite, runs SwiftLint, and filters both logs against the PR diff — new
-warnings on changed lines annotate the PR and fail the job
-(`--fail-on warning`).
+This repository's own pull requests use Steward for this:
+[pr.yml](.github/workflows/pr.yml) runs [its Dangerfile](Dangerfile/)
+through steward-action, which fails on build and SwiftLint warnings on the
+lines a pull request changes, and lists them in its comment.
 
 **SonarQube.** The scanner doesn't print per-issue diagnostics, so after
 your pipeline uploads the analysis, fetch the open issues back from the
@@ -151,10 +205,13 @@ when that is the repo root. Past 500 issues the API pages (`&p=2`, …) —
 merge pages with `jq -s '[.[].issues[]]' page*.json`, a shape the parser
 also accepts.
 
-**Danger / custom bot.** Use `--format json` and post each entry as an inline
-comment via your API of choice; `file` is repo-relative and `line` is the
-new-side line number, which is exactly what the GitHub review-comment API
-(`side: RIGHT`) expects.
+**Steward, or your own bot.** In a Dangerfile, Steward's
+`Rule.diagnosticsOnChangedLines` does this filtering itself (see the
+[quickstart](docs/quickstart.md#2-write-the-rules)). For another bot, use
+`--format json` and post each entry as an inline comment via your API of
+choice; `file` is repo-relative and `line` is the new-side line number,
+which is exactly what the GitHub review-comment API (`side: RIGHT`)
+expects.
 
 ## Using the libraries
 
@@ -223,11 +280,10 @@ let kept = DiagnosticMatcher.match(
   benchmarks, and how the parser is validated against real-world diffs.
 - [AGENTS.md](AGENTS.md) — contribution conventions and coding style, written
   for humans and coding agents alike. Read it before contributing.
-- [docs/quickstart.md](docs/quickstart.md) — check your pull requests with
-  Steward: copy the template `Dangerfile/` package, write rules, and run it
-  in GitHub Actions.
-- [docs/rule-tests.md](docs/rule-tests.md) — how to test a Dangerfile's rules
-  with `StewardTesting`.
+- [docs/github-api.md](docs/github-api.md) — the GitHub client Steward posts
+  with, generated from GitHub's OpenAPI description, and how to update it.
+
+Steward's user docs are under [Where to start](#where-to-start).
 
 ## License
 

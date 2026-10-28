@@ -82,12 +82,12 @@ even when they fail, so it reports a broken build's errors:
   # 6.4 writes even into a file, and which Steward can't read.
   shell: bash
   run: swift build --no-color-diagnostics 2>&1 | tee build.log
-- name: Steward
+- uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
   if: ${{ !cancelled() }}
-  run: swift run --package-path Dangerfile
-  env:
-    GITHUB_TOKEN: ${{ github.token }}
 ```
+
+Without the Action, the step that runs `swift run --package-path
+Dangerfile` takes the same `if:`.
 
 Then uncomment the rule, with one source per log: `.xcodebuild` reads the
 output of `xcodebuild`, `swift build`, or `swiftc`; `.swiftLint` the
@@ -100,9 +100,11 @@ message.
 
 ### With the Action
 
-`marosoaie/steward-action` installs Swift, caches the Dangerfile's
-build, fetches the history Steward needs, and runs the Dangerfile, so the
-workflow is short. Save this as `.github/workflows/steward.yml`:
+[`marosoaie/steward-action`](https://github.com/marosoaie/steward-action)
+uses the runner's Swift, trusts the checkout for git, fetches the history
+Steward needs, caches the Dangerfile's build, runs it, and uploads its
+report, so the workflow is short. Save this as
+`.github/workflows/steward.yml`:
 
 ```yaml
 name: Steward
@@ -124,11 +126,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: marosoaie/steward-action@v1
+      # No v1 tag yet: pinned to a commit of the Action's main branch.
+      - uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
 ```
 
-The Action isn't released yet: until `v1` is tagged, use the workflow
-without it.
+**Pinning the Action.** No swift-steward release has Steward yet, so the
+Action has no `v1` tag either. Until it does, pin the Action by the full
+SHA of a commit on its `main` branch, as above; a branch name would run
+whatever lands there next. Once `v1` exists, use `@v1` instead.
+
+With the package at `Dangerfile/` and its executable called `Dangerfile`,
+as the template has them, the Action needs no `with:`; its
+[README](https://github.com/marosoaie/steward-action#inputs) lists the
+inputs for other layouts and tokens. It works the same on
+`runs-on: macos-26`, with the selected Xcode's Swift.
 
 ### Without the Action
 
@@ -176,7 +187,7 @@ jobs:
 
 On a macOS runner (`runs-on: macos-26`), leave out `container:` and the
 `safe.directory` step: there the checkout and the job have the same user.
-To keep the findings as JSON, run
+To keep the findings as JSON, as the Action does, run
 `swift run --package-path Dangerfile Dangerfile --report steward-report.json`
 and upload the file with `actions/upload-artifact`; a summary too long for
 the comment then points at it.
@@ -204,16 +215,20 @@ as it was when the event fired.
 - `contents: read` lets the job check out the repository, and
   `pull-requests: write` lets Steward create, update, and delete its
   summary comment. Set both explicitly: a new repository gives
-  `GITHUB_TOKEN` read-only permissions by default.
+  `GITHUB_TOKEN` read-only permissions by default. `issues: write` won't
+  do instead: on a pull request, GitHub refuses it with 403.
 - When posting fails, a missing permission included, Steward warns and the
   exit status still follows the findings; the job summary has them either
-  way. `--fail-on-post-error` makes a failed post fail the job.
+  way. The Action's `fail-on-post-error: true`, or
+  `--fail-on-post-error` without it, makes a failed post fail the job.
 - A pull request from a fork gets a read-only token: the rules run, and
   Steward posts nothing, with a notice that says so. A Dependabot pull
   request gets a read-only token too, and the post fails with a warning.
-- With a personal access token or a GitHub App's token instead of
-  `GITHUB_TOKEN`'s own, pass `--summary-author <login>`, the account the
-  token posts as, so Steward finds the summary it posted before.
+- With a personal access token or a GitHub App's token instead of the
+  workflow's own, name the account the token posts as, so Steward finds
+  the summary it posted before: the Action's `token` and `summary-author`
+  inputs, or, without the Action, that token in `GITHUB_TOKEN` and
+  `--summary-author <login>`.
 
 ## One run per pull request at a time
 
@@ -244,8 +259,11 @@ commit. `actions/checkout` fetches only the merge commit by default;
 Steward then stops, saying the history is too shallow. `fetch-depth: 0`
 fetches all of it. A partial history has to reach the merge base on every
 path from the head: Steward refuses one whose cut could pass the base's
-commits off as the pull request's. The Action fetches what it needs
-itself.
+commits off as the pull request's. The Action needs no `fetch-depth`:
+when the checkout is shallow, it fetches the whole history of the base
+and head commits itself, with the credentials `actions/checkout` keeps.
+In a private repository checked out with `persist-credentials: false`,
+give the checkout `fetch-depth: 0` instead.
 
 ## The merge commit
 
