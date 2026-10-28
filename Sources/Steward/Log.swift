@@ -65,13 +65,25 @@ struct Log: Sendable {
     /// `text` as a workflow command's data, which must stay on the
     /// command's line.
     static func escapedData(_ text: String) -> String {
+        escaped(text, isProperty: false)
+    }
+
+    /// `text` as the value of a workflow command's property, which must
+    /// also not end the value (`,`) or the properties (`::`).
+    static func escapedProperty(_ text: String) -> String {
+        escaped(text, isProperty: true)
+    }
+
+    private static func escaped(_ text: String, isProperty: Bool) -> String {
         // Over scalars: "\r\n" is one Character, and both of its halves
-        // need escaping.
+        // need escaping, as does a `:` or `,` a combining mark follows.
         text.unicodeScalars.reduce(into: "") { escaped, scalar in
             switch scalar {
             case "%": escaped += "%25"
             case "\r": escaped += "%0D"
             case "\n": escaped += "%0A"
+            case ":" where isProperty: escaped += "%3A"
+            case "," where isProperty: escaped += "%2C"
             default: escaped.unicodeScalars.append(scalar)
             }
         }

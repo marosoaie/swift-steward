@@ -110,9 +110,13 @@ struct FixtureDangerfileTests {
             """))
         #expect(run.outcome.log.contains("::endgroup::\n::group::Rules\nSize: 1 finding\n"))
         // Without a token, the process posts nothing to these real pull
-        // requests, and says so.
-        #expect(!run.outcome.log.contains("::error"))
-        let warnings = run.outcome.log.split(separator: "\n").filter { $0.hasPrefix("::warning") }
+        // requests, and says so; then, last, it annotates the located
+        // findings.
+        let annotations = expected.findings.compactMap(Log.annotation(of:)).joined()
+        #expect(run.outcome.log.hasSuffix(annotations))
+        let log = run.outcome.log.dropLast(annotations.count)
+        #expect(!log.contains("::error"))
+        let warnings = log.split(separator: "\n").filter { $0.hasPrefix("::warning") }
         #expect(warnings.count == 1)
         #expect(warnings.first?.hasPrefix("::warning title=Steward::GITHUB_TOKEN isn't set") == true)
     }

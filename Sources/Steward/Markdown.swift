@@ -24,6 +24,58 @@ enum Markdown {
 
     private static let inlinePunctuation: Set<Unicode.Scalar> = ["\\", "`", "*", "_", "[", "]", "<", ">", "&", "~"]
 
+    /// `text`, a finding's Markdown, as plain text for where Markdown
+    /// doesn't render, such as an annotation: what `escaped(_:)` adds is
+    /// taken out again. A backslash before ASCII punctuation is dropped, as
+    /// Markdown drops it, and so is every zero-width space, which shows as
+    /// nothing anyway. Code spans stay as they are, backticks and all,
+    /// since Markdown shows a backslash inside one as written; so does
+    /// other Markdown, such as emphasis or links.
+    static func unescaped(_ text: String) -> String {
+        let scalars = Array(text.unicodeScalars)
+        var plain = String.UnicodeScalarView()
+        var index = 0
+        // A cursor: an escape is two scalars and a code span runs to the
+        // next run of as many backticks as opened it, so steps vary.
+        while index < scalars.count {
+            let scalar = scalars[index]
+            if scalar == "\\", index + 1 < scalars.count, isASCIIPunctuation(scalars[index + 1]) {
+                plain.append(scalars[index + 1])
+                index += 2
+            } else if scalar == "`" {
+                let end = endOfCodeSpan(openingAt: index, in: scalars)
+                plain.append(contentsOf: scalars[index..<end])
+                index = end
+            } else {
+                if scalar != "\u{200B}" { plain.append(scalar) }
+                index += 1
+            }
+        }
+        return String(plain)
+    }
+
+    /// The index after the code span whose opening backticks start at
+    /// `start`, or, when no run of as many backticks closes them, after
+    /// those backticks, which are then text.
+    private static func endOfCodeSpan(openingAt start: Int, in scalars: [Unicode.Scalar]) -> Int {
+        let length = backtickRun(at: start, in: scalars)
+        let content = start + length
+        let closing = scalars.indices[content...].first { index in
+            scalars[index] == "`" && scalars[index - 1] != "`" && backtickRun(at: index, in: scalars) == length
+        }
+        return closing.map { $0 + length } ?? content
+    }
+
+    private static func backtickRun(at index: Int, in scalars: [Unicode.Scalar]) -> Int {
+        scalars[index...].prefix { $0 == "`" }.count
+    }
+
+    /// Whether Markdown lets a backslash escape `scalar`: `!` to `/`, `:`
+    /// to `@`, `[` to `` ` ``, and `{` to `~`.
+    private static func isASCIIPunctuation(_ scalar: Unicode.Scalar) -> Bool {
+        [0x21...0x2F, 0x3A...0x40, 0x5B...0x60, 0x7B...0x7E].contains { $0.contains(scalar.value) }
+    }
+
     /// Whether the scalar at `index` ends what GitHub reads as the start of
     /// a reference: an `@`; the `#` before an issue number, even after a
     /// word (`owner/repo#12`); or the `GH-`, in any case, before one, but

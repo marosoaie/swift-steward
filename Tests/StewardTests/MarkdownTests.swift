@@ -11,6 +11,38 @@ struct MarkdownTests {
         #expect(Markdown.escaped("Plain text, 1.0: done!") == "Plain text, 1.0: done!")
     }
 
+    @Test("plain text escaped and unescaped again is what it was", arguments: [
+        #"a*b_c`d[e](f) <g> & ~h~ \i \\ \"#,
+        "ping @ada, see #12, owner/repo#3, GH-4 and gh-5, but high-5",
+        "C:\\Users\\`ada`\\",
+        "a`\u{301}b \\\u{301} @\u{301}x",
+        "",
+    ])
+    func roundTrip(text: String) {
+        #expect(Markdown.unescaped(Markdown.escaped(text)) == text)
+    }
+
+    @Test("unescaping drops what Markdown drops outside code spans, and keeps code spans as they are", arguments: [
+        // A backslash escapes ASCII punctuation only.
+        [
+            ##"\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~"##,
+            ##"!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"##,
+        ],
+        [#"\a \é \1 \ end\"#, #"\a \é \1 \ end\"#],
+        ["@\u{200B}ada #\u{200B}1", "@ada #1"],
+        // Inside a code span, a backslash and a zero-width space are text.
+        [#"`\*` and ``a`\_`` (`a\`)"#, #"`\*` and ``a`\_`` (`a\`)"#],
+        ["`\u{200B}`", "`\u{200B}`"],
+        // An escaped backtick opens nothing; nor does a run nothing closes.
+        [#"\`a\*b` ``c\*"#, #"`a*b` ``c*"#],
+        // A longer run doesn't close a shorter one, nor a shorter a longer.
+        [#"`a``\*` \*"#, #"`a``\*` *"#],
+        [#"``b`\*`` \*"#, #"``b`\*`` *"#],
+    ])
+    func unescaping(pair: [String]) {
+        #expect(Markdown.unescaped(pair[0]) == pair[1])
+    }
+
     @Test("a table cell escapes pipes and turns every kind of line break into <br>")
     func tableCell() {
         #expect(Markdown.tableCell("a|b\nc\r\nd\re\n") == #"a\|b<br>c<br>d<br>e<br>"#)

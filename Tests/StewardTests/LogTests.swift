@@ -30,18 +30,32 @@ struct LogTests {
         ])
     }
 
-    @Test("in CI, text that could pass for a workflow command is logged with commands paused", arguments: [
-        "::add-mask::secret",
-        "Files:\n  \t::endgroup::",
-        "one\r::error::two",
-        "\u{00A0}::warning::non-breaking space",
-        "a ##[error]legacy syntax anywhere",
-        "##[\u{301}error]: [ and a combining mark are one Character",
-    ])
-    func pausedCommands(text: String) async {
+    /// Text that could pass for a workflow command. The tests take the
+    /// case, not its text, because swift-testing prints its arguments and
+    /// the runner would take the text for commands in that output too.
+    enum Disguise: CaseIterable {
+        case command, indented, afterCarriageReturn, afterNonBreakingSpace, legacySyntax, combiningMark
+
+        var text: String {
+            switch self {
+            case .command: "::add-mask::secret"
+            case .indented: "Files:\n  \t::endgroup::"
+            case .afterCarriageReturn: "one\r::error::two"
+            case .afterNonBreakingSpace: "\u{00A0}::warning::non-breaking space"
+            case .legacySyntax: "a ##[error]legacy syntax anywhere"
+            case .combiningMark: "##[\u{301}error]: [ and a combining mark are one Character"
+            }
+        }
+    }
+
+    @Test(
+        "in CI, text that could pass for a workflow command is logged with commands paused",
+        arguments: Disguise.allCases
+    )
+    func pausedCommands(disguise: Disguise) async {
         let recording = RecordingConsole()
-        Log(mode: .actions, console: recording.console, makeToken: { "T0K3N" }).write(text)
-        #expect(await recording.finish() == [.error("::stop-commands::T0K3N\n\(text)\n::T0K3N::\n")])
+        Log(mode: .actions, console: recording.console, makeToken: { "T0K3N" }).write(disguise.text)
+        #expect(await recording.finish() == [.error("::stop-commands::T0K3N\n\(disguise.text)\n::T0K3N::\n")])
     }
 
     @Test("in CI, text with :: only inside its lines is logged as it is")

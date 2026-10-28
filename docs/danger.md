@@ -18,8 +18,10 @@ changed), the nine step 4.6 raised in swift-steward#31 the same
 day, as recommended and as built, the seven step 4.7 raised in
 swift-steward#32 that day too, also as recommended and as built, the
 nine step 4.9 raised in swift-steward#36 on 2026-10-28, as recommended
-and as built, and the two step 4.10 raised in swift-steward#37 the same
-day, as recommended. The sections reflect the answers.
+and as built, the two step 4.10 raised in swift-steward#37 the same
+day, as recommended, and the five step 5.0 raised in swift-steward#38
+that day too, as recommended and as built. The sections reflect the
+answers.
 Claims about danger-swift, GitHub, and SwiftPM were checked against
 their sources or by experiment; [Checks](#checks) lists how.
 
@@ -32,7 +34,7 @@ their sources or by experiment; [Checks](#checks) lists how.
 | S3 | Line numbers | **Decided 2026-10-26; the built-in rule's paths and severities 2026-10-27.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default, or the head when only the head is checked out) to the head before matching; Steward leaves `safe.directory` to the workflow. The built-in rule resolves a path the checkout has exactly before trying suffixes, and fails on diagnostics at or above a severity, errors by default | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | **Generator decided 2026-10-26:** `Steward <version>`, the version the CLI prints. A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26; the author option and the budget's API 2026-10-27.** The 3.5 marker on the first line, only the token's own comments (`--summary-author` names another account); danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
-| S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice | Always fail; fail on configuration errors only; refusing to run on forks |
+| S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27; the annotations 2026-10-28.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice; in CI, each finding with a location is also an annotation on its head line (5.0) | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
 | S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner; **the template decided 2026-10-27:** `Templates/Dangerfile`, copied with one `curl \| tar` line, on `branch: "main"` until a release ships `Steward`, and built and tested in CI against the pull request's own code; **the dogfood decided 2026-10-28:** this repository's `Dangerfile/` depends on its own checkout and git-diff-parser's on `main`, pinned, each run by the Action in the job that builds and lints, failing on warnings on changed lines | `action.yml` at swift-steward's root with a moving `v1` tag |
 
@@ -454,10 +456,13 @@ tab, and its links rot as soon as the merge ref moves. B is also what
 check runs it annotated sit on the head commit (this repository's
 `pull_request` runs report the head SHA), so in the shifted case its
 annotations probably landed on the wrong lines; GitHub doesn't document
-how it places them. C is consistent and free, and Steward supports it
-(it's the identity case), but the build then stops testing what will
-actually merge, and the build job is the user's to configure, not
-Steward's. D gives the same answers as A with two diffs and two
+how it places them. Steward's annotations (section 6) give head lines,
+and GitHub shows them there: on #38's run, a build warning on line 113
+of the merge commit, in a file whose base had moved, is on line 112 of
+the head, and that's where Files changed showed it. C is consistent
+and free, and Steward supports it (it's the identity case), but the
+build then stops testing what will actually merge, and the build job is
+the user's to configure, not Steward's. D gives the same answers as A with two diffs and two
 coordinate systems to keep straight.
 
 Constraints this puts on the workflow:
@@ -746,7 +751,26 @@ posts. That's why the Action's documentation (4.8) sets the group.
    summary; decided 2026-10-26, question 10, and the notice 2026-10-27,
    question 25). Posting needs
    `GITHUB_TOKEN`; a step without it warns and sends no request.
-6. **Exit.**
+6. **Annotate**, in CI only: each finding with a location becomes a
+   workflow command at its path and head line, titled `Steward`, so it
+   shows on that line in Files changed. A failure is an `::error`, a
+   warning a `::warning`, and a message a `::notice`. A location
+   without a line annotates the whole file, which the check run lists
+   but Files changed doesn't show. Findings without a location, and
+   `markdown` ones, are in the summary only. Annotations need no token, so a fork's pull request,
+   which skips posting, gets them too. The text is plain: an annotation
+   shows Markdown as written, so the escapes a finding's text carries
+   (section 5's backslashes and zero-width spaces) are taken out, and
+   code spans and other Markdown stay as written. The text and the
+   path are then escaped as workflow commands require, a property's
+   value more strictly than the message, so no finding can end its
+   command, start another, or add a property. GitHub shows only a
+   step's first 10 errors, 10 warnings, and 10 notices (a composite
+   action's steps, such as steward-action's, count as one), so Steward
+   annotates last, after its own warnings about posting; the summary
+   comment and the job summary keep every finding (5.0; decided
+   2026-10-28, questions 64–68, as built).
+7. **Exit.**
 
 Options are a handful of hand-parsed flags (`--base`, `--pull-request`,
 `--report`, `--fail-on-post-error`, `--summary-author`, `--help`) and
@@ -832,7 +856,7 @@ danger-swift's source at that tag; the
 |---|---|---|
 | `let danger = Danger()` | `@main struct Checks: Dangerfile`, and each rule's `context` | No global; the runner builds the context once |
 | `warn("…")`, `danger.warn("…")` | `[.warning("…")]` returned from a rule | Same for `fail` → `.failure`, `message` → `.message`, `markdown` → `.markdown` |
-| `warn(message:file:line:)` (and `fail`, `message`, `markdown`) | `.warning("…", at: Location(path: file, line: line))` | Rendered as a link in the summary; inline review comments are in the backlog |
+| `warn(message:file:line:)` (and `fail`, `message`, `markdown`) | `.warning("…", at: Location(path: file, line: line))` | A link in the summary and, in CI, an annotation on its line in Files changed, but for `markdown` (section 6); review comments are in the backlog |
 | `suggestion(code:file:line:)` | – | Needs inline review comments (backlog) |
 | `danger.fails`, `.warnings`, `.messages`, `.markdowns` | – | A rule never sees other rules' findings; tests inspect what a rule returns (`StewardTesting`, 4.6) |
 | `danger.git.modifiedFiles`, `.createdFiles`, `.deletedFiles` | `context.git.modifiedFiles`, `.createdFiles`, `.deletedFiles` | `[String]` in both; plus `renamedFiles` (section 2) |
@@ -863,7 +887,7 @@ danger-swift's source at that tag; the
 The deliberate departures, in one place: no global `danger` and no
 global result lists; findings returned, not reported; paths in
 `Location` rather than `file:`/`line:` arguments; pull request data from
-the event, not the API; nothing that needs inline comments or API access
+the event, not the API; nothing that needs review comments or API access
 from rules. They follow from the plan's decisions (value types, no
 globals, one summary comment) rather than from taste, and the migration
 guide says so.
@@ -1003,8 +1027,9 @@ swift-steward#30 (numbered on from 26) the same day, the nine that
 step 4.6 raised in swift-steward#31 (numbered on from 35) that day too,
 the seven that step 4.7 raised in swift-steward#32 (numbered on from
 44) that day as well, the nine that step 4.9 raised in
-swift-steward#36 (numbered on from 51) on 2026-10-28, and the two that
-step 4.10 raised in swift-steward#37 (62 and 63) the same day. The
+swift-steward#36 (numbered on from 51) on 2026-10-28, the two that
+step 4.10 raised in swift-steward#37 (62 and 63) the same day, and the
+five that step 5.0 raised in swift-steward#38 (64–68) that day too. The
 sections refer to them by number, and each section above already
 reflects its answer.
 
@@ -1270,7 +1295,8 @@ reflects its answer.
     removed**, once Steward's findings equalled the steps' on #36's own
     runs and `DiagnosticsRuleOracleTests` held the two equal on recorded
     logs. Inline annotations for findings with a location, in place of
-    `filter`'s, come in a separate pull request (the plan's backlog).
+    `filter`'s, come in a separate pull request (the plan's backlog;
+    #38, step 5.0).
 57. **`ActionsRunTests` (S2). Answered 2026-10-28: kept.** The Action's
     runs prove a context is built and posted from, but only the suite
     compares it with git, and only it reaches the Linux job's depth-1
@@ -1300,6 +1326,25 @@ reflects its answer.
     template's CI jobs keep building the quickstart's package. A test or
     CI job that compiles them on every pull request waits until a
     snippet breaks.
+64. **Findings without a location (S6). Answered 2026-10-28: no
+    annotation** ("Go with all", for all five of #38's questions). They're
+    in the summary comment and the job summary. A `::warning` without
+    `file` would be listed with the run, not in Files changed, and take
+    one of the step's 10 slots from Steward's own warnings.
+65. **`markdown` findings (S6). Answered 2026-10-28: no annotation,**
+    located or not. A markdown finding is free-form content, such as a
+    table or a list, and an annotation would show its source as written.
+66. **A location without a line (S6). Answered 2026-10-28: a file-level
+    annotation,** with `file` and no `line`. GitHub records it on line 0
+    and lists it with the check run, not in Files changed; `line=1` would
+    claim a line it isn't about.
+67. **When to annotate (S6). Answered 2026-10-28: last,** after posting,
+    so a failed post's or a missing token's warning keeps one of the
+    step's 10 slots. The summary comment keeps every finding either way.
+68. **Code spans in an annotation's text (S6). Answered 2026-10-28:
+    kept** with their backticks and contents, so the built-in rule's
+    ``(`rule_id`)`` reads as it does in the summary. Other Markdown, such
+    as emphasis or links, stays as written too.
 
 ## Checks
 
@@ -1378,3 +1423,25 @@ How the factual claims were verified (2026-10-25/26):
   - It reads issue numbers in ASCII digits only.
   - A dry run's summary with every form rendered no issue link except
     the one GitHub makes from a bare pull-request URL.
+- **Workflow commands** (2026-10-28), from actions/runner's source on
+  `main` (`ActionCommandManager.cs`, `ExecutionContext.cs`): a line is
+  read as a `::` command before the older `##[` form, after leading
+  whitespace, and the command ends at the second `::`. Properties split
+  at `,` and each at its first `=`; their values unescape `%0D`, `%0A`,
+  `%3A`, `%2C`, and `%25`, and the message only `%0D`, `%0A`, and `%25`
+  (section 6). A step keeps its first 10 errors, 10 warnings, and 10
+  notices, a composite action's steps counting toward the step that
+  uses it, and cuts a message at 4,096 characters. A relative `file`
+  passes through as it is.
+- **Annotations on a shifted base** (2026-10-28), on #38's run of a
+  temporary commit (`50b3a0b`, built as the merge commit `ce0e25b`):
+  `GET /repos/{owner}/{repo}/check-runs/{id}/annotations` gave the
+  build's warning in `Runner+Posting.swift` on head line 112, which
+  build.log had on 113, below a line that `main` had replaced with two
+  after the branch started; the control, in a file `main` hadn't moved,
+  on 9 in both. The rule's findings were on the lines they gave, and
+  Files changed showed all five there. A hostile message and a hostile
+  path each made exactly one annotation, which read as written; the
+  finding without a location and the `markdown` one made none. The one
+  without a line came back with `start_line` 0, and Files changed didn't
+  show it.
