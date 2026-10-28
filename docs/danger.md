@@ -15,9 +15,10 @@ recommended, the four step 4.4 raised in swift-steward#29 on
 2026-10-27, as recommended too, the ten step 4.5 raised in
 swift-steward#30 the same day, as recommended (six as built, four
 changed), the nine step 4.6 raised in swift-steward#31 the same
-day, as recommended and as built, and the seven step 4.7 raised in
-swift-steward#32 that day too, also as recommended and as built. The
-sections reflect the answers.
+day, as recommended and as built, the seven step 4.7 raised in
+swift-steward#32 that day too, also as recommended and as built, and
+the nine step 4.9 raised in swift-steward#36 on 2026-10-28, as
+recommended and as built. The sections reflect the answers.
 Claims about danger-swift, GitHub, and SwiftPM were checked against
 their sources or by experiment; [Checks](#checks) lists how.
 
@@ -32,7 +33,7 @@ their sources or by experiment; [Checks](#checks) lists how.
 | S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26; the author option and the budget's API 2026-10-27.** The 3.5 marker on the first line, only the token's own comments (`--summary-author` names another account); danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
-| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner; **the template decided 2026-10-27:** `Templates/Dangerfile`, copied with one `curl \| tar` line, on `branch: "main"` until a release ships `Steward`, and built and tested in CI against the pull request's own code | `action.yml` at swift-steward's root with a moving `v1` tag |
+| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner; **the template decided 2026-10-27:** `Templates/Dangerfile`, copied with one `curl \| tar` line, on `branch: "main"` until a release ships `Steward`, and built and tested in CI against the pull request's own code; **the dogfood decided 2026-10-28:** this repository's `Dangerfile/` depends on its own checkout and git-diff-parser's on `main`, pinned, each run by the Action in the job that builds and lints, failing on warnings on changed lines | `action.yml` at swift-steward's root with a moving `v1` tag |
 
 ## Context and constraints
 
@@ -986,9 +987,11 @@ day too, the four that step 4.4 raised in swift-steward#29 (numbered
 on from 22) on 2026-10-27, the ten that step 4.5 raised in
 swift-steward#30 (numbered on from 26) the same day, the nine that
 step 4.6 raised in swift-steward#31 (numbered on from 35) that day too,
-and the seven that step 4.7 raised in swift-steward#32 (numbered on from
-44) that day as well. The sections refer to them by number, and each
-section above already reflects its answer.
+the seven that step 4.7 raised in swift-steward#32 (numbered on from
+44) that day as well, and the nine that step 4.9 raised in
+swift-steward#36 (numbered on from 51) on 2026-10-28. The sections
+refer to them by number, and each section above already reflects its
+answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1220,6 +1223,56 @@ section above already reflects its answer.
     `swift --version` too.** The `swift:6.2` tag moves across patch
     releases, so a key on `Package.resolved` alone would restore modules
     another compiler built.
+52. **Which rules each repository gets (S8). Answered 2026-10-28: rules
+    that each enforce a line of the repository's AGENTS.md, as built**
+    ("can you go with the recommended answers and continue?", for all
+    nine of #36's questions). swift-steward: the diagnostics rule, a
+    warning when `Release.version` changes, and a warning when a licence
+    or notice file arrives without an entry in `THIRD_PARTY_NOTICES.md`.
+    git-diff-parser: the diagnostics rule, a failure at each dependency
+    added to the root `Package.swift`, a warning for a change under
+    `Sources/` without a CHANGELOG entry, and the notices warning. No
+    rule reads the title or description (question 60).
+53. **swift-steward's own Dangerfile (S8). Answered 2026-10-28: it
+    depends on the checkout, `path: ".."`**, so every pull request is
+    checked by its own Steward, a change that breaks Steward fails its
+    own check, and no pin needs moving. The Action's cache keeps the
+    build of Steward from the pull request's sources incremental.
+54. **git-diff-parser's Dangerfile (S8). Answered 2026-10-28:
+    swift-steward `branch: "main"`, pinned by `Package.resolved`**, as the
+    quickstart tells a user; it switches to `from:` with the first
+    release that ships `Steward` (AGENTS.md's release note). It builds
+    against the released GitDiffKit, not the pull request's, so the
+    library's checks don't break when a pull request changes GitDiffKit's
+    API first.
+55. **Fail-on levels (S3). Answered 2026-10-28: `failingOn: .warning`
+    in both**, as `--fail-on warning` did, since both repositories build
+    without warnings and SwiftLint must print nothing. git-diff-parser's
+    dependency rule is a failure, a changed `.package(` line such as a
+    version bump included; the other rules warn. `fail-on-post-error`
+    stays off (question 4).
+56. **`pr.yml`'s `steward filter` steps (S3). Answered 2026-10-28:
+    removed**, once Steward's findings equalled the steps' on #36's own
+    runs and `DiagnosticsRuleOracleTests` held the two equal on recorded
+    logs. Inline annotations for findings with a location, in place of
+    `filter`'s, come in a separate pull request (the plan's backlog).
+57. **`ActionsRunTests` (S2). Answered 2026-10-28: kept.** The Action's
+    runs prove a context is built and posted from, but only the suite
+    compares it with git, and only it reaches the Linux job's depth-1
+    refusal, since the Action fetches the history first.
+58. **git-diff-parser's Steward job (S8). Answered 2026-10-28: the macOS
+    `tests-and-lint`**, the only job that builds and lints. Its pushes to
+    `main` get `pull-requests: write` too, since a job's permissions
+    can't depend on the event, and use it for nothing: the Steward steps
+    run on `pull_request` only.
+59. **git-diff-parser's SwiftLint step (S3). Answered 2026-10-28: it
+    still annotates every violation**, and a second run from SwiftLint's
+    cache writes the log Steward reads.
+60. **Activity types for the dogfood (S2). Answered 2026-10-28: the
+    defaults.** `edited` and `ready_for_review` would rerun the whole
+    macOS build and suite on every description edit, so the workflows
+    keep `pull_request`'s defaults and no rule reads the title or
+    description.
 
 ## Checks
 
