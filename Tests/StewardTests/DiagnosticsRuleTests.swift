@@ -6,7 +6,7 @@ import Testing
 struct DiagnosticsRuleTests {
     /// Adds lines 2 and 4 of `Sources/A.swift` and both lines of the new
     /// `Sources/B.swift`.
-    private static let diff = """
+    static let diff = """
         diff --git a/Sources/A.swift b/Sources/A.swift
         index 1111111..2222222 100644
         --- a/Sources/A.swift
@@ -29,7 +29,7 @@ struct DiagnosticsRuleTests {
         """
 
     /// Files written to a fresh directory, for reports to read.
-    private struct Reports {
+    struct Reports {
         let directory: URL
 
         init() throws {
@@ -56,7 +56,7 @@ struct DiagnosticsRuleTests {
 
     /// The rule's findings and what it logged, run as the runner runs it,
     /// failing on `severity`, or by default when that's nil.
-    private func run(
+    func run(
         _ sources: [DiagnosticSource],
         failingOn severity: DiagnosticSeverity? = nil,
         in context: Context = .stub(diff: diff)

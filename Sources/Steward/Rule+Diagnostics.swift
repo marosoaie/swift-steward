@@ -22,9 +22,12 @@ extension Rule {
     /// warning and a note a message. The default, `.error`, fails on errors
     /// alone; `.warning` fails on warnings too, as a workflow that gates on
     /// warnings does. Each finding's text is the tool's message, escaped so
-    /// it renders as written, with its rule, if any, as a code span. The log
-    /// says, for each report, how many diagnostics it held, matched, and
-    /// dropped.
+    /// it renders as written, with its rule, if any, as a code span. A
+    /// diagnostic that several reports give alike in every part, column
+    /// included, is reported once, from the first of them: two builds of
+    /// one package, for two platforms, warn twice about the same line. The
+    /// log says, for each report, how many diagnostics it held, matched,
+    /// dropped, and left out as an earlier report's.
     ///
     /// A report that can't be read, or whose `builtAt:` commit the
     /// checkout doesn't have, is one failure; the other reports are still

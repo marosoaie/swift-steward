@@ -10,7 +10,10 @@ import GitDiffKit
 enum ChangedLineDiagnostics {
     /// The findings of every source, in the sources' order, failures at or
     /// above `threshold`, with what became of each source's diagnostics
-    /// logged.
+    /// logged. A diagnostic that matches one an earlier source gave in
+    /// every part, column included, is left out: two builds of one package,
+    /// for two platforms, give each of its warnings twice. A source's own
+    /// repeats stay, as `steward filter` keeps them.
     static func findings(
         for sources: [DiagnosticSource],
         failingOn threshold: DiagnosticSeverity,
@@ -20,6 +23,7 @@ enum ChangedLineDiagnostics {
         let changes = context.git.addedLines
         let lineMaps = await lineMaps(for: sources, in: context)
         var findings: [Finding] = []
+        var reported: Set<MatchedDiagnostic> = []
         // Imperative: each source awaits its read, which `reduce` can't.
         for source in sources {
             try Task.checkCancellation()
@@ -31,7 +35,16 @@ enum ChangedLineDiagnostics {
                 log: log
             )
             switch result {
-            case .success(let matched): findings += matched.map { finding(for: $0, failingOn: threshold) }
+            case .success(let matched):
+                let new = matched.filter { !reported.contains($0) }
+                reported.formUnion(matched)
+                if new.count < matched.count {
+                    log.write("""
+                        \(source.kind) \(source.path): \(count(matched.count - new.count, "diagnostic")) \
+                        on changed lines left out, the same as one an earlier report gave
+                        """)
+                }
+                findings += new.map { finding(for: $0, failingOn: threshold) }
             case .failure(let unreadable): findings.append(.failure(unreadable.text))
             }
         }
