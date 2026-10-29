@@ -12,8 +12,9 @@ diff parser underneath, is in
 
 Steward ran in two outside repositories, the playground and a fork of
 NetNewsWire, on 23 pull requests between them; Track C of the same step
-adds a third, a fork of danger-swift. The maintainer's private app was
-skipped.
+adds a third, a fork of a project that uses danger-swift. The
+maintainer's private app, and a pull request from a second account's
+fork, were skipped.
 
 ## At a glance
 
@@ -23,6 +24,7 @@ skipped.
 | [Clean installs](#clean-installs) | Homebrew, the release binary, a source build on Linux | – | All print `2.0.0` |
 | [The maintainer's private app](#the-maintainers-private-app) | Xcode and SwiftLint logs | 1, no run of Steward | Skipped: its macOS job never got a runner |
 | [NetNewsWire](#netnewswire) | A Mac and iOS app, 16 changes merged upstream replayed: two `xcodebuild` logs and SwiftLint | 16, 38 runs | 406 findings, each on its line; none off changed lines |
+| [A fork's pull request](#a-pull-request-from-a-fork) | – | – | Skipped: playground PR 6 shows a read-only token |
 
 ## How each run was checked
 
@@ -35,7 +37,9 @@ back through the check run's annotations
 against the head commit's file. GitHub shows job summaries only to
 signed-in viewers, so they were read from the log: Steward writes the same
 text to the log's Summary group as to `GITHUB_STEP_SUMMARY`, and warns when
-that write fails or doesn't fit, which no run did.
+that write fails or doesn't fit, which no run did. Once checked, each
+pull request was closed and its branch deleted; its comment, annotations
+and runs stay, and the links here still work.
 
 Versions: Steward 2.0.0 from swift-steward `main` at `d2224d2` (each
 Dangerfile's `Package.resolved`), steward-action at `325c70a`, with
@@ -118,7 +122,7 @@ either, since only that job would have checked it.
 maintainer's public fork of the NetNewsWire feed reader: a Mac and iOS
 app built from an Xcode project and local Swift packages, with SwiftLint
 and warnings as errors. Sixteen changes merged upstream were replayed
-unchanged as draft pull requests. Each base branch is the merge's first
+unchanged as pull requests. Each base branch is the merge's first
 parent plus one commit that adds Steward's workflow and Dangerfile, and
 each head is the merged change on top, so a pull request's diff is
 exactly what upstream merged and its test merge has the head's tree.
@@ -204,6 +208,14 @@ Three pull requests are worth a closer look:
   (`AccountNotificationInspectorView.swift:51`) in reasonable time, a
   real error with this compiler. Steward reports it as a failure with an
   error annotation and fails the job.
+
+## A pull request from a fork
+
+Skipped, by the maintainer's choice. GitHub runs a fork's pull request
+with a read-only token, and playground PR 6 already shows how Steward
+behaves with one: it warns that it couldn't post the comment, naming the
+permission to grant, and the annotations and the job summary still carry
+the findings.
 
 ## Findings
 
