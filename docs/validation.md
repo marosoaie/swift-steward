@@ -232,6 +232,10 @@ Fixed:
   changed (NetNewsWire PR 8), or that errors without a location, or on a
   line the pull request broke without changing it (PR 7), show only as
   the build step's failure. It does now.
+- One diagnostic that two logs gave alike was reported twice (NetNewsWire
+  PR 1, [B5](#b5-one-diagnostic-from-two-logs)), and
+  [#40](https://github.com/marosoaie/swift-steward/pull/40) reports it
+  once.
 
 Intended, and documented:
 
@@ -263,9 +267,7 @@ Not Steward's:
 
 Open for step 5.1: [B2](#b2-annotations-without-a-column),
 [B3](#b3-report-formats-other-than-sonarqubes-api) and
-[B4](#b4-a-broken-build-whose-errors-arent-on-changed-lines). Open for
-the maintainer: [B5](#b5-one-diagnostic-from-two-logs), which changes no
-API.
+[B4](#b4-a-broken-build-whose-errors-arent-on-changed-lines).
 
 ## Questions
 
@@ -308,7 +310,10 @@ BuildLogKit drops a log's repeated diagnostics, but nothing merges one
 diagnostic that two sources report. In NetNewsWire PR 1 both builds
 compile the shared Account package and warn about the same unused value
 on the same line, so the comment lists it twice and it has two
-annotations. Merging findings with the same severity, location and
-message across sources would change what the built-in rule reports,
-though not its API; whether to, and in which step, is the maintainer's
-call.
+annotations. Fixed by
+[#40](https://github.com/marosoaie/swift-steward/pull/40), as the
+maintainer decided: the rule leaves out a diagnostic that matches one an
+earlier report gave in every part (path, line, column, severity, message
+and rule), and logs how many it left out. A report's own repeats stay,
+as `steward filter` keeps them. It changes the rule's output, not its
+API.
