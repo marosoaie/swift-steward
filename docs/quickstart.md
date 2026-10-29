@@ -79,10 +79,10 @@ even when they fail, so it reports a broken build's errors:
 ```yaml
 - name: Build
   # Bash, for pipefail: without it a failed build passes the step, and a
-  # container job's default shell, sh, has none. No colours, which Swift
-  # 6.4 writes even into a file, and which Steward can't read.
+  # container job's default shell, sh, has none. Colours, which Swift 6.4
+  # writes even into a file, are fine: Steward reads past them.
   shell: bash
-  run: swift build --no-color-diagnostics 2>&1 | tee build.log
+  run: swift build 2>&1 | tee build.log
 - uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
   if: ${{ !cancelled() }}
 ```
@@ -95,7 +95,11 @@ output of `xcodebuild`, `swift build`, or `swiftc`; `.swiftLint` the
 output of `swiftlint lint`; `.swiftFormat` that of `swiftformat --lint`;
 and `.sonar` a SonarQube issues report. A diagnostic at or above
 `failingOn:` (errors, by default) is a failure; below it, a warning or a
-message.
+message. Changed lines are the ones the pull request's Files tab marks
+as added, so a renamed file's are only its edits. A diagnostic needs a
+file and a line to land on one: an error without them, such as a
+linker's, or one on a line the pull request broke without changing it,
+shows only as the build step's failure.
 
 ## 3. Run it on pull requests
 
