@@ -1,8 +1,8 @@
 # Validation record
 
 What was run to check Steward, the Dangerfile runner, in real
-repositories and on real runners, as of 2026-10-29 (plan step 5.0,
-Track B). Every pull request listed here ran Steward through
+repositories and on real runners, as of 2026-11-02 (plan step 5.0,
+Tracks B and C). Every pull request listed here ran Steward through
 [steward-action](https://github.com/marosoaie/steward-action), and every
 comment and annotation it left was checked by hand against the log it came
 from: right file, right line of the head commit, nothing missed on a
@@ -10,9 +10,8 @@ changed line, nothing reported off one. GitDiffKit's own validation, the
 diff parser underneath, is in
 [git-diff-parser's record](https://github.com/marosoaie/git-diff-parser/blob/main/docs/validation.md).
 
-Steward ran in two outside repositories, the playground and a fork of
-NetNewsWire, on 23 pull requests between them; Track C of the same step
-adds a third, a fork of a project that uses danger-swift. The
+Steward ran in three outside repositories, the playground and forks of
+NetNewsWire and CocoaLumberjack, on 24 pull requests between them. The
 maintainer's private app, and a pull request from a second account's
 fork, were skipped.
 
@@ -24,6 +23,7 @@ fork, were skipped.
 | [Clean installs](#clean-installs) | Homebrew, the release binary, a source build on Linux | – | All print `2.0.0` |
 | [The maintainer's private app](#the-maintainers-private-app) | Xcode and SwiftLint logs | 1, no run of Steward | Skipped: its macOS job never got a runner |
 | [NetNewsWire](#netnewswire) | A Mac and iOS app, 16 changes merged upstream replayed: two `xcodebuild` logs and SwiftLint | 16, 38 runs | 406 findings, each on its line; none off changed lines |
+| [CocoaLumberjack](#cocoalumberjack-a-cold-read) | Its danger-swift Dangerfile ported from the docs alone, by an agent new to Steward; SwiftLint | 1, 1 run | The comment on the first run, right; 5 stuck points and 11 confusions: 14 answered in the docs, 2 open |
 | [A fork's pull request](#a-pull-request-from-a-fork) | – | – | Skipped: playground PR 6 shows a read-only token |
 
 ## How each run was checked
@@ -209,6 +209,28 @@ Three pull requests are worth a closer look:
   real error with this compiler. Steward reports it as a failure with an
   error annotation and fails the job.
 
+## CocoaLumberjack: a cold read
+
+[marosoaie/CocoaLumberjack](https://github.com/marosoaie/CocoaLumberjack),
+a fork of the logging library, whose pull requests danger-swift checks on
+`pull_request_target`. An agent new to Steward ported that Dangerfile
+using only the READMEs, the quickstart, and the rule-test and migration
+guides, never Steward's source, and noted each place it got stuck or
+confused. The port is 7 rules with 25 tests in the template's layout,
+pinning swift-steward `main` at `aa0a5b8`, and a workflow that runs
+SwiftLint 0.65.1's image on `Sources/` before steward-action at `c606a4a`.
+To rerun it, give someone new the same docs and the same task.
+
+| PR | Runner (Swift) | Scenario | Findings on changed lines | Comment, annotations | Result |
+|---|---|---|---|---|---|
+| [1](https://github.com/marosoaie/CocoaLumberjack/pull/1) | ubuntu-24.04 (6.4.1) | The port: 14 files, 1,016 lines changed, none in `Sources/` | The ported size rule's warning; none of SwiftLint's 7 diagnostics, all in `Sources/` | [The comment](https://github.com/marosoaie/CocoaLumberjack/pull/1#issuecomment-6578468016) on the first run, with that warning; no annotations but GitHub's own | ✓ |
+
+It took 10 minutes from the first read to the comment. The old danger
+workflow ran on the same pull request, from `master`, and couldn't post
+with the fork's read-only token; upstream it would have. GitDiffKit's
+part of the cold read is in
+[git-diff-parser's record](https://github.com/marosoaie/git-diff-parser/blob/main/docs/validation.md#a-cold-read).
+
 ## A pull request from a fork
 
 Skipped, by the maintainer's choice. GitHub runs a fork's pull request
@@ -236,6 +258,18 @@ Fixed:
   PR 1, [B5](#b5-one-diagnostic-from-two-logs)), and
   [#40](https://github.com/marosoaie/swift-steward/pull/40) reports it
   once.
+- The cold read got stuck on a SwiftLint finding's text, which is
+  escaped Markdown with the rule as a code span; on where SwiftLint
+  comes from on a runner, and whether its step should fail; on a
+  `pull_request_target` workflow; and on the "Steward 2.0.0" footer
+  before any release has Steward. It was confused by gaps: the
+  workspace's type, line numbers in a file read from disk, danger-swift
+  pieces with no row in the migration guide, `PullRequest.fixture`'s
+  parameters, the old workflow running on the migrating pull request, a
+  missing log's failure text, rules that name the Dangerfile by path,
+  the template's layout, and the Action's `safeExec` warnings. The
+  guides and steward-action's README answer each now (this record's
+  pull request).
 
 Intended, and documented:
 
@@ -267,7 +301,10 @@ Not Steward's:
 
 Open for step 5.1: [B2](#b2-annotations-without-a-column),
 [B3](#b3-report-formats-other-than-sonarqubes-api) and
-[B4](#b4-a-broken-build-whose-errors-arent-on-changed-lines).
+[B4](#b4-a-broken-build-whose-errors-arent-on-changed-lines); and from
+the cold read, a footer that names Steward's own version, a name for the
+diagnostics rule of one's choosing, and a `StewardTesting` helper for a
+test's temporary files.
 
 ## Questions
 
