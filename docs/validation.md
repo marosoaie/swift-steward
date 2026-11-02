@@ -268,8 +268,9 @@ Fixed:
   parameters, the old workflow running on the migrating pull request, a
   missing log's failure text, rules that name the Dangerfile by path,
   the template's layout, and the Action's `safeExec` warnings. The
-  guides and steward-action's README answer each now (this record's
-  pull request).
+  guides (this record's pull request) and steward-action's README
+  ([steward-action#4](https://github.com/marosoaie/steward-action/pull/4))
+  answer each now.
 
 Intended, and documented:
 
