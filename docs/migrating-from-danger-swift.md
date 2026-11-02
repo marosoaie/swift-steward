@@ -31,11 +31,30 @@ Follow the [quickstart](quickstart.md): it copies the template package to
 needed:
 
 - `Dangerfile.swift`, and any files it pulled in with `// fileImport:`;
-  in Steward they're more files in the `Dangerfile` target.
+  in Steward they're more files in the `Dangerfile` target. A rule or
+  script that skipped `Dangerfile.swift` by name must skip `Dangerfile/`
+  instead.
 - In your `Package.swift`, the `DangerDeps` library product, the
   `DangerDependencies` target, and the danger-swift and plugin packages.
 - The danger-js install, and the step that ran `danger-swift ci` or the
   `danger/swift` Action.
+
+**A `pull_request_target` workflow**, which lets danger comment on
+pull requests from forks, has no equivalent. Steward runs on
+`pull_request` only, where a fork's pull request gets a read-only token,
+so it posts no comment there: the findings show only as annotations in
+Files changed and in the job summary. For forks' pull requests, a
+project can today:
+
+- accept the annotations and the job summary; or
+- keep its danger workflow for them, beside Steward's, for now. GitHub
+  is starting to block `pull_request_target` by default in public
+  repositories, so that may need a policy that allows it.
+
+A second workflow, on `workflow_run`, that posts a fork's findings is
+designed ([danger.md](danger.md#4-the-report-s4)) but not built. The old
+workflow runs from the base branch, so it still runs on the pull request
+that removes it, and posts danger's comment beside Steward's.
 
 ## A Dangerfile, side by side
 
@@ -102,6 +121,7 @@ changes from the local checkout, once, before the first rule runs.
 | danger-swift | Steward | Notes |
 |---|---|---|
 | `danger.git.modifiedFiles`, `.createdFiles`, `.deletedFiles` | `context.git.modifiedFiles`, `.createdFiles`, `.deletedFiles` | `[String]`, repository-relative. Renamed files are in `modifiedFiles` under their new path, and in `renamedFiles` |
+| `File`, and its `fileType` (`.swift`, `.m`, …) | `String`, and `hasSuffix(".swift")` | `File` was a `String` already; Steward has no `fileType` |
 | `danger.git.commits` | `context.git.commits` | A `Commit` has `subject` and `body` rather than `message`, and a `sha` that's never `nil` |
 | `danger.utils.diff(forFile:sourceBranch:)` | `context.git.file(at:)`, or `context.git.diff` | The pull request's whole diff, parsed once: files, hunks, and lines with their old and new numbers |
 | `danger.github.pullRequest.title`, `.body`, `.number`, `.htmlUrl` | `context.pullRequest.title`, `.body`, `.number`, `.webURL` | `body` is empty rather than `nil` |
@@ -111,7 +131,7 @@ changes from the local checkout, once, before the first rule runs.
 | `.base.ref`, `.base.sha`, `.base.repo` (and `head`) | `.base.name`, `.base.commit`, `.base.repository` (and `head`) | `repository` is `owner/name` |
 | `danger.github.issue.labels` | `context.pullRequest.labels` | Label names, as they were when the event fired |
 | `danger.github.commits` | `context.git.commits` | From git, not the API |
-| `danger.utils.readFile(_:)` | Foundation, under `context.run.workspace` | The checkout is the merge commit, so a file the base branch also changed reads as merged |
+| `danger.utils.readFile(_:)` | `try String(contentsOfFile: "\(context.run.workspace)/\(path)", encoding: .utf8)`, with Foundation | `context.run.workspace` is the checkout's root, a `String`. The checkout is the merge commit, so a file the base branch also changed reads as merged |
 | `danger.utils.exec(_:arguments:)`, `.spawn(_:arguments:)` | Foundation's `Process` | Rules are `async throws`: a tool that fails can throw |
 | `danger.utils.environment` | `ProcessInfo.processInfo.environment` | |
 
@@ -146,8 +166,12 @@ warning, and a message as a notice. One with a path but no line is
 listed with the check run instead. The finding is also a row of the
 summary comment that links to that line in the pull request's head
 commit. The line is the head's, as the Files changed tab shows it, and
-the path is repository-relative. GitHub shows 10 error, 10 warning, and
-10 notice annotations per step; the summary comment keeps every finding.
+the path is repository-relative. A rule that reads a file from disk
+reads the merge commit's, so it maps each line to the head's first, with
+`context.run.lineMap.headLocation(ofLine:inFile:)`
+([The merge commit](quickstart.md#the-merge-commit)). GitHub shows 10
+error, 10 warning, and 10 notice annotations per step; the summary
+comment keeps every finding.
 A `markdown` finding, or one without a location, is in the summary only.
 
 Steward doesn't post review comments on the diff, so
@@ -194,18 +218,21 @@ Rule.diagnosticsOnChangedLines(in: [.swiftLint("swiftlint.log")])
 ```
 
 Write `swiftlint lint`'s output, its default `xcode` reporter, to
-`swiftlint.log` in a step before Steward's. `strict: true`, which makes
-every violation fail, is `failingOn: .warning`. The same rule reads
-`xcodebuild` and `swift build` output, SwiftFormat's, and SonarQube's
-issues; the quickstart's
-[diagnostics section](quickstart.md#2-write-the-rules) shows the
-workflow steps.
+`swiftlint.log` in a step before Steward's. The `danger/swift` Action's
+image brought SwiftLint along, but a runner doesn't have it: the quickstart's
+[diagnostics section](quickstart.md#2-write-the-rules) has a step that
+runs SwiftLint's own image on an Ubuntu runner, and says what to do on
+macOS.
+`strict: true`, which makes every violation fail, is
+`failingOn: .warning`. The same rule reads `xcodebuild` and
+`swift build` output, SwiftFormat's, and SonarQube's issues.
 
 ## Running locally and in CI
 
 | danger-swift | Steward |
 |---|---|
 | `danger-swift ci`, or the `danger/swift` Action | The [steward-action](https://github.com/marosoaie/steward-action), or the quickstart's [workflow without it](quickstart.md#without-the-action) |
+| The `danger/swift` Action's `args:`, such as `--failOnErrors` and `--no-publish-check` | Nothing: a failure always fails the run, and Steward adds no check of its own beside the job's |
 | `danger-swift local` | `swift run --package-path Dangerfile`, outside Actions: a dry run of the branch you're on, against the `origin` remote's default branch (`--base <ref>` for another), which prints the summary and never posts |
 | `danger-swift pr <url>` | Check out the pull request's branch, then add `--pull-request <number>` to the dry run, so the rules see its title, description, and labels |
 | `danger-swift edit` | Open `Dangerfile/Package.swift` in Xcode |

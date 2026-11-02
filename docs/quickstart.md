@@ -29,8 +29,10 @@ your-repository/
 ├── Package.swift                      your own package
 ├── Sources/
 └── Dangerfile/
+    ├── .gitignore                     keeps .build out
     ├── Package.swift                  depends on swift-steward
     ├── Package.resolved               written by the first build
+    ├── README.md                      how to test and run the rules
     ├── Sources/Dangerfile/Checks.swift
     └── Tests/DangerfileTests/
 ```
@@ -40,14 +42,20 @@ the `Steward` library, and a test target that depends on `StewardTesting`.
 It sits beside your package, not inside it, so it never joins your app's
 build, and your app never builds Steward. Commit all of it, with the
 `Package.resolved` the first build wrote: it pins the Steward revision
-your rules run with. Its `.gitignore` keeps `.build` out.
+your rules run with. It's Swift sources in your repository, though, so
+scripts, linters and rules that pick files by path see it now; exclude
+`Dangerfile/` where they should skip it.
 
 **Steward's version.** No swift-steward release has Steward yet, so the
 template depends on the `main` branch, at the revision `Package.resolved`
 pins. `swift package update --package-path Dangerfile` moves the pin;
 until the first release, Steward's API may still change between
 revisions. Once a release has Steward, replace `branch: "main"` in
-`Dangerfile/Package.swift` with `from:` and that version.
+`Dangerfile/Package.swift` with `from:` and that version. Until then, the
+summary's footer says "Steward 2.0.0": that's the number of
+swift-steward's latest release, which renamed the `steward` command and
+has no Steward, and `main` keeps it until the next release. The revision
+you run is the one `Package.resolved` pins.
 
 ## 2. Write the rules
 
@@ -83,12 +91,27 @@ even when they fail, so it reports a broken build's errors:
   # writes even into a file, are fine: Steward reads past them.
   shell: bash
   run: swift build 2>&1 | tee build.log
+- name: SwiftLint
+  if: ${{ !cancelled() }}
+  # The image's entrypoint is swiftlint, so `lint` follows its name. The
+  # checkout is mounted at its own path, so the report's paths are the
+  # runner's. Status 2 is error-level violations, Steward's to judge; any
+  # other failure means SwiftLint didn't run, and fails the step.
+  run: >-
+    docker run --rm -v "$PWD:$PWD" -w "$PWD" ghcr.io/realm/swiftlint:0.65.1
+    lint --quiet > swiftlint.log || [ $? -eq 2 ]
 - uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
   if: ${{ !cancelled() }}
 ```
 
 Without the Action, the step that runs `swift run --package-path
-Dangerfile` takes the same `if:`.
+Dangerfile` takes the same `if:`. A lint step mustn't fail on
+violations, since Steward decides which fail, and only on changed lines;
+it must fail when the linter can't run, or Steward would read an empty
+report as a clean one. The SwiftLint step needs Docker, which an Ubuntu
+runner has, but a `container:` job and a macOS runner don't. On macOS,
+run `brew install swiftlint`, then
+`swiftlint lint --quiet > swiftlint.log || [ $? -eq 2 ]`.
 
 Then uncomment the rule, with one source per log: `.xcodebuild` reads the
 output of `xcodebuild`, `swift build`, or `swiftc`; `.swiftLint` the
@@ -282,7 +305,10 @@ into the latest base, not the pull request's head:
   base to the head, and findings' line numbers are the head's.
 - A rule that reads a file from disk, such as `Package.swift`, reads the
   merge commit's. That's the head's file unless the base changed the same
-  file since the branch was cut.
+  file since the branch was cut. To report a line of it, map it with
+  `context.run.lineMap.headLocation(ofLine:inFile:)`, which gives the
+  head's location, or nil for a line the head doesn't have, such as one
+  the base changed: leave those out, as the diagnostics rule does.
 - Build logs have the merge commit's line numbers. The diagnostics rule
   maps them to the head, and leaves out diagnostics on lines that only the
   base changed. A log made from another checkout, in another job for

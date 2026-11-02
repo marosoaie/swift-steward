@@ -120,8 +120,10 @@ a GitHub Actions run builds for a pull request with that diff:
   `main`, with additions, deletions, changed files, and commits counted
   from the diff and the commits as GitHub counts them. `PullRequest.fixture`
   takes every field as an argument with a default, so a test names only
-  what its rule reads. A pull request you give is used as it is, sizes
-  included.
+  what its rule reads, in this order: `number`, `title`, `body`,
+  `author`, `state`, `isDraft`, `base`, `head`, `labels`, `webURL`,
+  `additions`, `deletions`, `changedFiles`, `commits`. A pull request you
+  give is used as it is, sizes included.
 - **The commits** are one when you give none: the pull request's head on
   its base, with its title and description. `Commit.fixture` and
   `Commit.Signature.fixture` default every field too.
@@ -214,6 +216,33 @@ struct BuildLogTests {
     }
 }
 ```
+
+A finding's text is Markdown, as the summary renders it: the tool's
+message, with Markdown's punctuation escaped by a backslash so it shows
+as written, then the rule, if the log names one, as a code span.
+SwiftLint's output names its rule, so the same test for it expects the
+rule after the message:
+
+```swift
+try """
+    /ci/checkout/Sources/App.swift:2:23: warning: Trailing Whitespace Violation: Lines should not have trailing whitespace (trailing_whitespace)
+    """.write(to: workspace.appendingPathComponent("swiftlint.log"), atomically: true, encoding: .utf8)
+let context = try Context.fixture(diff: ChangelogTests.sourcesOnly, workspace: workspace.path)
+let findings = try await Rule.diagnosticsOnChangedLines(in: [.swiftLint("swiftlint.log")]).evaluate(context)
+#expect(findings == [.warning(
+    "Trailing Whitespace Violation: Lines should not have trailing whitespace (`trailing_whitespace`)",
+    at: Location(path: "Sources/App.swift", line: 2)
+)])
+```
+
+Backticks in a message come escaped too: for SwiftLint's `empty_count`,
+a test expects
+``#"Empty Count Violation: Prefer checking \`isEmpty\` over comparing \`count\` to zero (`empty_count`)"#``,
+a raw string, so the backslashes stay. A missing report is one failure
+without a location, whose text starts
+``Couldn't read the xcodebuild log `build.log`:`` ("the SwiftLint
+output" for `.swiftLint`, and so on), then the system's reason, which
+macOS and Linux word differently.
 
 A report's paths resolve as in a run: a path to a file under the
 workspace is that file, and any other matches the pull request's path it
