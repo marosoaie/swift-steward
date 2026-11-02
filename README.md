@@ -73,7 +73,7 @@ brew trust marosoaie/tap   # one-time; Homebrew 6 gates third-party taps
 brew install marosoaie/tap/steward
 ```
 
-Up to v1.0.2 the tool was called `git-diff-parser`. `brew upgrade` moves an
+The tool used to be called `git-diff-parser`. `brew upgrade` moves an
 existing `git-diff-parser` install over to `steward`; scripts and workflows
 that call the old name need updating.
 

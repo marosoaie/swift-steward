@@ -509,7 +509,7 @@ public struct Report: Sendable, Hashable, Codable {
     public var pullRequest: Int
     public var headCommit: String     // the SHA the findings describe
     public var findings: [Finding]    // rule order, then the order each rule returned them
-    public var generator: String      // e.g. "Steward 1.0.0", for the log
+    public var generator: String      // e.g. "Steward 0.1.0", for the log
 
     public var hasFailures: Bool { get }
 }
@@ -633,7 +633,7 @@ when non-empty, then the `markdown` findings as they are, then a footer:
 |---|---|
 | :warning: | Add a CHANGELOG entry. |
 
-<sub>Steward 1.0.0 · [workflow run](https://github.com/o/r/actions/runs/123) · 4c95447</sub>
+<sub>Steward 0.1.0 · [workflow run](https://github.com/o/r/actions/runs/123) · 4c95447</sub>
 ```
 
 - **The layout and icons follow danger-js** (`:no_entry_sign:`,
@@ -999,7 +999,8 @@ a breaking change to a Swift API forces a new Action major for unchanged
 inputs. A Marketplace listing helps the launch (5.3). The SwiftPM check
 still constrains swift-steward's own tags: a two-part tag such as `v1.1`
 is read as version 1.1.0, so the package must never get a moving minor
-tag.
+tag. Since the version reset (question 69), the Action's first release
+is `v0.1.0`, and its moving `v1` waits for 1.0.
 
 ## What the later steps take from this
 
@@ -1345,6 +1346,13 @@ reflects its answer.
     kept** with their backticks and contents, so the built-in rule's
     ``(`rule_id`)`` reads as it does in the summary. Other Markdown, such
     as emphasis or links, stays as written too.
+69. **Tags after the version reset (S8). Answered 2026-11-02: exact tags
+    until 1.0.** swift-steward restarts at 0.1.0 and withdraws
+    v1.0.0–v2.0.0, and the Action's first release is `v0.1.0`. Under 0.x
+    a minor release may break, so workflows pin an exact tag such as
+    `@v0.1.0`, or a SHA (question 62); a moving `v1` waits for 1.0, which
+    follows the maintainer's own external testing. This replaces the `v1`
+    of questions 8 and 50.
 
 ## Checks
 
