@@ -221,7 +221,8 @@ Write `swiftlint lint`'s output, its default `xcode` reporter, to
 `swiftlint.log` in a step before Steward's. The `danger/swift` Action's
 image brought SwiftLint along, but a runner doesn't have it: the quickstart's
 [diagnostics section](quickstart.md#2-write-the-rules) has a step that
-runs SwiftLint's own image on Linux, and says what to do on macOS.
+runs SwiftLint's own image on an Ubuntu runner, and says what to do on
+macOS.
 `strict: true`, which makes every violation fail, is
 `failingOn: .warning`. The same rule reads `xcodebuild` and
 `swift build` output, SwiftFormat's, and SonarQube's issues.

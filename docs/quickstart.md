@@ -108,8 +108,9 @@ Without the Action, the step that runs `swift run --package-path
 Dangerfile` takes the same `if:`. A lint step mustn't fail on
 violations, since Steward decides which fail, and only on changed lines;
 it must fail when the linter can't run, or Steward would read an empty
-report as a clean one. The SwiftLint step is for Linux runners; macOS
-runners have no Docker, so there run `brew install swiftlint`, then
+report as a clean one. The SwiftLint step needs Docker, which an Ubuntu
+runner has, but a `container:` job and a macOS runner don't. On macOS,
+run `brew install swiftlint`, then
 `swiftlint lint --quiet > swiftlint.log || [ $? -eq 2 ]`.
 
 Then uncomment the rule, with one source per log: `.xcodebuild` reads the
