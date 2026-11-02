@@ -21,8 +21,8 @@ enum SampleDiff {
         +++ b/Sources/StewardVersion/Release.swift
         @@ -1,3 +1,3 @@
          package enum Release {
-        -    package static let version = "2.0.0"
-        +    package static let version = "2.1.0"
+        -    package static let version = "0.1.0"
+        +    package static let version = "0.2.0"
          }
 
         """

@@ -52,10 +52,9 @@ pins. `swift package update --package-path Dangerfile` moves the pin;
 until the first release, Steward's API may still change between
 revisions. Once a release has Steward, replace `branch: "main"` in
 `Dangerfile/Package.swift` with `from:` and that version. Until then, the
-summary's footer says "Steward 2.0.0": that's the number of
-swift-steward's latest release, which renamed the `steward` command and
-has no Steward, and `main` keeps it until the next release. The revision
-you run is the one `Package.resolved` pins.
+summary's footer says "Steward 0.1.0": that's the number of the first
+release, which `main` already carries. The revision you run is the one
+`Package.resolved` pins.
 
 ## 2. Write the rules
 
@@ -154,14 +153,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # No v1 tag yet: pinned to a commit of the Action's main branch.
+      # No release yet: pinned to a commit of the Action's main branch.
       - uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
 ```
 
 **Pinning the Action.** No swift-steward release has Steward yet, so the
-Action has no `v1` tag either. Until it does, pin the Action by the full
-SHA of a commit on its `main` branch, as above; a branch name would run
-whatever lands there next. Once `v1` exists, use `@v1` instead.
+Action has no release either. Until its first, `v0.1.0`, pin the Action
+by the full SHA of a commit on its `main` branch, as above; a branch name
+would run whatever lands there next. Then pin an exact tag such as
+`@v0.1.0` (or a SHA): under 0.x a minor release may break. A moving `v1`
+tag waits for 1.0.
 
 With the package at `Dangerfile/` and its executable called `Dangerfile`,
 as the template has them, the Action needs no `with:`; its

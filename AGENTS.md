@@ -222,5 +222,10 @@ iteration), never narration of the next line.
   `Templates/Dangerfile/Package.swift`, `docs/quickstart.md` (and its
   tarball URL), `docs/rule-tests.md`, and the README, and in the
   `Dangerfile/Package.swift` of git-diff-parser and of steward-action.
-  Once steward-action has a `v1` tag, the quickstart's two pins of it by
-  commit SHA become `@v1`, and so does `pr.yml`'s.
+  Once steward-action tags `v0.1.0`, the quickstart's two pins of it by
+  commit SHA become `@v0.1.0`, and so do `pr.yml`'s and git-diff-parser's
+  `ci.yml`'s.
+  Versions restarted at 0.1.0 on 2026-11-02 (v1.0.0–v2.0.0 were
+  withdrawn). Under 0.x a minor release may break, so workflows pin an
+  exact tag such as `@v0.1.0`, or a SHA; a moving `v1` tag waits for 1.0,
+  which follows the maintainer's own external testing.

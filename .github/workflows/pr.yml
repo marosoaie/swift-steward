@@ -78,7 +78,7 @@ jobs:
       # the pull request is checked by its own Steward. Its diagnostics rule
       # reads the two logs above, maps them from the merge commit to the
       # head, and fails on warnings on changed lines, as the `steward filter`
-      # step it replaced did. Pinned to a commit until steward-action tags v1.
+      # step it replaced did. Pinned to a commit until steward-action tags v0.1.0.
       - name: Steward
         if: ${{ !cancelled() }}
         uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb

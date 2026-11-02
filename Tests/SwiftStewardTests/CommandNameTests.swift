@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-/// The tool ships as `steward` (it was `git-diff-parser` up to v1.0.2); its
+/// The tool ships as `steward` (it was called `git-diff-parser`); its
 /// help must use the new name throughout, examples included.
 @Suite("Command name")
 struct CommandNameTests {

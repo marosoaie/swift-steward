@@ -50,7 +50,7 @@ struct SummaryTests {
                 pullRequest: 7,
                 headCommit: Self.head,
                 findings: findings,
-                generator: "Steward 1.0.0"
+                generator: "Steward 0.1.0"
             ),
             serverURL: Self.server,
             origin: Self.run

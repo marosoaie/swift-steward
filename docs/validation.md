@@ -44,7 +44,11 @@ and runs stay, and the links here still work.
 Versions: Steward 2.0.0 from swift-steward `main` at `d2224d2` (each
 Dangerfile's `Package.resolved`), steward-action at `325c70a`, with
 `actions/checkout@v7`. Local checks: macOS 26.6.2, git 2.54.0, SwiftLint
-0.65.1.
+0.65.1. swift-steward's releases v1.0.0 to v2.0.0 were withdrawn when its
+versions restarted at 0.1.0 (2026-11-02), so 2.0.0 here is the number
+`main` printed then, and the [clean installs](#clean-installs) installed
+v2.0.0, commit
+[`130b762`](https://github.com/marosoaie/swift-steward/commit/130b762314ebb150fa2cb6614ddfe1a07787f05f).
 
 ## steward-playground
 
