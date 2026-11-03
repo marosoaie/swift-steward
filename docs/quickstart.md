@@ -41,10 +41,11 @@ your-repository/
 the `Steward` library, and a test target that depends on `StewardTesting`.
 It sits beside your package, not inside it, so it never joins your app's
 build, and your app never builds Steward. Commit all of it, with the
-`Package.resolved` the first build wrote: it pins the Steward revision
-your rules run with. It's Swift sources in your repository, though, so
-scripts, linters and rules that pick files by path see it now; exclude
-`Dangerfile/` where they should skip it.
+`Package.resolved` the first build wrote: it pins the revisions of
+Steward and every package under it that your rules run with. It's Swift
+sources in your repository, though, so scripts, linters and rules that
+pick files by path see it now; exclude `Dangerfile/` where they should
+skip it.
 
 **Steward's version.** The template depends on swift-steward 0.1.x, at
 the release `Package.resolved` pins, and

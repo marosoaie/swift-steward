@@ -28,7 +28,7 @@ let package = Package(
         // released Steward builds against. Tagged versions only: SwiftPM
         // rejects branch and revision dependencies underneath a versioned
         // package.
-        .package(url: "https://github.com/marosoaie/git-diff-parser.git", .upToNextMinor(from: "0.2.0")),
+        .package(url: "https://github.com/marosoaie/git-diff-parser.git", .upToNextMinor(from: "0.2.1")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
         // The GitHub client target only (decision 5). The generator itself
         // lives in Tooling/Package.swift, so packages that depend on this one
