@@ -2,7 +2,7 @@
 # Copies the template Dangerfile package to a new directory, as a user
 # would, and points its swift-steward dependency at the checkout this
 # script is in, so PR CI tests the template against the pull request's
-# Steward rather than the main branch the template names.
+# Steward rather than the release the template names.
 #
 #     Templates/copy-dangerfile.sh <destination>
 set -eu
@@ -27,7 +27,7 @@ tar -C "$checkout/Templates/Dangerfile" --exclude=./.build --exclude=./.swiftpm 
 # checkout's directory is called.
 manifest=$destination/Package.swift
 escaped=$(printf '%s' "$checkout" | sed 's/[&|\\]/\\&/g')
-sed "s|^\( *\)\.package(url: \"https://github.com/marosoaie/swift-steward.git\", [^)]*)|\1.package(name: \"swift-steward\", path: \"$escaped\")|" \
+sed "s|^\( *\)\.package(url: \"https://github.com/marosoaie/swift-steward.git\", .*)|\1.package(name: \"swift-steward\", path: \"$escaped\")|" \
     "$manifest" > "$manifest.new"
 mv "$manifest.new" "$manifest"
 if ! grep -qF "path: \"$checkout\")" "$manifest"; then

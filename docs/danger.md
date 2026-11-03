@@ -36,7 +36,7 @@ their sources or by experiment; [Checks](#checks) lists how.
 | S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26; the author option and the budget's API 2026-10-27.** The 3.5 marker on the first line, only the token's own comments (`--summary-author` names another account); danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
 | S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27; the annotations 2026-10-28.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice; in CI, each finding with a location is also an annotation on its head line (5.0) | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
-| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner; **the template decided 2026-10-27:** `Templates/Dangerfile`, copied with one `curl \| tar` line, on `branch: "main"` until a release ships `Steward`, and built and tested in CI against the pull request's own code; **the dogfood decided 2026-10-28:** this repository's `Dangerfile/` depends on its own checkout and git-diff-parser's on `main`, pinned, each run by the Action in the job that builds and lints, failing on warnings on changed lines | `action.yml` at swift-steward's root with a moving `v1` tag |
+| S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner; **the template decided 2026-10-27:** `Templates/Dangerfile`, copied with one `curl \| tar` line, on `branch: "main"` until a release ships `Steward`, and built and tested in CI against the pull request's own code; **the dogfood decided 2026-10-28:** this repository's `Dangerfile/` depends on its own checkout and git-diff-parser's on `main`, pinned, each run by the Action in the job that builds and lints, failing on warnings on changed lines; **since 0.1.0 (2026-11-03):** the template and git-diff-parser's Dangerfile on 0.1.x | `action.yml` at swift-steward's root with a moving `v1` tag |
 
 ## Context and constraints
 
@@ -1244,6 +1244,9 @@ reflects its answer.
     AGENTS.md's release note says what that release switches to `from:`,
     the tarball URL included. Step 5.1 reviews `Steward`'s and
     `StewardTesting`'s API first, and no release ships them before then.
+    **Since 2026-11-03:** 0.1.0 shipped them, and the template depends on
+    `.upToNextMinor(from: "0.1.0")`, since a 0.x minor release may break;
+    the tarball URL stays on `main`, whose template names the release.
 47. **Testing the template (S8). Answered 2026-10-27: against the pull
     request's own code.** `Templates/copy-dangerfile.sh` copies the
     template as a user would and rewrites its swift-steward dependency to
@@ -1285,7 +1288,8 @@ reflects its answer.
     release that ships `Steward` (AGENTS.md's release note). It builds
     against the released GitDiffKit, not the pull request's, so the
     library's checks don't break when a pull request changes GitDiffKit's
-    API first.
+    API first. **Since 2026-11-03:** `.upToNextMinor(from: "0.1.0")`, as
+    the template (question 46).
 55. **Fail-on levels (S3). Answered 2026-10-28: `failingOn: .warning`
     in both**, as `--fail-on warning` did, since both repositories build
     without warnings and SwiftLint must print nothing. git-diff-parser's

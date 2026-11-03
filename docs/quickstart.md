@@ -46,15 +46,11 @@ your rules run with. It's Swift sources in your repository, though, so
 scripts, linters and rules that pick files by path see it now; exclude
 `Dangerfile/` where they should skip it.
 
-**Steward's version.** No swift-steward release has Steward yet, so the
-template depends on the `main` branch, at the revision `Package.resolved`
-pins. `swift package update --package-path Dangerfile` moves the pin;
-until the first release, Steward's API may still change between
-revisions. Once a release has Steward, replace `branch: "main"` in
-`Dangerfile/Package.swift` with `from:` and that version. Until then, the
-summary's footer says "Steward 0.1.0": that's the number of the first
-release, which `main` already carries. The revision you run is the one
-`Package.resolved` pins.
+**Steward's version.** The template depends on swift-steward 0.1.x, at
+the release `Package.resolved` pins, and
+`swift package update --package-path Dangerfile` takes 0.1.x's fixes.
+Under 0.x a minor release may break, so moving to the next one is an
+edit of the requirement in `Dangerfile/Package.swift`.
 
 ## 2. Write the rules
 
@@ -157,12 +153,11 @@ jobs:
       - uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
 ```
 
-**Pinning the Action.** No swift-steward release has Steward yet, so the
-Action has no release either. Until its first, `v0.1.0`, pin the Action
-by the full SHA of a commit on its `main` branch, as above; a branch name
-would run whatever lands there next. Then pin an exact tag such as
-`@v0.1.0` (or a SHA): under 0.x a minor release may break. A moving `v1`
-tag waits for 1.0.
+**Pinning the Action.** The Action has no release yet. Until its first,
+`v0.1.0`, pin the Action by the full SHA of a commit on its `main`
+branch, as above; a branch name would run whatever lands there next.
+Then pin an exact tag such as `@v0.1.0` (or a SHA): under 0.x a minor
+release may break. A moving `v1` tag waits for 1.0.
 
 With the package at `Dangerfile/` and its executable called `Dangerfile`,
 as the template has them, the Action needs no `with:`; its

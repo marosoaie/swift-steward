@@ -33,8 +33,8 @@ struct Checks: Dangerfile {
 }
 ```
 
-No release has Steward yet: until one does, a Dangerfile depends on this
-repository's `main` branch, and Steward's API may still change.
+Steward's first release is 0.1.0. Until 1.0, a minor release may change
+its API, so a Dangerfile depends on 0.1.x.
 
 ## Where to start
 
@@ -232,7 +232,7 @@ needs:
 ```swift
 // Package.swift
 .package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.2.0"),
-.package(url: "https://github.com/marosoaie/swift-steward.git", branch: "main"),
+.package(url: "https://github.com/marosoaie/swift-steward.git", .upToNextMinor(from: "0.1.0")),
 // target dependencies (pick what you need):
 .product(name: "GitDiffKit", package: "git-diff-parser"),
 .product(name: "BuildLogKit", package: "swift-steward"),

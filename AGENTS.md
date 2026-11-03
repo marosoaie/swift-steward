@@ -217,11 +217,11 @@ iteration), never narration of the next line.
   `TAP_DEPLOY_KEY` secret).
   The maintainer drives version numbers — never change the version outside
   this procedure.
-  The first release that ships `Steward` also switches the requirement
-  users start from, `branch: "main"`, to `from:` that version: in
-  `Templates/Dangerfile/Package.swift`, `docs/quickstart.md` (and its
-  tarball URL), `docs/rule-tests.md`, and the README, and in the
-  `Dangerfile/Package.swift` of git-diff-parser and of steward-action.
+  Users start from the latest minor release,
+  `.upToNextMinor(from: "0.1.0")`, in `Templates/Dangerfile/Package.swift`,
+  `docs/quickstart.md`, `docs/rule-tests.md`, and the README, and in the
+  `Dangerfile/Package.swift` of git-diff-parser and of steward-action; a
+  new minor release moves them all to it.
   Once steward-action tags `v0.1.0`, the quickstart's two pins of it by
   commit SHA become `@v0.1.0`, and so do `pr.yml`'s and git-diff-parser's
   `ci.yml`'s.

@@ -22,7 +22,7 @@ let package = Package(
     name: "Dangerfile",
     platforms: [.macOS(.v26)],
     dependencies: [
-        .package(url: "https://github.com/marosoaie/swift-steward.git", branch: "main"),
+        .package(url: "https://github.com/marosoaie/swift-steward.git", .upToNextMinor(from: "0.1.0")),
     ],
     targets: [
         .executableTarget(
