@@ -75,13 +75,15 @@ checkout it sits in (`path: ".."`), so every PR is checked by its own
 Steward, and the root manifest never sees it either.
 
 `GitDiffKit` comes from the first-party git-diff-parser package, pinned to
-tagged versions (`from:`) only, never a branch or revision: SwiftPM rejects
-those underneath a versioned package. For lockstep changes, use
-`swift package edit git-diff-parser` locally, then tag the library and bump
-the requirement. The root package must not be *named* `git-diff-parser`,
-nor checked out into a directory of that name (a root package's identity
-is its directory name): either way SwiftPM takes the root as an override
-of the dependency and fails to resolve.
+one minor release's tags (`.upToNextMinor(from:)`), never a branch or
+revision: SwiftPM rejects those underneath a versioned package, and a 0.x
+minor release may break the API a released Steward builds against. For
+lockstep changes, use `swift package edit git-diff-parser` locally, then
+tag the library; Steward takes its new minor release in a release of its
+own, which bumps the requirement. The root package must not be *named*
+`git-diff-parser`, nor checked out into a directory of that name (a root
+package's identity is its directory name): either way SwiftPM takes the
+root as an override of the dependency and fails to resolve.
 
 ## Commands
 
@@ -221,7 +223,9 @@ iteration), never narration of the next line.
   `.upToNextMinor(from: "0.1.0")`, in `Templates/Dangerfile/Package.swift`,
   `docs/quickstart.md`, `docs/rule-tests.md`, and the README, and in the
   `Dangerfile/Package.swift` of git-diff-parser and of steward-action; a
-  new minor release moves them all to it.
+  new minor release moves them all to it. From the next one on, it also
+  moves the quickstart's tarball URL from `main` to its tag, whose
+  template names that release.
   Once steward-action tags `v0.1.0`, the quickstart's two pins of it by
   commit SHA become `@v0.1.0`, and so do `pr.yml`'s and git-diff-parser's
   `ci.yml`'s.

@@ -231,7 +231,7 @@ needs:
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.2.0"),
+.package(url: "https://github.com/marosoaie/git-diff-parser.git", .upToNextMinor(from: "0.2.0")),
 .package(url: "https://github.com/marosoaie/swift-steward.git", .upToNextMinor(from: "0.1.0")),
 // target dependencies (pick what you need):
 .product(name: "GitDiffKit", package: "git-diff-parser"),
