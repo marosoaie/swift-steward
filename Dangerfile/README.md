@@ -8,7 +8,8 @@ and their tests in [`Tests/DangerfileTests`](Tests/DangerfileTests).
 
 It's the [template](../Templates/Dangerfile) a user copies, except that it
 depends on the checkout it sits in (`path: ".."`) rather than on a
-release, so every pull request is checked by its own Steward. The root package never depends on it.
+release, so every pull request is checked by its own Steward. The root
+package never depends on it.
 
 From the repository's root:
 
