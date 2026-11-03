@@ -24,9 +24,11 @@ let package = Package(
         .library(name: "StewardTesting", targets: ["StewardTesting"]),
     ],
     dependencies: [
-        // GitDiffKit. Tagged versions only: SwiftPM rejects branch and
-        // revision dependencies underneath a versioned package.
-        .package(url: "https://github.com/marosoaie/git-diff-parser.git", from: "0.2.0"),
+        // GitDiffKit, one minor release: a 0.x minor may break the API a
+        // released Steward builds against. Tagged versions only: SwiftPM
+        // rejects branch and revision dependencies underneath a versioned
+        // package.
+        .package(url: "https://github.com/marosoaie/git-diff-parser.git", .upToNextMinor(from: "0.2.0")),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
         // The GitHub client target only (decision 5). The generator itself
         // lives in Tooling/Package.swift, so packages that depend on this one

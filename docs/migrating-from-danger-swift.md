@@ -204,10 +204,8 @@ public enum TeamRules {
 Add the package to `dependencies:` in `Dangerfile/Package.swift`, its
 product to the `Dangerfile` target, and its rules to `rules`, beside your
 own: `TeamRules.size(limit: 500)`. `rules` also takes an array, so a
-plugin can hand over several rules at once. Until a swift-steward release
-has Steward, such a package depends on swift-steward by branch, and the
-Dangerfile has to depend on it by branch or revision too: SwiftPM doesn't
-let a version requirement reach a branch dependency.
+plugin can hand over several rules at once. Both depend on
+swift-steward, so their requirements must share a version, such as 0.1.x.
 
 **SwiftLint.** danger-swift's `SwiftLint.lint(…)` runs SwiftLint itself.
 Steward's built-in rule reads the report an earlier step of the workflow
