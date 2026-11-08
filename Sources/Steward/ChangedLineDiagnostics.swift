@@ -27,7 +27,7 @@ enum ChangedLineDiagnostics {
         let lineMaps = await lineMaps(for: sources, in: context)
         var findings: [Finding] = []
         var reported: Set<MatchedDiagnostic> = []
-        var reportedElsewhere: [String?: Set<Diagnostic>] = [:]
+        var reportedElsewhere: [String: Set<Diagnostic>] = [:]
         // Imperative: each source awaits its read, which `reduce` can't.
         for source in sources {
             try Task.checkCancellation()
@@ -51,9 +51,11 @@ enum ChangedLineDiagnostics {
                 }
                 findings += new.map { finding(for: $0, failingOn: threshold) }
                 let elsewhere = matches.errorsElsewhere
-                let earlier = reportedElsewhere[source.builtCommit, default: []]
+                // By commit, not name: `HEAD` and no name can be one commit.
+                let built = source.builtCommit.flatMap { try? lineMaps[$0]?.get().commit } ?? context.run.builtCommit
+                let earlier = reportedElsewhere[built, default: []]
                 let errors = elsewhere.filter { !earlier.contains($0) }
-                reportedElsewhere[source.builtCommit] = earlier.union(elsewhere)
+                reportedElsewhere[built] = earlier.union(elsewhere)
                 if errors.count < elsewhere.count {
                     log.write("""
                         \(source.kind) \(source.path): \(count(elsewhere.count - errors.count, "error")) \
@@ -75,12 +77,14 @@ enum ChangedLineDiagnostics {
         of source: DiagnosticSource,
         in context: Context,
         changes: ChangedLines,
-        lineMaps: [String: Result<LineMap, LineMapError>],
+        lineMaps: [String: Result<BuiltLineMap, LineMapError>],
         log: Log
     ) async -> Result<Matches, UnreadableSource> {
         let lineMap: LineMap
-        switch source.builtCommit.flatMap({ lineMaps[$0] }) ?? .success(context.run.lineMap) {
-        case .success(let map): lineMap = map
+        let resolved = source.builtCommit.flatMap { lineMaps[$0] }
+            ?? .success((context.run.builtCommit, context.run.lineMap))
+        switch resolved {
+        case .success(let built): lineMap = built.lineMap
         case .failure(let error): return .failure(UnreadableSource(text: error.text(for: source)))
         }
         let diagnostics: [Diagnostic]
@@ -144,14 +148,17 @@ enum ChangedLineDiagnostics {
         }
     }
 
+    /// A commit a source names, and the line map from it to the head.
+    private typealias BuiltLineMap = (commit: String, lineMap: LineMap)
+
     /// The line maps from the commits the sources name with `builtAt:` to
     /// the head, by the names they give, each read once.
     private static func lineMaps(
         for sources: [DiagnosticSource],
         in context: Context
-    ) async -> [String: Result<LineMap, LineMapError>] {
+    ) async -> [String: Result<BuiltLineMap, LineMapError>] {
         let git = Git(directory: context.run.workspace)
-        var maps: [String: Result<LineMap, LineMapError>] = [:]
+        var maps: [String: Result<BuiltLineMap, LineMapError>] = [:]
         // Imperative: each map awaits git, which `reduce` can't.
         for name in Set(sources.compactMap(\.builtCommit)).sorted() {
             maps[name] = await lineMap(builtAt: name, in: context, git: git)
@@ -163,11 +170,11 @@ enum ChangedLineDiagnostics {
         builtAt name: String,
         in context: Context,
         git: Git
-    ) async -> Result<LineMap, LineMapError> {
+    ) async -> Result<BuiltLineMap, LineMapError> {
         do {
             guard let built = try await git.commit(named: name) else { return .failure(.missingCommit) }
-            if built == context.run.builtCommit { return .success(context.run.lineMap) }
-            return .success(try await LineMap(built: built, head: context.git.head, git: git))
+            if built == context.run.builtCommit { return .success((built, context.run.lineMap)) }
+            return .success((built, try await LineMap(built: built, head: context.git.head, git: git)))
         } catch {
             return .failure(.git(String(errorDescription: error)))
         }

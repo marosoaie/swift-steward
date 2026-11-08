@@ -102,19 +102,23 @@ struct DiagnosticsRuleRepositoryTests {
         #expect(named.log == unnamed.log)
     }
 
-    @Test("an error off the changed lines is listed for each of two build logs built at different commits")
-    func errorsElsewhereAtTwoCommits() async throws {
+    @Test(
+        "an error off the changed lines that two build logs give is listed once for each commit they were built at",
+        arguments: [("HEAD", ["merge"]), ("pr-head", ["merge", "head"])]
+    )
+    func errorsElsewhereAtTwoCommits(builtAt name: String, listedIn logs: [String]) async throws {
         let fixture = try PullRequestFixture()
         defer { fixture.remove() }
+        try fixture.repository.git(["branch", "--quiet", "pr-head", fixture.head])
         // Line 5 is the head's line 2 in the merge, and its line 5 at the head.
         try fixture.repository.write("a.swift:5:1: error: e\n", to: "reports/merge.log")
         try fixture.repository.write("a.swift:5:1: error: e\n", to: "reports/head.log")
 
         let (findings, _) = try await run(fixture, sources: [
             .xcodebuild("reports/merge.log"),
-            .xcodebuild("reports/head.log", builtAt: fixture.head),
+            .xcodebuild("reports/head.log", builtAt: name),
         ])
-        #expect(findings.map(\.text) == ["merge", "head"].map { name in
+        #expect(findings.map(\.text) == logs.map { name in
             """
             Errors in the xcodebuild log `reports/\(name).log` that aren't on lines the pull request adds:
             `a.swift:5`: e
