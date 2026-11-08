@@ -50,7 +50,7 @@ struct RuleEvaluationTests {
         #expect(findings[1].text == "Rule “Described” failed: the \\*linter\\* crashed")
         #expect(findings[2].text == "Rule “Plain” failed: StewardTests.RuleEvaluationTests.Broken.tool(status: 3)")
         #expect(findings[3].text == "Rule “Own cancellation” failed: Swift.CancellationError()")
-        #expect(Report(repository: "o/r", pullRequest: 7, headCommit: "h", findings: findings, generator: "S")
+        #expect(Report(repository: "o/r", pullRequestNumber: 7, headCommit: "h", findings: findings, generator: "S")
             .hasFailures)
     }
 

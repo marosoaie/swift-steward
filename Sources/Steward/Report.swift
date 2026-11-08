@@ -21,7 +21,7 @@ public struct Report: Sendable, Hashable, Codable {
     /// tell.
     public var repository: String
     /// The pull request's number; 0 for a dry run's placeholder.
-    public var pullRequest: Int
+    public var pullRequestNumber: Int
     /// The SHA of the head commit the findings describe.
     public var headCommit: String
     /// The findings, in rule order, then in the order each rule returned
@@ -35,14 +35,14 @@ public struct Report: Sendable, Hashable, Codable {
     public init(
         schemaVersion: Int = Report.currentSchemaVersion,
         repository: String,
-        pullRequest: Int,
+        pullRequestNumber: Int,
         headCommit: String,
         findings: [Finding],
         generator: String
     ) {
         self.schemaVersion = schemaVersion
         self.repository = repository
-        self.pullRequest = pullRequest
+        self.pullRequestNumber = pullRequestNumber
         self.headCommit = headCommit
         self.findings = findings
         self.generator = generator
@@ -70,7 +70,7 @@ public struct Report: Sendable, Hashable, Codable {
         self.init(
             schemaVersion: version,
             repository: try container.decode(String.self, forKey: .repository),
-            pullRequest: try container.decode(Int.self, forKey: .pullRequest),
+            pullRequestNumber: try container.decode(Int.self, forKey: .pullRequestNumber),
             headCommit: try container.decode(String.self, forKey: .headCommit),
             findings: try container.decode([Finding].self, forKey: .findings),
             generator: try container.decode(String.self, forKey: .generator)
@@ -88,7 +88,7 @@ public struct Report: Sendable, Hashable, Codable {
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"
         case repository
-        case pullRequest = "pull_request"
+        case pullRequestNumber = "pull_request"
         case headCommit = "head_commit"
         case findings
         case generator

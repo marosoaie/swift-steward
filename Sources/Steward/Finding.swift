@@ -12,6 +12,10 @@
 public struct Finding: Sendable, Hashable, Codable {
     /// How a finding counts: failures fail the check, the other kinds only
     /// inform.
+    ///
+    /// Minor releases may add cases, so a `switch` over one needs an
+    /// `@unknown default`.
+    @nonexhaustive
     public enum Kind: String, Sendable, Hashable, Codable {
         /// Fails the check: the run exits with status 1.
         case failure

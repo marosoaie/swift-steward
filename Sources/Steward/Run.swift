@@ -3,6 +3,10 @@ import Foundation
 /// Where Steward runs, and on which trees.
 public struct Run: Sendable, Hashable {
     /// How Steward was started.
+    ///
+    /// Minor releases may add cases, so a `switch` over one needs an
+    /// `@unknown default`.
+    @nonexhaustive
     public enum Mode: Sendable, Hashable {
         /// In a GitHub Actions workflow (`GITHUB_ACTIONS=true`).
         case actions

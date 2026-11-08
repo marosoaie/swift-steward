@@ -10,7 +10,7 @@ struct SummaryBudgetTests {
         Summary(
             report: Report(
                 repository: "o/r",
-                pullRequest: 7,
+                pullRequestNumber: 7,
                 headCommit: SummaryTests.head,
                 findings: findings,
                 generator: "Steward"

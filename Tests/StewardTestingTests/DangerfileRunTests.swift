@@ -30,7 +30,7 @@ struct DangerfileRunTests {
         let context = try Context.fixture(diff: SampleDiff.mixed)
         let report = try #require(await FixtureChecks.run(on: context).report)
         #expect(report.repository == "octocat/hello-world")
-        #expect(report.pullRequest == 1)
+        #expect(report.pullRequestNumber == 1)
         #expect(report.headCommit == context.git.head)
         #expect(report.generator.hasPrefix("Steward "))
     }

@@ -6,7 +6,7 @@ import Testing
 struct ReportTests {
     static let report = Report(
         repository: "o/r",
-        pullRequest: 7,
+        pullRequestNumber: 7,
         headCommit: Context.stubHead,
         findings: [
             Finding(
