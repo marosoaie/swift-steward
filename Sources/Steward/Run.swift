@@ -6,7 +6,9 @@ public struct Run: Sendable, Hashable {
     ///
     /// Minor releases may add cases, so a `switch` over one needs an
     /// `@unknown default`.
+    #if hasAttribute(nonexhaustive)
     @nonexhaustive
+    #endif
     public enum Mode: Sendable, Hashable {
         /// In a GitHub Actions workflow (`GITHUB_ACTIONS=true`).
         case actions

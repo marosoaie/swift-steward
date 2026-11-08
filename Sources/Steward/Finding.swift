@@ -15,7 +15,9 @@ public struct Finding: Sendable, Hashable, Codable {
     ///
     /// Minor releases may add cases, so a `switch` over one needs an
     /// `@unknown default`.
+    #if hasAttribute(nonexhaustive)
     @nonexhaustive
+    #endif
     public enum Kind: String, Sendable, Hashable, Codable {
         /// Fails the check: the run exits with status 1.
         case failure

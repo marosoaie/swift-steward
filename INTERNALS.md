@@ -95,7 +95,9 @@ Xcode/`xcodebuild test`, whose build-product layouts differ.
 Every target builds with Swift 6.2 strict concurrency plus
 `ExistentialAny`, `MemberImportVisibility`, `InferIsolatedConformances`,
 `NonisolatedNonsendingByDefault`, and `strictMemorySafety()`; the build is
-kept warning-free. Model types are `Sendable`; parser types that hold a
+kept warning-free. Swift 6.2.3 brought `@nonexhaustive`, so it sits in
+`#if hasAttribute(nonexhaustive)`, and earlier 6.2 compilers build the
+enums without it. Model types are `Sendable`; parser types that hold a
 `Regex` deliberately are not. Libraries never throw on malformed input —
 damage stays contained to the malformed file (truncated hunks recover at the
 next file header). Only the CLI throws.
