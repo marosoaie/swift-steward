@@ -18,12 +18,15 @@ import Foundation
 public struct SonarReportParser: LogParsing, Sendable {
     private var buffer: [UInt8] = []
 
+    /// Creates a parser that hasn't read anything yet.
     public init() {}
 
+    /// Feeds the next chunk of the report; it may end anywhere.
     public mutating func consume(_ chunk: ArraySlice<UInt8>) {
         buffer.append(contentsOf: chunk)
     }
 
+    /// Decodes the report and returns its issues, in its order.
     public mutating func finalize() -> [Diagnostic] {
         defer { buffer.removeAll(keepingCapacity: false) }
         let data = Data(buffer)

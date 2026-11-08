@@ -312,6 +312,11 @@ the cold read, a footer that names Steward's own version, a name for the
 diagnostics rule of one's choosing, and a `StewardTesting` helper for a
 test's temporary files.
 
+Step 5.1's answers: B4 and the rule's name are fixed (R5 and R7 in
+[danger.md](danger.md#answered-questions), questions 74 and 76); B2, B3
+and the test helper wait until after 1.0 (questions 77, 75 and 81); and
+the footer keeps the release's version (question 82).
+
 ## Questions
 
 ### B2: annotations without a column
@@ -322,6 +327,9 @@ carry no `col=`, although most sources know one: clang-style logs give
 findings on one line (PR 5) differ only by their text. A column is a new
 `Location` property, public API, so it waits for step 5.1.
 
+Step 5.1's answer: after 1.0, as a second `Location` initializer, so
+nothing breaks.
+
 ### B3: report formats other than SonarQube's API
 
 `.sonar` reads what a SonarQube server's `GET /api/issues/search`
@@ -330,6 +338,8 @@ returns. Linters that write a report themselves use other shapes, SARIF
 reads neither, so the playground converts ruff's JSON with an eight-line
 `jq` filter. A SARIF source would need no converter. A new source is
 public API, so it waits for step 5.1.
+
+Step 5.1's answer: a SARIF source after 1.0, as an addition.
 
 ### B4: a broken build whose errors aren't on changed lines
 
@@ -346,6 +356,13 @@ errors on unchanged lines. Only the failed build steps show the
 breakage, and the quickstart now says so. Steward could also say, in the
 summary, that a log holds errors it didn't report, which changes what
 the built-in rule reports, so it's a question for step 5.1.
+
+Step 5.1's answer: report them. BuildLogKit keeps errors without a
+location, and the built-in rule adds, per build log, one failure that
+lists its errors that aren't on changed lines, the first five at their
+places in the log. Errors without a location count only in a log
+without located ones: Swift 6.4's build system repeats a compiler's
+errors as "SwiftCompile … failed" and "Build failed".
 
 ### B5: one diagnostic from two logs
 

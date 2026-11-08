@@ -52,14 +52,14 @@ struct DiagnosticsPathResolutionTests {
             diagnostic("\(checkout.path)/Foo.swift", 3),
         ]
 
-        let (matched, dropped) = ChangedLineDiagnostics.matched(
+        let matches = ChangedLineDiagnostics.matched(
             diagnostics,
             lineMap: .identity,
             changes: Self.changes,
             workspace: checkout.path
         )
-        #expect(locations(matched) == ["Foo.swift:3"])
-        #expect(dropped == 0)
+        #expect(locations(matches.onChangedLines) == ["Foo.swift:3"])
+        #expect(matches.dropped == 0)
         // `steward filter`'s matching is unchanged: it can't see the
         // checkout, so the namesake still lands by suffix.
         #expect(locations(DiagnosticMatcher.match(diagnostics, against: Self.changes, repoRoot: checkout.path))
@@ -75,13 +75,14 @@ struct DiagnosticsPathResolutionTests {
         defer { checkout.remove() }
         let diagnostics = [diagnostic(path.replacingOccurrences(of: "{root}", with: checkout.path), 2)]
 
-        let (matched, _) = ChangedLineDiagnostics.matched(
+        let matches = ChangedLineDiagnostics.matched(
             diagnostics,
             lineMap: .identity,
             changes: Self.changes,
             workspace: checkout.path
         )
-        #expect(locations(matched) == ["Foo.swift:2"])
-        #expect(matched == DiagnosticMatcher.match(diagnostics, against: Self.changes, repoRoot: checkout.path))
+        #expect(locations(matches.onChangedLines) == ["Foo.swift:2"])
+        let filtered = DiagnosticMatcher.match(diagnostics, against: Self.changes, repoRoot: checkout.path)
+        #expect(matches.onChangedLines == filtered)
     }
 }

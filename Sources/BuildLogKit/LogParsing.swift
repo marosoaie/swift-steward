@@ -8,6 +8,7 @@ import Foundation
 /// duplicate diagnostics (xcodebuild frequently prints the same one per
 /// architecture or target).
 public protocol LogParsing {
+    /// Creates a parser that hasn't read anything yet.
     init()
 
     /// Feeds the next chunk of log bytes. Chunks may split lines — or
@@ -20,14 +21,17 @@ public protocol LogParsing {
 }
 
 extension LogParsing {
+    /// Feeds the next chunk of log bytes; it may end anywhere.
     public mutating func consume(_ chunk: [UInt8]) {
         consume(chunk[...])
     }
 
+    /// Feeds the next chunk of log bytes; it may end anywhere.
     public mutating func consume(_ chunk: Data) {
         consume([UInt8](chunk)[...])
     }
 
+    /// Feeds the next chunk of the log as UTF-8 text.
     public mutating func consume(_ text: String) {
         consume(Array(text.utf8)[...])
     }

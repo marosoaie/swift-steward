@@ -8,6 +8,12 @@ import StreamParsing
 ///     /path/to/File.swift:42:13: warning: variable 'x' was never used
 ///     Sources/App/File.swift:10: error: something bad
 ///
+/// An error without a location, written as `error: message` or
+/// `tool: error: message` at the start of a line, is kept too, with a nil
+/// path and line: a linker's (`clang: error: linker command failed …`), or
+/// Xcode's `error: Multiple commands produce …`. Warnings and notes without
+/// one are skipped.
+///
 /// This is the right parser when the log's origin is mixed or unknown. When
 /// you know which tool produced the log, prefer `XcodeLogParser`,
 /// `SwiftLintLogParser`, or `SwiftFormatLogParser` — same recognition, plus
@@ -40,6 +46,10 @@ public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
         // swiftlint:disable:next line_length
         /^(?<path>[^:\n][^\n]*?):(?<line>\d+)(?::(?<column>\d+))?:\s*(?<severity>fatal error|error|warning|note|remark):\s*(?<message>.*)$/
 
+    // [tool:] error : message, where the tool is one word, so prose such
+    // as "Failed with error: …" isn't taken for one.
+    private let unlocatedErrorRegex = /^(?:[^\s:]+:\s+)?(?:fatal error|error):\s*(?<message>.*)$/
+
     // containsSeverityMarker switches on their first bytes: keep it in step.
     private static let severityMarkers: [[UInt8]] = [
         Array("error:".utf8),
@@ -48,6 +58,7 @@ public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
         Array("remark:".utf8),
     ]
 
+    /// Creates a parser that hasn't read anything yet.
     public init() {
         refine = nil
     }
@@ -56,10 +67,13 @@ public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
         self.refine = refine
     }
 
+    /// Feeds the next chunk of the log; it may end mid-line.
     public mutating func consume(_ chunk: ArraySlice<UInt8>) {
         consumeChunk(chunk)
     }
 
+    /// Flushes an unterminated final line and returns the diagnostics in
+    /// log order.
     public mutating func finalize() -> [Diagnostic] {
         flushPartialLine()
         return diagnostics
@@ -79,28 +93,27 @@ public struct ClangStyleLogParser: LogParsing, ByteLineConsumer {
 
     private mutating func parseDiagnostic(_ line: ArraySlice<UInt8>) {
         let text = String(decoding: line, as: UTF8.self)
-        guard let match = text.firstMatch(of: diagnosticRegex),
-              let lineNumber = Int(match.line)
-        else { return }
-
-        let severity: Diagnostic.Severity =
-            switch match.severity {
-            case "error", "fatal error": .error
-            case "warning": .warning
-            default: .note
-            }
-
-        var diagnostic = Diagnostic(
-            path: String(match.path),
-            line: lineNumber,
-            column: match.column.flatMap { Int($0) },
-            severity: severity,
-            message: String(match.message)
-        )
-        if let refine {
-            diagnostic = refine(diagnostic)
+        if let match = text.firstMatch(of: diagnosticRegex), let lineNumber = Int(match.line) {
+            let severity: Diagnostic.Severity =
+                switch match.severity {
+                case "error", "fatal error": .error
+                case "warning": .warning
+                default: .note
+                }
+            record(Diagnostic(
+                path: String(match.path),
+                line: lineNumber,
+                column: match.column.flatMap { Int($0) },
+                severity: severity,
+                message: String(match.message)
+            ))
+        } else if let match = text.firstMatch(of: unlocatedErrorRegex) {
+            record(Diagnostic(path: nil, line: nil, severity: .error, message: String(match.message)))
         }
+    }
 
+    private mutating func record(_ diagnostic: Diagnostic) {
+        let diagnostic = refine?(diagnostic) ?? diagnostic
         // Dedup on the complete value: rule and nil-vs-zero column must
         // distinguish diagnostics.
         if seen.insert(diagnostic).inserted {

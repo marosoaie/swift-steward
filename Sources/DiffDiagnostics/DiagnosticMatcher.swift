@@ -7,14 +7,19 @@ import GitDiffKit
 public struct MatchedDiagnostic: Sendable, Hashable, Codable {
     /// Repo-relative path, as spelled on the diff's new side.
     public var path: String
+    /// The 1-based line, one the pull request adds.
     public var line: Int
+    /// The 1-based column, when the log gives one.
     public var column: Int?
+    /// How serious the tool says the diagnostic is.
     public var severity: Diagnostic.Severity
+    /// The tool's message, as `Diagnostic.message`.
     public var message: String
     /// The violated rule, when the log parser extracted one
     /// (see `Diagnostic.rule`).
     public var rule: String?
 
+    /// Creates a matched diagnostic from its parts.
     public init(
         path: String,
         line: Int,
@@ -47,7 +52,8 @@ public struct MatchedDiagnostic: Sendable, Hashable, Codable {
 public enum DiagnosticMatcher {
     /// Returns the diagnostics that land on changed lines, with their paths
     /// rewritten to the diff's repo-relative form and the result sorted by
-    /// path, line, column, and message.
+    /// path, line, column, and message. A diagnostic without a path and a
+    /// line lands on none.
     ///
     /// - Parameters:
     ///   - diagnostics: All diagnostics found in the log.
@@ -69,12 +75,13 @@ public enum DiagnosticMatcher {
     ) -> [MatchedDiagnostic] {
         var resolver = DiagnosticPathResolver(paths: changes.files.keys, repoRoot: repoRoot)
         return diagnostics.compactMap { diagnostic -> MatchedDiagnostic? in
-            guard let path = resolver.resolve(diagnostic.path),
-                  changes.contains(line: diagnostic.line, in: path, tolerance: tolerance)
+            guard let logPath = diagnostic.path, let line = diagnostic.line,
+                  let path = resolver.resolve(logPath),
+                  changes.contains(line: line, in: path, tolerance: tolerance)
             else { return nil }
             return MatchedDiagnostic(
                 path: path,
-                line: diagnostic.line,
+                line: line,
                 column: diagnostic.column,
                 severity: diagnostic.severity,
                 message: diagnostic.message,

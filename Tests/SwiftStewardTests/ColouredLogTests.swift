@@ -48,7 +48,7 @@ struct ColouredLogTests {
         let coloured = try Self.bytes(of: "swift-6.4.log")
         #expect(coloured.contains(TerminalEscapes.escape))
         let plain = tool.diagnostics(in: try Self.bytes(of: "swift-6.4-no-color.log"))
-        #expect(plain.count == 3)
+        #expect(plain.count == 5)
         #expect(tool.diagnostics(in: coloured) == plain)
     }
 
@@ -58,6 +58,13 @@ struct ColouredLogTests {
             Diagnostic(
                 path: "/ci/Scratch/Sources/CScratch/probe.c", line: 4, column: 2,
                 severity: .warning, message: "\"hand-rolled warning\"", rule: "-W#warnings"
+            ),
+            Diagnostic(
+                path: nil, line: nil, severity: .error,
+                message: """
+                    SwiftCompile normal arm64 /ci/Scratch/Sources/Scratch/Error.swift failed with a nonzero \
+                    exit code. Command line:     cd /ci
+                    """
             ),
             Diagnostic(
                 path: "/ci/Scratch/Sources/Scratch/Error.swift", line: 2, column: 12,
@@ -71,6 +78,7 @@ struct ColouredLogTests {
                     assignment to '_' or removing it [#NoUsage]
                     """
             ),
+            Diagnostic(path: nil, line: nil, severity: .error, message: "Build failed"),
         ])
     }
 
