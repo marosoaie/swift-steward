@@ -16,8 +16,8 @@ From your repository's root, copy the template and check that it builds
 and its tests pass:
 
 ```sh
-curl -fsSL https://github.com/marosoaie/swift-steward/archive/refs/heads/main.tar.gz \
-  | tar -xz --strip-components=2 swift-steward-main/Templates/Dangerfile
+curl -fsSL https://github.com/marosoaie/swift-steward/archive/refs/tags/v0.1.1.tar.gz \
+  | tar -xz --strip-components=2 swift-steward-0.1.1/Templates/Dangerfile
 swift build --package-path Dangerfile
 swift test --package-path Dangerfile
 ```
@@ -96,7 +96,7 @@ even when they fail, so it reports a broken build's errors:
   run: >-
     docker run --rm -v "$PWD:$PWD" -w "$PWD" ghcr.io/realm/swiftlint:0.65.1
     lint --quiet > swiftlint.log || [ $? -eq 2 ]
-- uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
+- uses: marosoaie/steward-action@v0.1.0
   if: ${{ !cancelled() }}
 ```
 
@@ -150,15 +150,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      # No release yet: pinned to a commit of the Action's main branch.
-      - uses: marosoaie/steward-action@c606a4a637221b3d86c35e18c71aa4bbf6d9fecb
+      - uses: marosoaie/steward-action@v0.1.0
 ```
 
-**Pinning the Action.** The Action has no release yet. Until its first,
-`v0.1.0`, pin the Action by the full SHA of a commit on its `main`
-branch, as above; a branch name would run whatever lands there next.
-Then pin an exact tag such as `@v0.1.0` (or a SHA): under 0.x a minor
-release may break. A moving `v1` tag waits for 1.0.
+**Pinning the Action.** Pin an exact tag, as above, or a full commit
+SHA: under 0.x a minor release may break, and a branch name would run
+whatever lands there next. A moving `v1` tag waits for 1.0.
 
 With the package at `Dangerfile/` and its executable called `Dangerfile`,
 as the template has them, the Action needs no `with:`; its
