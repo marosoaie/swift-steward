@@ -15,7 +15,8 @@ enum ChangedLineDiagnostics {
     /// for two platforms, give each of its warnings twice. A source's own
     /// repeats stay, as `steward filter` keeps them. A build log's errors
     /// that aren't on changed lines are one more failure, without the ones
-    /// an earlier log gave.
+    /// an earlier log built at the same commit gave: at another, one place
+    /// can be another line.
     static func findings(
         for sources: [DiagnosticSource],
         failingOn threshold: DiagnosticSeverity,
@@ -26,7 +27,7 @@ enum ChangedLineDiagnostics {
         let lineMaps = await lineMaps(for: sources, in: context)
         var findings: [Finding] = []
         var reported: Set<MatchedDiagnostic> = []
-        var reportedElsewhere: Set<Diagnostic> = []
+        var reportedElsewhere: [String?: Set<Diagnostic>] = [:]
         // Imperative: each source awaits its read, which `reduce` can't.
         for source in sources {
             try Task.checkCancellation()
@@ -50,8 +51,9 @@ enum ChangedLineDiagnostics {
                 }
                 findings += new.map { finding(for: $0, failingOn: threshold) }
                 let elsewhere = matches.errorsElsewhere
-                let errors = elsewhere.filter { !reportedElsewhere.contains($0) }
-                reportedElsewhere.formUnion(elsewhere)
+                let earlier = reportedElsewhere[source.builtCommit, default: []]
+                let errors = elsewhere.filter { !earlier.contains($0) }
+                reportedElsewhere[source.builtCommit] = earlier.union(elsewhere)
                 if errors.count < elsewhere.count {
                     log.write("""
                         \(source.kind) \(source.path): \(count(elsewhere.count - errors.count, "error")) \
