@@ -5,6 +5,12 @@
 /// log.
 public struct PullRequestHostError: Error, Sendable, Hashable, CustomStringConvertible {
     /// What went wrong, in the terms a caller acts on.
+    ///
+    /// Minor releases may add cases, so a `switch` over one needs an
+    /// `@unknown default`.
+    #if hasAttribute(nonexhaustive)
+    @nonexhaustive
+    #endif
     public enum Kind: Sendable, Hashable {
         /// The pull request, comment, or repository doesn't exist, or the
         /// credentials can't see it (hosts hide private repositories that

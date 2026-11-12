@@ -186,9 +186,9 @@ and Steward's own tests cover how a run handles them.
 
 ## The diagnostics rule
 
-`Rule.diagnosticsOnChangedLines(in:failingOn:)` reads its reports under
-`context.run.workspace`, so its test writes one into a directory of its
-own and builds the context there:
+`Rule.diagnosticsOnChangedLines(in:failingOn:named:)` reads its
+reports under `context.run.workspace`, so its test writes one into a
+directory of its own and builds the context there:
 
 ```swift
 // Dangerfile/Tests/DangerfileTests/BuildLogTests.swift

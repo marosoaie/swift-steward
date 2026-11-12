@@ -19,11 +19,16 @@ day, as recommended and as built, the seven step 4.7 raised in
 swift-steward#32 that day too, also as recommended and as built, the
 nine step 4.9 raised in swift-steward#36 on 2026-10-28, as recommended
 and as built, the two step 4.10 raised in swift-steward#37 the same
-day, as recommended, and the five step 5.0 raised in swift-steward#38
-that day too, as recommended and as built. The sections reflect the
-answers.
+day, as recommended, the five step 5.0 raised in swift-steward#38
+that day too, as recommended and as built, and the fifteen of step
+5.1's API review on 2026-11-08, as recommended. The sections reflect
+the answers.
 Claims about danger-swift, GitHub, and SwiftPM were checked against
 their sources or by experiment; [Checks](#checks) lists how.
+
+"v1" below, written before the version reset (question 69), means the
+first release's scope, or the Action's `v1` tag, which `v0.1.0`
+replaced (question 83).
 
 ## Decisions at a glance
 
@@ -130,6 +135,7 @@ public struct Rule: Sendable {
 
 /// One thing a rule wants the pull request's author to see.
 public struct Finding: Sendable, Hashable, Codable {
+    @nonexhaustive
     public enum Kind: String, Sendable, Hashable, Codable { case failure, warning, message, markdown }
     public var kind: Kind
     public var text: String          // GitHub-flavored Markdown
@@ -424,7 +430,9 @@ at the edge:
 - The built-in rule (4.5) maps each diagnostic, drops the ones with no
   head counterpart (they can't be on the pull request's changes, which
   exist in the head), and matches the rest against `context.git` with
-  `DiagnosticMatcher`. Dropped diagnostics are counted in the log.
+  `DiagnosticMatcher`. Dropped diagnostics are counted in the log. A
+  build log's errors that aren't on changed lines are one more failure,
+  without a location (question 74).
 
   As built, a `DiagnosticSource` is `.xcodebuild`, `.swiftLint`,
   `.swiftFormat`, or `.sonar`, each with a path and an optional
@@ -506,7 +514,7 @@ one value:
 public struct Report: Sendable, Hashable, Codable {
     public var schemaVersion: Int     // 1; bumped on any breaking change
     public var repository: String     // owner/name of the base repository
-    public var pullRequest: Int
+    public var pullRequestNumber: Int // "pull_request" in JSON
     public var headCommit: String     // the SHA the findings describe
     public var findings: [Finding]    // rule order, then the order each rule returned them
     public var generator: String      // e.g. "Steward 0.1.0", for the log
@@ -1030,9 +1038,10 @@ the seven that step 4.7 raised in swift-steward#32 (numbered on from
 44) that day as well, the nine that step 4.9 raised in
 swift-steward#36 (numbered on from 51) on 2026-10-28, the two that
 step 4.10 raised in swift-steward#37 (62 and 63) the same day, and the
-five that step 5.0 raised in swift-steward#38 (64–68) that day too. The
-sections refer to them by number, and each section above already
-reflects its answer.
+five that step 5.0 raised in swift-steward#38 (64–68) that day too, and
+the fifteen of step 5.1's API review (R1–R15, numbered on from 70) on
+2026-11-08. The sections refer to them by number, and each section above
+already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1357,6 +1366,57 @@ reflects its answer.
     `@v0.1.0`, or a SHA (question 62); a moving `v1` waits for 1.0, which
     follows the maintainer's own external testing. This replaces the `v1`
     of questions 8 and 50.
+70. **`DiffParser` and `ChangedLines.lines(in:)` (R1). Answered
+    2026-11-08: removed** ("Go with all", for all fifteen of step 5.1's
+    questions), in GitDiffKit 0.3.0. `ChangedLines(diff:)` stays, and
+    streaming goes through `DiffEventParser(consumer:
+    ChangedLines.Collector())`, as `DiffSummary`'s does.
+71. **`DamageReport.Reason` (R2). Answered 2026-11-08: `@nonexhaustive`,**
+    so minor releases may add reasons, and a `switch` over one needs
+    `@unknown default`. GitDiffKit's other enums stay exhaustive.
+72. **Coloured diffs (R3). Answered 2026-11-08: parsed as plain ones,** in
+    GitDiffKit 0.3.0: git's colour codes are removed, so a coloured diff
+    gives the plain one's changed lines and renders back plain.
+73. **GitDiffKit's additions (R4). Answered 2026-11-08: after 1.0:**
+    `Hashable` on `Change`, `LineRangeSet`, `ChangedLines` and the
+    models, and `ChangedLines(diff: [UInt8])`. None breaks later.
+74. **A broken build's errors elsewhere (S3, R5). Answered 2026-11-08:
+    reported.** `Diagnostic`'s `path` and `line` are optional, and the
+    clang-style parsers keep `error:` lines without a location. The
+    built-in rule adds, per build log, one failure without a location
+    that lists the log's errors that aren't on changed lines, the first
+    five at their places in the log. Unlocated errors count only in a log
+    without located ones, since a build system repeats a compiler's
+    errors without one. Lint and Sonar reports are left out, and
+    `steward filter`'s output doesn't change.
+75. **A SARIF source (S3, R6). Answered 2026-11-08: after 1.0,** as an
+    addition.
+76. **The built-in rule's name (S3, R7). Answered 2026-11-08: a `named:`
+    parameter,** `diagnosticsOnChangedLines(in:failingOn:named:)`,
+    defaulting to "Diagnostics on changed lines", so two such rules can
+    be told apart.
+77. **A column in `Location` (S6, R8). Answered 2026-11-08: after 1.0,**
+    as a second initializer, so nothing breaks.
+78. **Enums that will grow (R9). Answered 2026-11-08: `@nonexhaustive`**
+    on `Finding.Kind`, `Run.Mode`, `PullRequestHostError.Kind` and
+    `FakePullRequestHost.Request`. `DiagnosticSeverity`,
+    `Diagnostic.Severity` and `PullRequest.State` stay exhaustive.
+79. **`Report.pullRequest` (S4, R10). Answered 2026-11-08: renamed
+    `pullRequestNumber`;** the JSON key stays `pull_request`.
+80. **Additions for real rules (S2, R11). Answered 2026-11-08: after
+    1.0,** shaped on a real rule: a file's contents as the head commit
+    has them, and the pull request's added lines with their text.
+81. **A workspace helper in `StewardTesting` (S8, R12). Answered
+    2026-11-08: after 1.0,** with question 80, which may leave tests
+    needing no files.
+82. **The footer's version (S5, R13). Answered 2026-11-08:
+    `Release.version`,** as now: every documented install pins a
+    release.
+83. **"v1" in this document (R14). Answered 2026-11-08: one note,**
+    under the status paragraph; the recorded answers stay as written.
+84. **The `Dangerfile` name (S7, R15). Answered 2026-11-08: kept,** for
+    the protocol and the package: it's Danger's word, and the one
+    migrating users search for.
 
 ## Checks
 

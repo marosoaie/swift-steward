@@ -17,13 +17,20 @@ struct DiagnosticsRuleRepositoryTests {
         builtAt commit: String? = nil
     ) async throws -> (findings: [Finding], log: [String]) {
         try fixture.repository.write(lines.map { "\($0)\n" }.joined(), to: "reports/swiftlint.log")
+        return try await run(fixture, sources: [.swiftLint("reports/swiftlint.log", builtAt: commit)])
+    }
+
+    private func run(
+        _ fixture: PullRequestFixture,
+        sources: [DiagnosticSource]
+    ) async throws -> (findings: [Finding], log: [String]) {
         let context = try await Context.actions(environment: fixture.repository.actionsEnvironment(
             base: fixture.base,
             head: fixture.head,
             built: fixture.built
         ))
         let console = RecordingConsole()
-        let rule = Rule.diagnosticsOnChangedLines(in: [.swiftLint("reports/swiftlint.log", builtAt: commit)])
+        let rule = Rule.diagnosticsOnChangedLines(in: sources)
         let findings = try await [rule].findings(in: context, log: Log(mode: .dryRun, console: console.console))
         let log = await console.finish().map { entry in
             switch entry {
@@ -93,6 +100,30 @@ struct DiagnosticsRuleRepositoryTests {
         #expect(named.findings == [warning("a.swift", 10, "changed 10")])
         #expect(named.findings == unnamed.findings)
         #expect(named.log == unnamed.log)
+    }
+
+    @Test(
+        "an error off the changed lines that two build logs give is listed once for each commit they were built at",
+        arguments: [("HEAD", ["merge"]), ("pr-head", ["merge", "head"])]
+    )
+    func errorsElsewhereAtTwoCommits(builtAt name: String, listedIn logs: [String]) async throws {
+        let fixture = try PullRequestFixture()
+        defer { fixture.remove() }
+        try fixture.repository.git(["branch", "--quiet", "pr-head", fixture.head])
+        // Line 5 is the head's line 2 in the merge, and its line 5 at the head.
+        try fixture.repository.write("a.swift:5:1: error: e\n", to: "reports/merge.log")
+        try fixture.repository.write("a.swift:5:1: error: e\n", to: "reports/head.log")
+
+        let (findings, _) = try await run(fixture, sources: [
+            .xcodebuild("reports/merge.log"),
+            .xcodebuild("reports/head.log", builtAt: name),
+        ])
+        #expect(findings.map(\.text) == logs.map { name in
+            """
+            Errors in the xcodebuild log `reports/\(name).log` that aren't on lines the pull request adds:
+            `a.swift:5`: e
+            """
+        })
     }
 
     @Test("a report built at a commit the checkout doesn't have is one failure, and reads nothing")

@@ -15,6 +15,7 @@ import Foundation
 public struct XcodeLogParser: LogParsing {
     private var base: ClangStyleLogParser
 
+    /// Creates a parser that hasn't read anything yet.
     public init() {
         base = ClangStyleLogParser { diagnostic in
             var diagnostic = diagnostic
@@ -29,10 +30,13 @@ public struct XcodeLogParser: LogParsing {
         }
     }
 
+    /// Feeds the next chunk of the log; it may end mid-line.
     public mutating func consume(_ chunk: ArraySlice<UInt8>) {
         base.consume(chunk)
     }
 
+    /// Flushes an unterminated final line and returns the diagnostics in
+    /// log order.
     public mutating func finalize() -> [Diagnostic] {
         base.finalize()
     }
@@ -47,6 +51,7 @@ public struct XcodeLogParser: LogParsing {
 public struct SwiftLintLogParser: LogParsing {
     private var base: ClangStyleLogParser
 
+    /// Creates a parser that hasn't read anything yet.
     public init() {
         base = ClangStyleLogParser { diagnostic in
             var diagnostic = diagnostic
@@ -62,10 +67,13 @@ public struct SwiftLintLogParser: LogParsing {
         }
     }
 
+    /// Feeds the next chunk of the log; it may end mid-line.
     public mutating func consume(_ chunk: ArraySlice<UInt8>) {
         base.consume(chunk)
     }
 
+    /// Flushes an unterminated final line and returns the diagnostics in
+    /// log order.
     public mutating func finalize() -> [Diagnostic] {
         base.finalize()
     }
@@ -80,6 +88,7 @@ public struct SwiftLintLogParser: LogParsing {
 public struct SwiftFormatLogParser: LogParsing {
     private var base: ClangStyleLogParser
 
+    /// Creates a parser that hasn't read anything yet.
     public init() {
         base = ClangStyleLogParser { diagnostic in
             var diagnostic = diagnostic
@@ -91,10 +100,13 @@ public struct SwiftFormatLogParser: LogParsing {
         }
     }
 
+    /// Feeds the next chunk of the log; it may end mid-line.
     public mutating func consume(_ chunk: ArraySlice<UInt8>) {
         base.consume(chunk)
     }
 
+    /// Flushes an unterminated final line and returns the diagnostics in
+    /// log order.
     public mutating func finalize() -> [Diagnostic] {
         base.finalize()
     }

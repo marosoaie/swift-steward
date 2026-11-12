@@ -1,7 +1,7 @@
 import BuildLogKit
 
 /// How severe a build or lint diagnostic is, as its tool reported it, from
-/// least to most: what `Rule.diagnosticsOnChangedLines(in:failingOn:)`
+/// least to most: what `Rule.diagnosticsOnChangedLines(in:failingOn:named:)`
 /// fails on, as `steward filter --fail-on` does.
 public enum DiagnosticSeverity: Sendable, Hashable, Comparable {
     /// A note.

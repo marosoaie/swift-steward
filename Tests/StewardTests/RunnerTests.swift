@@ -62,7 +62,7 @@ struct RunnerTests {
             """)
         let report = try #require(outcome.report)
         #expect(report.repository == "marosoaie/swift-steward")
-        #expect(report.pullRequest == 21)
+        #expect(report.pullRequestNumber == 21)
         #expect(report.headCommit == head)
         #expect(report.generator == "Steward \(Release.version)")
         #expect(report.findings.map(\.rule) == ["Deleted files", "Deleted files", "Edits", "Size", "Notes"])

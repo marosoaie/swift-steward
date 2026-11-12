@@ -93,7 +93,7 @@ struct FixtureExpectation {
     func report(repository: String, pullRequest: Int, head: String) -> Report {
         Report(
             repository: repository,
-            pullRequest: pullRequest,
+            pullRequestNumber: pullRequest,
             headCommit: head,
             findings: findings,
             generator: "Steward \(Release.version)"

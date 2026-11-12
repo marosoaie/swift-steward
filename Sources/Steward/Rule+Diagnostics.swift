@@ -29,15 +29,28 @@ extension Rule {
     /// log says, for each report, how many diagnostics it held, matched,
     /// dropped, and left out as an earlier report's.
     ///
+    /// A build log's errors that aren't on lines the pull request adds are
+    /// one more failure, without a location, listing the first five: a
+    /// build can fail on lines the pull request didn't change, or with no
+    /// line at all, as on a linker's undefined symbol or Xcode's "Multiple
+    /// commands produce". Errors without a location count only in a log
+    /// without located ones, since a build system repeats a compiler's
+    /// errors without one. A lint report's errors elsewhere are the norm,
+    /// so they're left out.
+    ///
     /// A report that can't be read, or whose `builtAt:` commit the
     /// checkout doesn't have, is one failure; the other reports are still
     /// read. Content a report's parser doesn't recognize, a malformed
     /// report included, gives no diagnostics.
+    ///
+    /// `name` names the rule in the report and the log; give each of two
+    /// such rules its own.
     public static func diagnosticsOnChangedLines(
         in sources: [DiagnosticSource],
-        failingOn severity: DiagnosticSeverity = .error
+        failingOn severity: DiagnosticSeverity = .error,
+        named name: String = "Diagnostics on changed lines"
     ) -> Rule {
-        Rule("Diagnostics on changed lines") { context, log in
+        Rule(name) { context, log in
             try await ChangedLineDiagnostics.findings(for: sources, failingOn: severity, in: context, log: log)
         }
     }

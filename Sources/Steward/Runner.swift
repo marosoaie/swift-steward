@@ -107,7 +107,7 @@ struct Runner: Sendable {
         }
         let report = Report(
             repository: context.pullRequest.base.repository,
-            pullRequest: context.pullRequest.number,
+            pullRequestNumber: context.pullRequest.number,
             headCommit: context.git.head,
             findings: findings,
             generator: Self.generator

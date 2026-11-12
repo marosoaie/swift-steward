@@ -44,7 +44,7 @@ struct DiagnosticsLineMapTests {
 
     @Test("built lines map to head lines, through the base's rename too, and lines the base wrote are dropped")
     func mapped() {
-        let (matched, dropped) = ChangedLineDiagnostics.matched(
+        let matches = ChangedLineDiagnostics.matched(
             [
                 diagnostic("/w/a.swift", 1), diagnostic("/w/a.swift", 5), diagnostic("/w/a.swift", 4),
                 diagnostic("/w/new.swift", 6), diagnostic("/w/new.swift", 1), diagnostic("/w/other.swift", 3),
@@ -53,32 +53,32 @@ struct DiagnosticsLineMapTests {
             changes: Self.changes,
             workspace: "/w"
         )
-        #expect(matched.map { "\($0.path):\($0.line)" } == ["a.swift:3", "old.swift:5"])
-        #expect(dropped == 2)
+        #expect(matches.onChangedLines.map { "\($0.path):\($0.line)" } == ["a.swift:3", "old.swift:5"])
+        #expect(matches.dropped == 2)
     }
 
     @Test("a path the line map doesn't know keeps its lines")
     func unknownPath() {
         // `old.swift` is the head's name for the built commit's `new.swift`.
-        let (matched, dropped) = ChangedLineDiagnostics.matched(
+        let matches = ChangedLineDiagnostics.matched(
             [diagnostic("old.swift", 5)],
             lineMap: Self.lineMap,
             changes: Self.changes,
             workspace: "/w"
         )
-        #expect(matched.map(\.line) == [5])
-        #expect(dropped == 0)
+        #expect(matches.onChangedLines.map(\.line) == [5])
+        #expect(matches.dropped == 0)
     }
 
     @Test("line numbers at the extremes neither trap nor match", arguments: [Int.min, -1, 0, Int.max])
     func extremeLines(line: Int) {
-        let (matched, _) = ChangedLineDiagnostics.matched(
+        let matches = ChangedLineDiagnostics.matched(
             [diagnostic("a.swift", line), diagnostic("new.swift", line), diagnostic("b.swift", line)],
             lineMap: Self.lineMap,
             changes: Self.changes,
             workspace: "/w"
         )
-        #expect(matched.isEmpty)
+        #expect(matches.onChangedLines.isEmpty)
     }
 
     @Test("a finding's text is the escaped message and the rule as a code span, either alone if the other is empty")

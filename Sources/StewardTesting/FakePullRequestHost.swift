@@ -17,6 +17,12 @@ import GitHubAPI
 /// ```
 public actor FakePullRequestHost: PullRequestHost {
     /// A request a run sent, with what it asked for.
+    ///
+    /// Minor releases may add cases, so a `switch` over one needs an
+    /// `@unknown default`.
+    #if hasAttribute(nonexhaustive)
+    @nonexhaustive
+    #endif
     public enum Request: Sendable, Hashable {
         /// `pullRequest(number:)`, which a run sends before each write to
         /// check that the head hasn't moved.

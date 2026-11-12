@@ -39,6 +39,28 @@ struct LogParserTests {
         ])
     }
 
+    @Test("an error without a location is kept, without its tool's name; prose and other severities aren't")
+    func unlocatedErrors() {
+        let log = """
+        error: Multiple commands produce '/Build/App.app/Info.plist'
+        clang: error: linker command failed with exit code 1 (use -v to see invocation)
+        ld: fatal error: too many errors
+        warning: an unlocated warning
+        Failed with error: prose
+        error: Multiple commands produce '/Build/App.app/Info.plist'
+        """
+        #expect(ClangStyleLogParser.diagnostics(in: log) == [
+            Diagnostic(
+                path: nil, line: nil, severity: .error, message: "Multiple commands produce '/Build/App.app/Info.plist'"
+            ),
+            Diagnostic(
+                path: nil, line: nil, severity: .error,
+                message: "linker command failed with exit code 1 (use -v to see invocation)"
+            ),
+            Diagnostic(path: nil, line: nil, severity: .error, message: "too many errors"),
+        ])
+    }
+
     @Test("collapses duplicate diagnostics (multi-target builds)")
     func deduplicates() {
         let log = """
@@ -153,6 +175,12 @@ struct DiagnosticMatcherTests {
         let matched = DiagnosticMatcher.match(
             diagnostics, against: changes, tolerance: 2)
         #expect(matched.map(\.message) == ["near"])
+    }
+
+    @Test("a diagnostic without a location lands on no changed line")
+    func unlocatedDiagnostic() {
+        let diagnostics = [Diagnostic(path: nil, line: nil, severity: .error, message: "linker command failed")]
+        #expect(DiagnosticMatcher.match(diagnostics, against: changes).isEmpty)
     }
 
     @Test("output is sorted by file, line, column")

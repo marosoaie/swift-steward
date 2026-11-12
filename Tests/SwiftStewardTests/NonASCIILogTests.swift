@@ -42,7 +42,7 @@ struct NonASCIILogTests {
             \(decomposed):1:1: warning: x
             """).first)
         // String == compares canonical equivalence, so compare the bytes.
-        #expect(Array(diagnostic.path.utf8) == Array(decomposed.utf8))
+        #expect(diagnostic.path.map { Array($0.utf8) } == Array(decomposed.utf8))
     }
 
     @Test(

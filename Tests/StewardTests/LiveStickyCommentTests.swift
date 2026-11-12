@@ -31,7 +31,7 @@ struct LiveStickyCommentTests {
             Summary(
                 report: Report(
                     repository: live.repository.description,
-                    pullRequest: live.number,
+                    pullRequestNumber: live.number,
                     headCommit: head,
                     findings: findings,
                     generator: "Steward's live test (step 4.4)"

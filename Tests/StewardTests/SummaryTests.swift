@@ -17,7 +17,7 @@ struct SummaryTests {
         Summary(
             report: Report(
                 repository: repository,
-                pullRequest: 7,
+                pullRequestNumber: 7,
                 headCommit: head,
                 findings: findings,
                 generator: "Steward"
@@ -47,7 +47,7 @@ struct SummaryTests {
         let summary = Summary(
             report: Report(
                 repository: "o/r",
-                pullRequest: 7,
+                pullRequestNumber: 7,
                 headCommit: Self.head,
                 findings: findings,
                 generator: "Steward 0.1.0"
@@ -170,7 +170,7 @@ struct SummaryTests {
         let summary = Summary(
             report: Report(
                 repository: "o/r",
-                pullRequest: 1,
+                pullRequestNumber: 1,
                 headCommit: Self.head,
                 findings: [.warning("w", at: Location(path: "a"))],
                 generator: "Steward"
