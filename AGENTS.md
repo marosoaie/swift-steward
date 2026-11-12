@@ -229,12 +229,9 @@ iteration), never narration of the next line.
   new minor release moves them all to it. The quickstart's tarball URL
   names the latest release's tag; every release's version-bump PR moves
   it to the new tag, so each tag's quickstart copies that tag's template.
-  The quickstart's two pins of steward-action name the Action's latest
-  release, `@v0.1.0`; a new release of the Action moves them to its tag.
-  This repository's workflows, like git-diff-parser's, pin every action,
-  steward-action included, by full commit SHA with its version in a
-  comment (`@<sha> # v0.1.0`), and Dependabot proposes new pins monthly,
-  in one pull request.
+  The quickstart's two pins of steward-action and `pr.yml`'s name the
+  Action's latest release, `@v0.1.0`, as git-diff-parser's `ci.yml` does;
+  a new release of the Action moves them all to its tag.
   Versions restarted at 0.1.0 on 2026-11-02 (v1.0.0–v2.0.0 were
   withdrawn). Under 0.x a minor release may break, so workflows pin an
   exact tag such as `@v0.1.0`, or a SHA; a moving `v1` tag waits for 1.0,
