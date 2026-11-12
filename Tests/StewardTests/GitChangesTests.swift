@@ -90,4 +90,56 @@ struct GitChangesTests {
         #expect(changes.createdFiles == ["caf\u{FFFD}"])
         #expect(changes.diff.files.first?.header.newPath?.bytes == Array("caf".utf8) + [0xE9])
     }
+
+    @Test("a pattern keeps the files either of whose paths it matches, and the commits, merge base and head")
+    func matching() throws {
+        let swift = try changes.changes(matching: "*.swift")
+        #expect(swift.createdFiles == ["Added.swift", "Copy.swift"])
+        #expect(swift.deletedFiles == ["Deleted.swift"])
+        #expect(swift.modifiedFiles == ["Modified.swift", "New.swift"])
+        #expect(swift.commits == changes.commits && swift.mergeBase == changes.mergeBase && swift.head == changes.head)
+        #expect(try changes.changes(matching: "**").diff == changes.diff)
+        #expect(try changes.changes(matching: "Sources/**").diff.files.isEmpty)
+    }
+
+    @Test(
+        "a deleted file matches by its old path, a rename by either, and a copy by its new path alone",
+        arguments: [
+            ("Deleted.swift", ["Deleted.swift"]),
+            ("Old.swift", ["New.swift"]),
+            ("New.swift", ["New.swift"]),
+            ("Copy.swift", ["Copy.swift"]),
+            ("Original.swift", []),
+        ]
+    )
+    func matchingByEitherPath(pattern: String, paths: [String]) throws {
+        let matched = try changes.changes(matching: PathPattern(pattern))
+        #expect(matched.diff.files.compactMap { $0.header.newPath?.string ?? $0.header.oldPath?.string } == paths)
+        #expect(matched.renamedFiles == (paths == ["New.swift"] ? changes.renamedFiles : []))
+    }
+
+    @Test("a pattern matches git's bytes, so ? matches one byte of a path that isn't UTF-8")
+    func matchingBytes() throws {
+        let diff = Diff(diff: Array("diff --git a/caf".utf8) + [0xE9] + Array(" b/caf".utf8) + [0xE9] + Array("""
+
+            new file mode 100644
+            index 0000000..1111111
+
+            """.utf8))
+        let changes = GitChanges(diff: diff, commits: [], mergeBase: "", head: "")
+        #expect(try changes.changes(matching: "caf?").diff.files.count == 1)
+        #expect(try changes.changes(matching: "caf??").diff.files.isEmpty)
+    }
+
+    @Test("a malformed pattern throws an error that names it and says what's wrong")
+    func malformedPattern() {
+        #expect {
+            try changes.changes(matching: "Sources/[ab].swift")
+        } throws: { error in
+            String(describing: error) == """
+                The path pattern “Sources/[ab].swift” has an unescaped “[”; classes aren't supported, \
+                so write \\[ for a literal one.
+                """
+        }
+    }
 }
