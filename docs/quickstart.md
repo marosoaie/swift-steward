@@ -256,7 +256,27 @@ as it was when the event fired.
   workflow's own, name the account the token posts as, so Steward finds
   the summary it posted before: the Action's `token` and `summary-author`
   inputs, or, without the Action, that token in `GITHUB_TOKEN` and
-  `--summary-author <login>`.
+  `--summary-author <login>`. Read the security model below first.
+
+## Security model
+
+- **A pull request decides its own check.** The workflow, the
+  `Dangerfile/` package and the build all come from the pull request's
+  merge commit, so a pull request can change its rules, or the steps
+  that write the logs, and pass. Steward reads `.gitattributes` from the
+  merge base, so a pull request can't hide its lines with one, but its
+  check is still its own code's verdict. Protect the base branch with
+  required reviews, so a person sees changes to the rules and the
+  workflow before they merge.
+- **A pull request from a fork can't post.** It gets a read-only
+  `GITHUB_TOKEN` and none of the repository's secrets, so Steward posts
+  nothing (see Permissions). Steward refuses `pull_request_target`,
+  whose token can write even on a fork's pull request.
+- **Steward's token is visible to the pull request's code.** The
+  Dangerfile is the pull request's code, so it can read the token it runs
+  with: the Action's `token` input, or `GITHUB_TOKEN` without the Action.
+  Give a token of your own only what a pull request's author may do:
+  comment on this repository's pull requests, and nothing more.
 
 ## One run per pull request at a time
 

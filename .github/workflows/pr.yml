@@ -22,7 +22,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # reach the merge base; the Actions-run suite needs it too
 
@@ -31,7 +31,7 @@ jobs:
           sudo xcode-select -s "$(printf '%s\n' /Applications/Xcode*.app | sort -V | tail -1)"
           swift --version
 
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .build
           key: spm-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('Package.resolved') }}
@@ -39,7 +39,7 @@ jobs:
       # Keyed on what it holds, as in linux-tests.
       - name: Restore the fixture cache
         id: fixture-cache
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/Library/Caches/git-diff-parser-tests
           key: fixtures-${{ runner.os }}-newest
@@ -62,7 +62,7 @@ jobs:
 
       - name: Save the fixture cache
         if: steps.fixture-key.outputs.key != '' && steps.fixture-key.outputs.key != steps.fixture-cache.outputs.cache-matched-key
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/Library/Caches/git-diff-parser-tests
           key: ${{ steps.fixture-key.outputs.key }}
@@ -81,7 +81,7 @@ jobs:
       # step it replaced did.
       - name: Steward
         if: ${{ !cancelled() }}
-        uses: marosoaie/steward-action@v0.1.0
+        uses: marosoaie/steward-action@f61519c48ca3d7ff61c7a91dbdac2686524300d5 # v0.1.0
 
       - name: Test the Dangerfile's rules
         if: ${{ !cancelled() }}
@@ -106,7 +106,7 @@ jobs:
           xz --version | head -1
           swift --version
 
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # The fixture cache is keyed on what it holds: after the tests, on a
       # hash of its files' names and sizes. A run that downloads a fixture
@@ -122,7 +122,7 @@ jobs:
       # modules.
       - name: Restore the fixture cache
         id: fixture-cache
-        uses: actions/cache/restore@v6
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/git-diff-parser-tests
           key: fixtures-${{ runner.os }}-newest
@@ -148,7 +148,7 @@ jobs:
 
       - name: Save the fixture cache
         if: steps.fixture-key.outputs.key != '' && steps.fixture-key.outputs.key != steps.fixture-cache.outputs.cache-matched-key
-        uses: actions/cache/save@v6
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/git-diff-parser-tests
           key: ${{ steps.fixture-key.outputs.key }}
@@ -164,7 +164,7 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0   # the dry run's merge base
 
@@ -185,10 +185,12 @@ jobs:
       # The built executable, not swift run, so a SwiftPM error can't pass
       # for status 1.
       - name: Dry run
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           bin=$(swift build --package-path "$RUNNER_TEMP/Dangerfile" --show-bin-path)
           status=0
-          env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/${{ github.base_ref }}" || status=$?
+          env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/$BASE_REF" || status=$?
           echo "The Dangerfile exited with status $status."
           test "$status" -le 1
 
@@ -197,7 +199,7 @@ jobs:
     container: swift:6.2
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -213,10 +215,12 @@ jobs:
       # The checkout belongs to the runner's user, not the container's root,
       # as the quickstart's workflow without the Action says.
       - name: Dry run
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           bin=$(swift build --package-path "$RUNNER_TEMP/Dangerfile" --show-bin-path)
           status=0
-          env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/${{ github.base_ref }}" || status=$?
+          env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/$BASE_REF" || status=$?
           echo "The Dangerfile exited with status $status."
           test "$status" -le 1

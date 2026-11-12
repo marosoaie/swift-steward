@@ -17,7 +17,13 @@ jobs:
     env:
       VERSION: ${{ inputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      # A release tags and publishes what main holds; the run's branch is
+      # whatever the dispatch chose.
+      - name: Release only from main
+        run: |
+          [[ "$GITHUB_REF" == refs/heads/main ]] || { echo "Releases run from main, not $GITHUB_REF"; exit 1; }
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Select newest Xcode (Swift 6.2+ required)
         run: |
@@ -68,6 +74,9 @@ jobs:
       # repo); skips quietly when it is not configured. Never touches the old
       # Formula/git-diff-parser.rb: it installs .build/release/git-diff-parser,
       # which releases since the rename don't produce.
+      # The key and the clone stay in the job's own temporary directory, and
+      # ssh accepts only GitHub's published host keys (api.github.com/meta),
+      # so the key can't be offered to a host that merely claims the name.
       - name: Bump Homebrew formula
         env:
           TAP_DEPLOY_KEY: ${{ secrets.TAP_DEPLOY_KEY }}
@@ -77,10 +86,18 @@ jobs:
             exit 0
           fi
           umask 077
-          printf '%s\n' "$TAP_DEPLOY_KEY" > /tmp/tap_deploy_key
-          export GIT_SSH_COMMAND="ssh -i /tmp/tap_deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-          git clone --depth 1 git@github.com:marosoaie/homebrew-tap.git /tmp/tap
-          cd /tmp/tap
+          key="$RUNNER_TEMP/tap_deploy_key"
+          known_hosts="$RUNNER_TEMP/known_hosts"
+          trap 'rm -f "$key"' EXIT
+          printf '%s\n' "$TAP_DEPLOY_KEY" > "$key"
+          cat > "$known_hosts" <<'EOF'
+          github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+          github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+          github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
+          EOF
+          export GIT_SSH_COMMAND="ssh -i '$key' -o IdentitiesOnly=yes -o UserKnownHostsFile='$known_hosts' -o StrictHostKeyChecking=yes"
+          git clone --depth 1 git@github.com:marosoaie/homebrew-tap.git "$RUNNER_TEMP/tap"
+          cd "$RUNNER_TEMP/tap"
           formula=Formula/steward.rb
           if [ ! -f "$formula" ]; then
             echo "::warning::$formula is not in the tap yet; pin it to v$VERSION ($GITHUB_SHA) by hand"

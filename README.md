@@ -171,15 +171,21 @@ On GitHub you can also download the PR's diff directly
 ### CI recipes
 
 **GitHub Actions — zero-infrastructure annotations.** Emit workflow commands;
-GitHub attaches them to the PR's changed lines in the Files tab:
+GitHub attaches them to the PR's changed lines in the Files tab. The base
+branch's name reaches the scripts through `env:` rather than `${{ }}`
+inside `run:`, so no branch name can become part of a script:
 
 ```yaml
-- run: git fetch origin ${{ github.base_ref }}
+- env:
+    BASE_REF: ${{ github.base_ref }}
+  run: git fetch origin "$BASE_REF"
 - run: |
     set -o pipefail
     xcodebuild build ... 2>&1 | tee build.log
-- run: |
-    git diff origin/${{ github.base_ref }}...HEAD \
+- env:
+    BASE_REF: ${{ github.base_ref }}
+  run: |
+    git diff "origin/$BASE_REF...HEAD" \
       | .build/release/steward filter build.log --diff - \
           --format github --fail-on error
 ```
@@ -284,6 +290,8 @@ let kept = DiagnosticMatcher.match(
   for humans and coding agents alike. Read it before contributing.
 - [docs/github-api.md](docs/github-api.md) — the GitHub client Steward posts
   with, generated from GitHub's OpenAPI description, and how to update it.
+- [SECURITY.md](SECURITY.md) — what Steward guarantees about the pull
+  request's text and logs, and how to report a vulnerability.
 
 Steward's user docs are under [Where to start](#where-to-start).
 
