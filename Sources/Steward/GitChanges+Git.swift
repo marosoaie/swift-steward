@@ -19,6 +19,7 @@ extension GitChanges {
         let diff = try await git.diff(
             from: mergeBase,
             to: head,
+            attributesFrom: mergeBase,
             options: ["--unified=3"],
             into: Diff.Collector(),
             parsing: .fullModel

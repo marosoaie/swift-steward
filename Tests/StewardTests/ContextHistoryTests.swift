@@ -252,4 +252,25 @@ struct ContextHistoryTests {
         let remedy = #"git config --global --add safe.directory "$GITHUB_WORKSPACE""#
         #expect(error?.description.contains(remedy) == true, "\(error?.description ?? "")")
     }
+
+    @Test("a git too old for --attr-source is a git failure that names the version Steward needs")
+    func gitWithoutAttributeSource() {
+        let option = "--attr-source=\(String(repeating: "a", count: 40))"
+        // git 2.31's output, cut after its usage's first line.
+        let tooOld = ContextError.gitFailed(arguments: [option, "diff"], status: 129, message: """
+            unknown option: \(option)
+            usage: git [--version] [--help] [-C <path>] [-c <name>=<value>]
+            """)
+        #expect(tooOld.description.hasSuffix("""
+            exited with status 129: unknown option: \(option)
+
+            Steward reads a diff's .gitattributes from the merge base with git's --attr-source \
+            option, which needs git 2.41 or later, and this git is older. Install a newer git \
+            before Steward, as a container job's image may need.
+            """))
+        let badSource = ContextError.gitFailed(
+            arguments: [option, "diff"], status: 128, message: "fatal: bad --attr-source or GIT_ATTR_SOURCE"
+        )
+        #expect(!badSource.description.contains("2.41"))
+    }
 }

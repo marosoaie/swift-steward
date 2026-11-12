@@ -290,7 +290,11 @@ Where each part comes from (step 4.2):
   shape rather than trusting the user's configuration:
   `--no-color --no-ext-diff --no-textconv --no-relative
   --src-prefix=a/ --dst-prefix=b/ -M`, so `diff.noprefix`,
-  `color.ui=always`, or an external diff tool can't break parsing. The
+  `color.ui=always`, or an external diff tool can't break parsing.
+  Attributes come from the merge base's `.gitattributes`, not the
+  checkout's (`--attr-source`, which needs git 2.41 or later), and not
+  from the user's or the system's attributes file: a pull request could
+  mark its own files `-diff`, and git would show none of their lines. The
   log is read with NUL-separated `--format` fields, so any subject parses.
 - **`run`** from the environment: `GITHUB_ACTIONS`, `GITHUB_WORKSPACE`,
   and `GITHUB_SHA` (the commit the workflow checked out, which for

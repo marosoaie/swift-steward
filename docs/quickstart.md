@@ -7,8 +7,8 @@ There's no Node and no separate binary: the package's executable is the
 runner. This page sets one up for GitHub Actions.
 [danger.md](danger.md) is the design behind it.
 
-You need Swift 6.2 or later, on macOS 26 or Linux, and GitHub Actions
-`pull_request` workflows.
+You need Swift 6.2 or later, on macOS 26 or Linux, git 2.41 or later,
+and GitHub Actions `pull_request` workflows.
 
 ## 1. Add the Dangerfile package
 

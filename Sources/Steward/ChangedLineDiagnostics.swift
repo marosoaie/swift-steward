@@ -174,7 +174,13 @@ enum ChangedLineDiagnostics {
         do {
             guard let built = try await git.commit(named: name) else { return .failure(.missingCommit) }
             if built == context.run.builtCommit { return .success((built, context.run.lineMap)) }
-            return .success((built, try await LineMap(built: built, head: context.git.head, git: git)))
+            let map = try await LineMap(
+                built: built,
+                head: context.git.head,
+                attributesFrom: context.git.mergeBase,
+                git: git
+            )
+            return .success((built, map))
         } catch {
             return .failure(.git(String(errorDescription: error)))
         }
