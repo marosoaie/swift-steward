@@ -19,8 +19,9 @@ extension Git {
     /// `diff.suppressBlankEmpty` drops the space of a blank context line,
     /// and git diffs a file over `core.bigFileThreshold` as binary. An
     /// attributes file outside the repository, `core.attributesFile` or by
-    /// default `~/.config/git/attributes`, could mark files `-diff`: only
-    /// the repository's own attributes count.
+    /// default `~/.config/git/attributes`, could mark files `-diff`; so
+    /// could the checkout's own `.gitattributes`, which `diff` reads from a
+    /// commit instead.
     static let diffConfiguration = [
         "-c", "core.quotePath=true", "-c", "diff.suppressBlankEmpty=false", "-c", "core.bigFileThreshold=512m",
         "-c", "core.attributesFile=/dev/null",
@@ -70,14 +71,22 @@ extension Git {
 
     /// Streams the diff from commit `old` to commit `new` through a parser
     /// whose consumer starts as `consumer`, and returns the consumer.
+    ///
+    /// The `.gitattributes` files are those of the commit `attributes`
+    /// (`--attr-source`, git 2.41 or later), not the checkout's: a pull
+    /// request could add one that marks its files `-diff`, and git would
+    /// show none of their lines. Callers pass the merge base, whose
+    /// attributes the base branch decided.
     func diff<Consumer: DiffEventConsumer & Sendable>(
         from old: String,
         to new: String,
+        attributesFrom attributes: String,
         options: [String] = [],
         into consumer: Consumer,
         parsing parsingOptions: ParsingOptions
     ) async throws -> Consumer {
-        let arguments = Self.diffConfiguration + ["diff"] + Self.diffOptions + options + [old, new, "--"]
+        let arguments = Self.diffConfiguration + ["--attr-source=\(attributes)", "diff"] + Self.diffOptions + options
+            + [old, new, "--"]
         let parser = DiffEventParser(consumer: consumer, options: parsingOptions)
         let outcome = try await run(arguments, into: parser) { $0.consume($1) }
         try Self.requireSuccess(outcome, arguments)

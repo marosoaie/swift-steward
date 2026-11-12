@@ -1,7 +1,11 @@
 import Foundation
 
-/// Building blocks for the GitHub-flavored Markdown the summary is made of.
-enum Markdown {
+/// Building blocks for the GitHub-flavored Markdown the summary is made of,
+/// two of them for rules: a finding's text is Markdown, so a rule that puts
+/// text from the pull request in it, such as a file name or an added line,
+/// passes that text through `escaped(_:)`, or `codeSpan(_:)` to show it as
+/// code. Either way it renders as written and can't mention anyone.
+public enum Markdown {
     /// `text`, plain text such as an error's description, escaped so it
     /// renders as written inside a line: Markdown's inline punctuation is
     /// backslash-escaped, and a zero-width space follows every `@`, so a
@@ -13,7 +17,7 @@ enum Markdown {
     /// they are. A bare URL still renders as a link, but one that contains
     /// escaped punctuation or such a number, as in `…/page#12`, links to
     /// the escaped spelling.
-    static func escaped(_ text: String) -> String {
+    public static func escaped(_ text: String) -> String {
         let scalars = Array(text.unicodeScalars)
         return String(scalars.indices.flatMap { index -> [Unicode.Scalar] in
             let scalar = scalars[index]
@@ -133,7 +137,7 @@ enum Markdown {
     /// them anyway, so the span can sit in a table cell. Backticks are
     /// counted by scalar, as the Markdown parser counts them, so one
     /// followed by a combining mark still counts.
-    static func codeSpan(_ text: String) -> String {
+    public static func codeSpan(_ text: String) -> String {
         let content = lines(of: text).joined(separator: " ")
         let scalars = content.unicodeScalars
         let longestRun = scalars.split { $0 != "`" }.map(\.count).max() ?? 0

@@ -1,6 +1,7 @@
 import Foundation
 import GitDiffKit
 import GitHubAPI
+import OutputEscaping
 import PullRequestHosting
 import StewardVersion
 
@@ -36,7 +37,7 @@ struct Runner: Sendable {
     var currentDirectory: String
     var console: Console
     var makeHost: HostFactory
-    var makeToken: @Sendable () -> String = { UUID().uuidString }
+    var makeToken: @Sendable () -> String = RunnerOutput.newStopToken
     /// Pauses before a request is retried.
     var sleep: @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
 

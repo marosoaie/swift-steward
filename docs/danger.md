@@ -290,7 +290,11 @@ Where each part comes from (step 4.2):
   shape rather than trusting the user's configuration:
   `--no-color --no-ext-diff --no-textconv --no-relative
   --src-prefix=a/ --dst-prefix=b/ -M`, so `diff.noprefix`,
-  `color.ui=always`, or an external diff tool can't break parsing. The
+  `color.ui=always`, or an external diff tool can't break parsing.
+  Attributes come from the merge base's `.gitattributes`, not the
+  checkout's (`--attr-source`, which needs git 2.41 or later), and not
+  from the user's or the system's attributes file: a pull request could
+  mark its own files `-diff`, and git would show none of their lines. The
   log is read with NUL-separated `--format` fields, so any subject parses.
 - **`run`** from the environment: `GITHUB_ACTIONS`, `GITHUB_WORKSPACE`,
   and `GITHUB_SHA` (the commit the workflow checked out, which for
@@ -658,7 +662,10 @@ when non-empty, then the `markdown` findings as they are, then a footer:
   it (Markdown punctuation, `@` so a compiler message can't ping
   anyone, and the `#` or `GH-` before an issue number, so it can't
   cross-reference an issue: decided 2026-10-27, question 34) before it
-  becomes a finding. Bare URLs stay links.
+  becomes a finding. Bare URLs stay links. Rules have the same escaping
+  for text they take from the pull request, such as a file name:
+  `Markdown.escaped(_:)`, and `Markdown.codeSpan(_:)` to show it as code
+  (decided 2026-11-12, question 85).
 - **The headline counts everything**, even when the body is cut short.
   `markdown` findings count as notes:
   `**1 failure, 2 warnings, 1 message, 1 note**` (decided 2026-10-26,
@@ -751,7 +758,8 @@ posts. That's why the Action's documentation (4.8) sets the group.
    writes it out.
 4. **Render** the summary (section 5): to the log and appended to
    `$GITHUB_STEP_SUMMARY` in CI (a summary that can't be written only
-   warns), to standard output in a dry run.
+   warns), to standard output in a dry run, escaped as the log is
+   (below).
 5. **Post** through `PullRequestHost`, unless this is a dry run or the
    pull request comes from a fork (v1 checks `PullRequest.isFromFork`
    first, says why it won't post in a `::notice title=Steward::` annotation, and
@@ -789,7 +797,11 @@ run ignores the dry run's `--base` and `--pull-request`, with a warning:
 there, the event names the pull request. The log goes to standard error,
 grouped with `::group::` in Actions; text that could pass for a workflow
 command, such as a finding's, is logged with commands paused
-(`::stop-commands::`). The library's damage reports go there too; an
+(`::stop-commands::`). A dry run, whose output can still land in a log,
+writes its log and summary as a terminal should show them: control
+characters other than line breaks and tabs as Swift escapes (`\u{1B}`),
+`##[` as `#\u{23}[`, and a `::` that starts a line as `\u{3A}:`
+(question 86). The library's damage reports go there too; an
 abandoned file (`.error`) becomes a `::warning::` annotation, since the
 rules then saw an incomplete diff.
 
@@ -1040,7 +1052,8 @@ swift-steward#36 (numbered on from 51) on 2026-10-28, the two that
 step 4.10 raised in swift-steward#37 (62 and 63) the same day, and the
 five that step 5.0 raised in swift-steward#38 (64–68) that day too, and
 the fifteen of step 5.1's API review (R1–R15, numbered on from 70) on
-2026-11-08. The sections refer to them by number, and each section above
+2026-11-08, and the two that step 5.1's hardening raised (85 and 86)
+on 2026-11-12. The sections refer to them by number, and each section above
 already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
@@ -1417,6 +1430,21 @@ already reflects its answer.
 84. **The `Dangerfile` name (S7, R15). Answered 2026-11-08: kept,** for
     the protocol and the package: it's Danger's word, and the one
     migrating users search for.
+85. **Escaping for rules (S5). Answered 2026-11-12: public,** as an
+    addition: `Markdown.escaped(_:)` and `Markdown.codeSpan(_:)`, the
+    built-in rule's own escaping. A rule that puts a file name or an
+    added line into a finding then shows it as written, and the text
+    can't mention anyone or cross-reference an issue. The names stay as
+    built ("The names look fine to me"), though in a Dangerfile that
+    also imports apple/swift-markdown, the type shadows that module's
+    name, `Markdown`.
+86. **Command syntax in text output (S5). Answered 2026-11-12: escaped
+    everywhere.** A dry run's summary and log, and `steward`'s text
+    output, write `##[` as `#\u{23}[` and a `::` that starts a line as
+    `\u{3A}:`, in the pass that escapes control characters, wherever
+    they run. The alternative, pausing commands around that output only
+    when `GITHUB_ACTIONS` is set, would miss output that reaches a
+    workflow's log another way, such as a dry run's.
 
 ## Checks
 

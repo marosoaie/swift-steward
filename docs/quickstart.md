@@ -7,8 +7,8 @@ There's no Node and no separate binary: the package's executable is the
 runner. This page sets one up for GitHub Actions.
 [danger.md](danger.md) is the design behind it.
 
-You need Swift 6.2 or later, on macOS 26 or Linux, and GitHub Actions
-`pull_request` workflows.
+You need Swift 6.2 or later, on macOS 26 or Linux, git 2.41 or later,
+and GitHub Actions `pull_request` workflows.
 
 ## 1. Add the Dangerfile package
 
@@ -65,8 +65,12 @@ template has three examples; keep, change, or delete them:
 | `conflictMarkers` | A failure at each added line that starts a merge conflict's marker | `context.git.diff`, line by line |
 
 A rule is a name and a closure from the context to findings: failures,
-which fail the check, warnings, messages, and Markdown. A finding with a
-`Location` links to that file and line in the pull request's head commit.
+which fail the check, warnings, messages, and Markdown. A finding's text
+is Markdown, so put text from the pull request, such as a file name, in
+it through `Markdown.escaped(_:)`, or `Markdown.codeSpan(_:)` to show it
+as code: then it shows as written and can't mention anyone. A finding
+with a `Location` links to that file and line in the pull request's head
+commit.
 Each rule is a static property listed in `rules`, so its test can call it
 by name: the template has a test for each rule, and one for the whole
 Dangerfile. [Testing a Dangerfile's rules](rule-tests.md) says how to
@@ -252,7 +256,27 @@ as it was when the event fired.
   workflow's own, name the account the token posts as, so Steward finds
   the summary it posted before: the Action's `token` and `summary-author`
   inputs, or, without the Action, that token in `GITHUB_TOKEN` and
-  `--summary-author <login>`.
+  `--summary-author <login>`. Read the security model below first.
+
+## Security model
+
+- **A pull request decides its own check.** The workflow, the
+  `Dangerfile/` package and the build all come from the pull request's
+  merge commit, so a pull request can change its rules, or the steps
+  that write the logs, and pass. Steward reads `.gitattributes` from the
+  merge base, so a pull request can't hide its lines with one, but its
+  check is still its own code's verdict. Protect the base branch with
+  required reviews, so a person sees changes to the rules and the
+  workflow before they merge.
+- **A pull request from a fork can't post.** It gets a read-only
+  `GITHUB_TOKEN` and none of the repository's secrets, so Steward posts
+  nothing (see Permissions). Steward refuses `pull_request_target`,
+  whose token can write even on a fork's pull request.
+- **Steward's token is visible to the pull request's code.** The
+  Dangerfile is the pull request's code, so it can read the token it runs
+  with: the Action's `token` input, or `GITHUB_TOKEN` without the Action.
+  Give a token of your own only what a pull request's author may do:
+  comment on this repository's pull requests, and nothing more.
 
 ## One run per pull request at a time
 
@@ -314,7 +338,10 @@ into the latest base, not the pull request's head:
 ## A dry run
 
 Outside GitHub Actions, the Dangerfile is a dry run: it checks the branch
-you're on, prints the summary, and never posts.
+you're on, prints the summary, and never posts. Its output escapes the
+control characters and workflow-command syntax it finds in the pull
+request's text, such as a terminal escape as `\u{1B}`, so it can't
+rewrite your terminal or pass for a command in a CI log.
 
 ```sh
 swift run --package-path Dangerfile
