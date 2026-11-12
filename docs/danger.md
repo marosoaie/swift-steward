@@ -1052,8 +1052,8 @@ swift-steward#36 (numbered on from 51) on 2026-10-28, the two that
 step 4.10 raised in swift-steward#37 (62 and 63) the same day, and the
 five that step 5.0 raised in swift-steward#38 (64–68) that day too, and
 the fifteen of step 5.1's API review (R1–R15, numbered on from 70) on
-2026-11-08, and the one that step 5.1's hardening raised (85) on
-2026-11-12. The sections refer to them by number, and each section above
+2026-11-08, and the two that step 5.1's hardening raised (85 and 86)
+on 2026-11-12. The sections refer to them by number, and each section above
 already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
@@ -1434,7 +1434,10 @@ already reflects its answer.
     addition: `Markdown.escaped(_:)` and `Markdown.codeSpan(_:)`, the
     built-in rule's own escaping. A rule that puts a file name or an
     added line into a finding then shows it as written, and the text
-    can't mention anyone or cross-reference an issue.
+    can't mention anyone or cross-reference an issue. The names stay as
+    built ("The names look fine to me"), though in a Dangerfile that
+    also imports apple/swift-markdown, the type shadows that module's
+    name, `Markdown`.
 86. **Command syntax in text output (S5). Answered 2026-11-12: escaped
     everywhere.** A dry run's summary and log, and `steward`'s text
     output, write `##[` as `#\u{23}[` and a `::` that starts a line as
