@@ -45,8 +45,9 @@ struct Changes: ParsableCommand {
             // through the buffer instead of materializing millions of lines.
             var output = BufferedStandardOutput()
             changes.sortedPaths.forEach { path in
+                let shown = readable(path)
                 changes.ranges(in: path).forEach { range in
-                    range.forEach { output.writeLine("\(path):\($0)") }
+                    range.forEach { output.writeLine("\(shown):\($0)") }
                 }
             }
             output.flush()

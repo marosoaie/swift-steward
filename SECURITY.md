@@ -19,10 +19,14 @@ become a command to the CI runner.
   anyone, link an issue, or change the comment's layout. Rules escape
   the pull request's text with `Markdown.escaped(_:)` and
   `Markdown.codeSpan(_:)`.
-- **Text from the pull request can't become a workflow command.** In
-  GitHub Actions, annotations escape their properties and messages, and
-  other text that could hold a command is written between
-  `::stop-commands::` markers.
+- **Text from the pull request can't become a workflow command in
+  Steward's log.** In GitHub Actions, annotations escape their properties
+  and messages, and other text that could hold a command is written
+  between `::stop-commands::` markers. `steward`'s annotations escape
+  theirs too, and its JSON writes `##[` escaped.
+- **Text from the pull request can't rewrite a terminal.** A dry run and
+  `steward`'s text output write control characters as escapes, such as
+  `\u{1B}`.
 - **Git's configuration can't change what Steward reads.** Steward runs
   git with every option that shapes a diff pinned, and reads
   `.gitattributes` from the merge base, so a pull request can't use its

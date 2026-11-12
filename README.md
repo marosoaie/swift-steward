@@ -154,6 +154,14 @@ Duplicate diagnostics (same file/line/message, common in multi-target
 `xcodebuild` runs) are collapsed. See `steward help <subcommand>` for
 the full reference.
 
+Paths and messages come from the diff and the log, so both commands keep
+them in their place. Text output writes a control character, such as a
+terminal escape or a line break in a file name, as a Swift escape
+(`\u{1B}`), so each entry stays on its line and can't rewrite the
+terminal. JSON writes `##[` as `\u0023#[`, the same value, so the GitHub
+Actions runner reads no workflow command in it, and annotations escape
+their properties and messages as GitHub documents.
+
 ### Getting the right diff
 
 Use the **three-dot** diff against the merge base so you only see the PR's own

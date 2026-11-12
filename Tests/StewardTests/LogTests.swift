@@ -18,6 +18,17 @@ struct LogTests {
         ])
     }
 
+    @Test("a dry run escapes the control characters it logs, but keeps lines and tabs")
+    func dryRunControlCharacters() async {
+        let recording = RecordingConsole()
+        let log = Log(mode: .dryRun, console: recording.console)
+        log.write("one\u{1B}[2J\ttwo\nthree\rfour")
+        log.warning("\u{9B}31m")
+        #expect(await recording.finish() == [
+            .error(#"one\u{1B}[2J\#ttwo\#nthree\u{D}four\#n"#), .error(#"warning: \u{9B}31m\#n"#),
+        ])
+    }
+
     @Test("in CI, warnings and errors are annotations whose data stays on one line")
     func annotations() async {
         let recording = RecordingConsole()

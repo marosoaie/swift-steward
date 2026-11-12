@@ -115,7 +115,7 @@ struct CommandLineOutputTests {
         ),
         Case(
             command: "filter \(saplogs)/sonar-issues.json --diff $sap --tool sonar --format text",
-            fingerprint: "945:2e81153bdf34b79d"
+            fingerprint: "957:70ddd556de2824fd"
         ),
     ]
 

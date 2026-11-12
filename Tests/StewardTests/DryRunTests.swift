@@ -49,6 +49,22 @@ struct DryRunTests {
         #expect(!log.contains("::"))
     }
 
+    @Test("a dry run escapes the control characters in the summary it prints")
+    func controlCharacters() async throws {
+        let fixture = try Self.checkedOutFixture()
+        defer { fixture.remove() }
+        let recording = RecordingConsole()
+        let rules = [Rule("Terminal") { _ in [.warning("red\u{1B}[31m\u{7}\u{9B}2J\tend")] }]
+        _ = await Runner.testing(["--base", "main"], environment: [:], directory: fixture.repository.path,
+                                 recording: recording)
+            .run(rules)
+        let (output, log) = await recording.finishStreams()
+        #expect(output.contains(#"red\u{1B}[31m\u{7}\u{9B}2J\#tend"#))
+        #expect(!(output + log).unicodeScalars.contains {
+            $0.properties.generalCategory == .control && $0 != "\n" && $0 != "\t"
+        })
+    }
+
     @Test("the placeholder comes from the head commit, the git user, and the local changes, sized as GitHub would")
     func placeholder() async throws {
         let fixture = try Self.checkedOutFixture()

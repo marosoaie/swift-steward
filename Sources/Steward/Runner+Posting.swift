@@ -20,7 +20,7 @@ extension Runner {
         let text = summary.text
         switch context.run.mode {
         case .dryRun:
-            console.writeOutput(text)
+            console.writeOutput(Log.readable(text))
             return .clean
         case .actions:
             await log.group("Summary") { log.write(text) }

@@ -23,6 +23,9 @@ the `GitDiffKit` library, strict dependency direction:
 (chunk-to-line splitting, shared via the `package` access level) — never
 expose it as a product. `StewardVersion` is another: the release version,
 one constant that `steward --version` and `Steward`'s reports both read.
+`OutputEscaping` is a third: the escaping that keeps text from a pull
+request from passing for a GitHub Actions workflow command or rewriting a
+terminal, shared by Steward's log and the `steward` command.
 Libraries take no third-party dependencies;
 swift-argument-parser is allowed in the CLI target only, and Apple's
 swift-openapi-runtime and swift-openapi-urlsession in the `GitHubAPI`
