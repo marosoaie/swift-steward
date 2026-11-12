@@ -65,8 +65,12 @@ template has three examples; keep, change, or delete them:
 | `conflictMarkers` | A failure at each added line that starts a merge conflict's marker | `context.git.diff`, line by line |
 
 A rule is a name and a closure from the context to findings: failures,
-which fail the check, warnings, messages, and Markdown. A finding with a
-`Location` links to that file and line in the pull request's head commit.
+which fail the check, warnings, messages, and Markdown. A finding's text
+is Markdown, so put text from the pull request, such as a file name, in
+it through `Markdown.escaped(_:)`, or `Markdown.codeSpan(_:)` to show it
+as code: then it shows as written and can't mention anyone. A finding
+with a `Location` links to that file and line in the pull request's head
+commit.
 Each rule is a static property listed in `rules`, so its test can call it
 by name: the template has a test for each rule, and one for the whole
 Dangerfile. [Testing a Dangerfile's rules](rule-tests.md) says how to

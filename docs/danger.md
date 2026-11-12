@@ -662,7 +662,10 @@ when non-empty, then the `markdown` findings as they are, then a footer:
   it (Markdown punctuation, `@` so a compiler message can't ping
   anyone, and the `#` or `GH-` before an issue number, so it can't
   cross-reference an issue: decided 2026-10-27, question 34) before it
-  becomes a finding. Bare URLs stay links.
+  becomes a finding. Bare URLs stay links. Rules have the same escaping
+  for text they take from the pull request, such as a file name:
+  `Markdown.escaped(_:)`, and `Markdown.codeSpan(_:)` to show it as code
+  (decided 2026-11-12, question 85).
 - **The headline counts everything**, even when the body is cut short.
   `markdown` findings count as notes:
   `**1 failure, 2 warnings, 1 message, 1 note**` (decided 2026-10-26,
@@ -1044,7 +1047,8 @@ swift-steward#36 (numbered on from 51) on 2026-10-28, the two that
 step 4.10 raised in swift-steward#37 (62 and 63) the same day, and the
 five that step 5.0 raised in swift-steward#38 (64–68) that day too, and
 the fifteen of step 5.1's API review (R1–R15, numbered on from 70) on
-2026-11-08. The sections refer to them by number, and each section above
+2026-11-08, and the one that step 5.1's hardening raised (85) on
+2026-11-12. The sections refer to them by number, and each section above
 already reflects its answer.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
@@ -1421,6 +1425,11 @@ already reflects its answer.
 84. **The `Dangerfile` name (S7, R15). Answered 2026-11-08: kept,** for
     the protocol and the package: it's Danger's word, and the one
     migrating users search for.
+85. **Escaping for rules (S5). Answered 2026-11-12: public,** as an
+    addition: `Markdown.escaped(_:)` and `Markdown.codeSpan(_:)`, the
+    built-in rule's own escaping. A rule that puts a file name or an
+    added line into a finding then shows it as written, and the text
+    can't mention anyone or cross-reference an issue.
 
 ## Checks
 
