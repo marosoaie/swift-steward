@@ -21,10 +21,14 @@ public struct XcodeLogParser: LogParsing {
             var diagnostic = diagnostic
             // Flags can contain '#' (-W#warnings), '=' (GCC's -Wformat=),
             // etc. — accept anything up to the closing bracket rather than
-            // enumerating characters.
-            if let match = diagnostic.message.firstMatch(of: /\s*\[(?<flags>-W[^\]]+)\]$/) {
+            // enumerating characters. They never contain '['.
+            if let (message, match) = splittingTrailingGroup(
+                of: diagnostic.message,
+                openingWith: "[",
+                matching: /\[(?<flags>-W[^\]]+)\]/
+            ) {
                 diagnostic.rule = match.flags.split(separator: ",").last.map(String.init)
-                diagnostic.message.removeSubrange(match.range)
+                diagnostic.message = message
             }
             return diagnostic
         }
@@ -59,9 +63,13 @@ public struct SwiftLintLogParser: LogParsing {
             // (custom_rules: in .swiftlint.yml) can be camelCase or
             // kebab-case; every violation line ends with the id, so the $
             // anchor alone bounds the match.
-            if let match = diagnostic.message.firstMatch(of: /\s*\((?<rule>[A-Za-z][A-Za-z0-9_-]*)\)$/) {
+            if let (message, match) = splittingTrailingGroup(
+                of: diagnostic.message,
+                openingWith: "(",
+                matching: /\((?<rule>[A-Za-z][A-Za-z0-9_-]*)\)/
+            ) {
                 diagnostic.rule = String(match.rule)
-                diagnostic.message.removeSubrange(match.range)
+                diagnostic.message = message
             }
             return diagnostic
         }
@@ -110,4 +118,25 @@ public struct SwiftFormatLogParser: LogParsing {
     public mutating func finalize() -> [Diagnostic] {
         base.finalize()
     }
+}
+
+/// The message without its trailing group, the text from its last
+/// `opening` on, when `group` matches all of that text, and without the
+/// whitespace before the group; and the group's match.
+///
+/// Found from the end, not with a regex such as `\s*\[…\]$`: `firstMatch`
+/// would try that from every character of a long run of spaces or of
+/// repeated openings, each time scanning to the run's end, so a line's
+/// time would grow with the square of its length.
+private func splittingTrailingGroup<Output>(
+    of message: String,
+    openingWith opening: Character,
+    matching group: Regex<Output>
+) -> (message: String, match: Regex<Output>.Match)? {
+    guard let start = message.lastIndex(of: opening),
+          let match = message[start...].wholeMatch(of: group)
+    else { return nil }
+    let before = message[..<start]
+    let end = before.lastIndex { !$0.isWhitespace }.map(before.index(after:)) ?? before.startIndex
+    return (String(before[..<end]), match)
 }
