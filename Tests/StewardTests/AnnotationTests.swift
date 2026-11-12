@@ -1,5 +1,6 @@
 import BuildLogKit
 import DiffDiagnostics
+import OutputEscaping
 @testable import Steward
 import Testing
 
@@ -69,11 +70,11 @@ struct AnnotationTests {
 
     @Test("a property value escapes what would end it, as well as what data escapes")
     func propertyEscaping() {
-        #expect(Log.escapedProperty("50% a\r\nb:c,d=e") == "50%25 a%0D%0Ab%3Ac%2Cd=e")
+        #expect(RunnerOutput.escapedProperty("50% a\r\nb:c,d=e") == "50%25 a%0D%0Ab%3Ac%2Cd=e")
         // A combining mark makes one Character of each, but the runner
         // splits at the `:` and the `,` all the same.
-        #expect(Log.escapedProperty(":\u{301},\u{301}") == "%3A\u{301}%2C\u{301}")
-        #expect(Log.escapedData("a:b,c") == "a:b,c")
+        #expect(RunnerOutput.escapedProperty(":\u{301},\u{301}") == "%3A\u{301}%2C\u{301}")
+        #expect(RunnerOutput.escapedData("a:b,c") == "a:b,c")
     }
 
     /// A path and a text that try every way out of their places: a line

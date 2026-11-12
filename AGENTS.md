@@ -23,6 +23,9 @@ the `GitDiffKit` library, strict dependency direction:
 (chunk-to-line splitting, shared via the `package` access level) — never
 expose it as a product. `StewardVersion` is another: the release version,
 one constant that `steward --version` and `Steward`'s reports both read.
+`OutputEscaping` is a third: the escaping that keeps text from a pull
+request from passing for a GitHub Actions workflow command or rewriting a
+terminal, shared by Steward's log and the `steward` command.
 Libraries take no third-party dependencies;
 swift-argument-parser is allowed in the CLI target only, and Apple's
 swift-openapi-runtime and swift-openapi-urlsession in the `GitHubAPI`
@@ -212,11 +215,11 @@ iteration), never narration of the next line.
   licence next to it and an entry in
   [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - Releases: bump `Release.version` (in `Sources/StewardVersion`) via PR,
-  then run the "Release" workflow (Actions tab) with the matching semver
-  number and branch. It tests, packages the arm64 binary, tags `vX.Y.Z`,
-  publishes a GitHub release with generated notes, and pins the Homebrew
-  formula in marosoaie/homebrew-tap to the new tag (via the
-  `TAP_DEPLOY_KEY` secret).
+  then run the "Release" workflow (Actions tab) on `main`, which it
+  requires, with the matching semver number. It tests, packages the arm64
+  binary, tags `vX.Y.Z`, publishes a GitHub release with generated notes,
+  and pins the Homebrew formula in marosoaie/homebrew-tap to the new tag
+  (via the `TAP_DEPLOY_KEY` secret).
   The maintainer drives version numbers — never change the version outside
   this procedure.
   Users start from the latest minor release,

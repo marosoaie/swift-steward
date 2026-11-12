@@ -101,6 +101,17 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
             check, so Steward leaves it to the workflow: run \
             `git config --global --add safe.directory "$GITHUB_WORKSPACE"` before Steward.
             """
+        // A git older than 2.41 stops at the option with its usage and status
+        // 129, and the option's name reads the same in every language.
+        case .gitFailed(let arguments, let status, let message)
+        where status == 129 && message.contains("--attr-source"):
+            """
+            git \(arguments.joined(separator: " ")) exited with status \(status): \(message.prefix { $0 != "\n" })
+
+            Steward reads a diff's .gitattributes from the merge base with git's --attr-source \
+            option, which needs git 2.41 or later, and this git is older. Install a newer git \
+            before Steward, as a container job's image may need.
+            """
         case .gitFailed(let arguments, let status, let message):
             "git \(arguments.joined(separator: " ")) exited with status \(status): \(message)"
         case .gitUnavailable(let reason):

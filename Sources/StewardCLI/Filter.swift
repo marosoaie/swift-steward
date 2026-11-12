@@ -3,6 +3,7 @@ import BuildLogKit
 import DiffDiagnostics
 import Foundation
 import GitDiffKit
+import OutputEscaping
 
 struct Filter: ParsableCommand {
     static let configuration = CommandConfiguration(
@@ -62,7 +63,8 @@ struct Filter: ParsableCommand {
 
     @Option(help: """
         Output format: structured (json), GitHub workflow annotation \
-        commands (github), or clang-style lines (text).
+        commands (github), or clang-style lines (text), which escape \
+        control characters and workflow command syntax.
         """)
     var format: OutputFormat = .json
 
@@ -104,10 +106,11 @@ struct Filter: ParsableCommand {
             matched.forEach { diagnostic in
                 let column = diagnostic.column.map { ":\($0)" } ?? ""
                 let rule = diagnostic.rule.map { " (\($0))" } ?? ""
-                print("""
+                // The whole line at once, so only a `::` that starts it is escaped.
+                print(readable("""
                     \(diagnostic.path):\(diagnostic.line)\(column): \
                     \(diagnostic.severity.rawValue): \(diagnostic.message)\(rule)
-                    """)
+                    """))
             }
         }
 
@@ -125,28 +128,14 @@ struct Filter: ParsableCommand {
             case .warning: "warning"
             case .note: "notice"
             }
-        // Escaping rules per
-        // https://docs.github.com/actions/reference/workflow-commands-for-github-actions
-        func escapeProperty(_ text: String) -> String {
-            text.replacingOccurrences(of: "%", with: "%25")
-                .replacingOccurrences(of: "\r", with: "%0D")
-                .replacingOccurrences(of: "\n", with: "%0A")
-                .replacingOccurrences(of: ":", with: "%3A")
-                .replacingOccurrences(of: ",", with: "%2C")
-        }
-        func escapeMessage(_ text: String) -> String {
-            text.replacingOccurrences(of: "%", with: "%25")
-                .replacingOccurrences(of: "\r", with: "%0D")
-                .replacingOccurrences(of: "\n", with: "%0A")
-        }
-        var properties = "file=\(escapeProperty(diagnostic.path)),line=\(diagnostic.line)"
+        var properties = "file=\(RunnerOutput.escapedProperty(diagnostic.path)),line=\(diagnostic.line)"
         if let column = diagnostic.column {
             properties += ",col=\(column)"
         }
         if let rule = diagnostic.rule {
-            properties += ",title=\(escapeProperty(rule))"
+            properties += ",title=\(RunnerOutput.escapedProperty(rule))"
         }
-        return "::\(command) \(properties)::\(escapeMessage(diagnostic.message))"
+        return "::\(command) \(properties)::\(RunnerOutput.escapedData(diagnostic.message))"
     }
 }
 

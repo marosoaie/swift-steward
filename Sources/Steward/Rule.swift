@@ -9,7 +9,7 @@
 /// Rule("No new Objective-C") { context in
 ///     context.git.createdFiles
 ///         .filter { $0.hasSuffix(".m") }
-///         .map { .failure("Write \($0) in Swift.", at: Location(path: $0)) }
+///         .map { .failure("Write \(Markdown.codeSpan($0)) in Swift.", at: Location(path: $0)) }
 /// }
 /// ```
 public struct Rule: Sendable {

@@ -35,14 +35,15 @@ extension Context {
         try await requireCommit(base, role: .base, in: git)
         try await requireCommit(head, role: .head, in: git)
         let built = try await builtCommit(gitHubSHA, head: head, in: git)
+        let changes = try await GitChanges(base: base, head: head, git: git)
         return Context(
             pullRequest: event.pullRequest,
-            git: try await GitChanges(base: base, head: head, git: git),
+            git: changes,
             run: Run(
                 mode: .actions,
                 workspace: workspace,
                 builtCommit: built,
-                lineMap: try await LineMap(built: built, head: head, git: git),
+                lineMap: try await LineMap(built: built, head: head, attributesFrom: changes.mergeBase, git: git),
                 apiURL: apiURL,
                 serverURL: serverURL
             )

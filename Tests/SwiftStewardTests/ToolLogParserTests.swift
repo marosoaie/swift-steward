@@ -101,6 +101,46 @@ struct ToolLogParserTests {
         ])
     }
 
+    @Test("a trailing rule is found after brackets or parentheses earlier in the message, with its whitespace")
+    func trailingRuleAfterOtherGroups() {
+        let log = """
+        /repo/a.c:1:1: warning: array 'a[1]' is past the end\t [-Warray-bounds]
+        /repo/a.c:2:1: warning: not a flag [x]
+        /repo/A.swift:3:1: warning: call f(x) here (my_rule)
+        /repo/A.swift:4:1: warning: two (a) (b c)
+        """
+        let xcode = XcodeLogParser.diagnostics(in: log)
+        #expect(xcode.map(\.message).prefix(2) == ["array 'a[1]' is past the end", "not a flag [x]"])
+        #expect(xcode.map(\.rule).prefix(2) == ["-Warray-bounds", nil])
+        let swiftLint = SwiftLintLogParser.diagnostics(in: log)
+        #expect(swiftLint.map(\.message).suffix(2) == ["call f(x) here", "two (a) (b c)"])
+        #expect(swiftLint.map(\.rule).suffix(2) == ["my_rule", nil])
+    }
+
+    /// Long enough that matching from every character of the run, as a
+    /// regex with a leading `\s*` did, takes far longer than the limit.
+    @Test(
+        "a long run of spaces or of openings in a message is read in linear time",
+        .timeLimit(.minutes(1)),
+        arguments: [(" ", 1 << 18), ("[-W", 1 << 16), ("(a ", 1 << 16)]
+    )
+    func longRuns(unit: String, count: Int) {
+        let run = "x" + String(repeating: unit, count: count)
+        let kept = String(run.reversed().drop { $0.isWhitespace }.reversed())
+        let xcode = XcodeLogParser.diagnostics(in: """
+            /repo/a.c:1:1: warning: \(run)y
+            /repo/a.c:2:1: warning: \(run) [-Wflag]
+            """)
+        #expect(xcode.map(\.message) == [run + "y", kept])
+        #expect(xcode.map(\.rule) == [nil, "-Wflag"])
+        let swiftLint = SwiftLintLogParser.diagnostics(in: """
+            /repo/A.swift:1:1: warning: \(run)y
+            /repo/A.swift:2:1: warning: \(run) (rule)
+            """)
+        #expect(swiftLint.map(\.message) == [run + "y", kept])
+        #expect(swiftLint.map(\.rule) == [nil, "rule"])
+    }
+
     @Test("the generic parser leaves rules embedded in the message")
     func genericParserKeepsMessagesVerbatim() {
         let line = "/repo/A.swift:1:1: warning: Something (some_rule)"

@@ -185,10 +185,12 @@ jobs:
       # The built executable, not swift run, so a SwiftPM error can't pass
       # for status 1.
       - name: Dry run
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           bin=$(swift build --package-path "$RUNNER_TEMP/Dangerfile" --show-bin-path)
           status=0
-          env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/${{ github.base_ref }}" || status=$?
+          env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/$BASE_REF" || status=$?
           echo "The Dangerfile exited with status $status."
           test "$status" -le 1
 
@@ -213,10 +215,12 @@ jobs:
       # The checkout belongs to the runner's user, not the container's root,
       # as the quickstart's workflow without the Action says.
       - name: Dry run
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           bin=$(swift build --package-path "$RUNNER_TEMP/Dangerfile" --show-bin-path)
           status=0
-          env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/${{ github.base_ref }}" || status=$?
+          env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/$BASE_REF" || status=$?
           echo "The Dangerfile exited with status $status."
           test "$status" -le 1

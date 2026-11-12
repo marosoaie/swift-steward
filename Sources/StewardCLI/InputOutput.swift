@@ -1,6 +1,7 @@
 import ArgumentParser
 import Foundation
 import GitDiffKit
+import OutputEscaping
 
 /// Reads a file (or stdin, for "-") in fixed-size chunks so inputs never
 /// have to fit in memory.
@@ -60,11 +61,25 @@ extension ChangedLines {
     }
 }
 
+/// `text` as the start of an output line people read: tabs as they are,
+/// any other control character, line breaks included, escaped, and a
+/// workflow command's syntax broken, so a path or a message from the input
+/// stays on its line, can't rewrite the terminal, and can't pass for a
+/// command in a workflow's log.
+func readable(_ text: String) -> String {
+    text.escapedForReading(keeping: ["\t"])
+}
+
 enum JSON {
+    /// `value` as pretty-printed JSON. The GitHub Actions runner takes a
+    /// `##[` anywhere in a line for a workflow command, so a string's `##[`
+    /// is written `\u0023#[`, the same JSON value. Pretty-printing never
+    /// starts a line with `::`, the other form, and escapes line breaks.
     static func encode(_ value: some Encodable) throws -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         return String(decoding: try encoder.encode(value), as: UTF8.self)
+            .replacingOccurrences(of: "##[", with: "\\u0023#[")
     }
 }
 

@@ -94,9 +94,9 @@ struct HostileConfigurationTests {
         )
 
         let changes = try await GitChanges(base: fixture.base, head: fixture.head, git: hostile)
-        let map = try await LineMap(built: fixture.built, head: fixture.head, git: hostile)
+        let map = try await LineMap(fixture, git: hostile)
         #expect(changes == (try await GitChanges(base: fixture.base, head: fixture.head, git: plain)))
-        #expect(map == (try await LineMap(built: fixture.built, head: fixture.head, git: plain)))
+        #expect(map == (try await LineMap(fixture, git: plain)))
     }
 
     @Test("an attributes file outside the repository can't make its files binary", arguments: [
@@ -126,10 +126,42 @@ struct HostileConfigurationTests {
         )
 
         let changes = try await GitChanges(base: fixture.base, head: fixture.head, git: hostile)
-        let map = try await LineMap(built: fixture.built, head: fixture.head, git: hostile)
+        let map = try await LineMap(fixture, git: hostile)
         #expect(changes == (try await GitChanges(base: fixture.base, head: fixture.head, git: plain)))
-        #expect(map == (try await LineMap(built: fixture.built, head: fixture.head, git: plain)))
+        #expect(map == (try await LineMap(fixture, git: plain)))
         #expect(changes.diff.files.count { $0.header.isBinary } == 1)
+    }
+
+    @Test("a pull request's own attributes can't make its files binary", arguments: ["*.swift -diff", "* -diff"])
+    func pullRequestAttributes(attributes: String) async throws {
+        let hostile = try await Self.context(addingAttributes: attributes)
+        let plain = try await Self.context(addingAttributes: "# none")
+        #expect(hostile.changes.addedLines == plain.changes.addedLines)
+        #expect(hostile.map == plain.map)
+        #expect(hostile.changes.diff.files.count { $0.header.isBinary } == 1)
+    }
+
+    /// The pull request's changes and line map once its head also adds a
+    /// `.gitattributes` of one line, `attributes`, and the base merges it.
+    private static func context(addingAttributes attributes: String) async throws -> (
+        changes: GitChanges,
+        map: LineMap
+    ) {
+        let fixture = try PullRequestFixture()
+        defer { fixture.remove() }
+        let repository = fixture.repository
+        try repository.git(["switch", "--quiet", "feature"])
+        try repository.write(attributes + "\n", to: ".gitattributes")
+        let head = try repository.commit("Add attributes", at: PullRequestFixture.time + 400)
+        // Checked out, as Actions checks out the merge: git reads the
+        // working tree's attributes.
+        try repository.git(["switch", "--quiet", "--create", "merged", fixture.base])
+        let built = try repository.merge("feature", at: PullRequestFixture.time + 500)
+        let git = Git(directory: repository.path)
+        return (
+            try await GitChanges(base: fixture.base, head: head, git: git),
+            try await LineMap(built: built, head: head, attributesFrom: fixture.forkPoint, git: git)
+        )
     }
 
     @Test("git never reads the system's attributes file, which no test can write")
@@ -152,7 +184,15 @@ struct HostileConfigurationTests {
         let built = try repository.commit("Change two lines", at: PullRequestFixture.time + 1)
         try repository.git(["config", "diff.interHunkContext", "10"])
 
-        let map = try await LineMap(built: built, head: head, git: Git(directory: repository.path))
+        let git = Git(directory: repository.path)
+        let map = try await LineMap(built: built, head: head, attributesFrom: head, git: git)
         #expect((1...7).map { map.headLocation(ofLine: $0, inFile: "a.swift")?.line } == [1, nil, 3, 4, 5, nil, 7])
+    }
+}
+
+private extension LineMap {
+    /// The map from the fixture's merge commit to its head.
+    init(_ fixture: PullRequestFixture, git: Git) async throws {
+        try await self.init(built: fixture.built, head: fixture.head, attributesFrom: fixture.forkPoint, git: git)
     }
 }

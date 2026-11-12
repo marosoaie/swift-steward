@@ -51,6 +51,14 @@ let package = Package(
             name: "StewardVersion",
             swiftSettings: swiftSettings
         ),
+        // Escaping for output: workflow commands' text for the GitHub
+        // Actions runner, and control characters for a terminal. Shared by
+        // Steward's log and the `steward` command; internal to the package
+        // (not a product), like StreamParsing.
+        .target(
+            name: "OutputEscaping",
+            swiftSettings: swiftSettings
+        ),
         // Build/lint logs → diagnostics, with tool-specific parsers for
         // xcodebuild, SwiftLint, and SwiftFormat.
         .target(
@@ -76,6 +84,7 @@ let package = Package(
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",
                 "DiffDiagnostics",
+                "OutputEscaping",
                 "StewardVersion",
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
             ],
@@ -117,6 +126,7 @@ let package = Package(
                 "DiffDiagnostics",
                 "PullRequestHosting",
                 "GitHubAPI",
+                "OutputEscaping",
                 "StewardVersion",
             ],
             swiftSettings: swiftSettings
@@ -154,6 +164,7 @@ let package = Package(
                 // `steward filter`, the oracle for the diagnostics rule.
                 "StewardCLI",
                 "StewardVersion",
+                "OutputEscaping",
                 .product(name: "GitDiffKit", package: "git-diff-parser"),
                 "BuildLogKit",
                 "DiffDiagnostics",

@@ -96,7 +96,8 @@ git diff origin/main...HEAD | steward changes -
 steward changes pr.diff --format text
 ```
 
-Output (`json` default, or `text` as greppable `path:line` lines). Changed
+Output (`json` default, or `text` as greppable `path:line` lines, escaped
+as `filter`'s section says). Changed
 lines are reported as closed ranges — contiguous runs stay compact no matter
 how large the edit:
 
@@ -145,7 +146,7 @@ terminal escape codes are removed before matching, and Swift 6.4's
 | `--tool <tool>` | Log dialect: `generic` (default, any clang-style log), `xcodebuild`, `swiftlint`, `swiftformat`, or `sonar` (a SonarQube `/api/issues/search` JSON report). Tool-specific parsers also extract the violated rule — SwiftLint rule identifier, SwiftFormat rule name, clang warning flag, Sonar rule key — into the `rule` field (and the GitHub annotation title) |
 | `--format json` | Structured output for your own PR-comment bot (default) |
 | `--format github` | `::warning file=…,line=…::…` workflow commands — GitHub renders these as PR annotations automatically |
-| `--format text` | clang-style lines, for humans |
+| `--format text` | clang-style lines, for humans, escaped as below |
 | `--repo-root <path>` | Strip this prefix from absolute log paths. Usually unnecessary: unmatched absolute paths fall back to longest component-aligned suffix matching |
 | `--tolerance <n>` | Also keep diagnostics within *n* lines of a change. `0` (default) is right for compiler warnings; `1`–`2` helps with lints that anchor on a declaration a line or two above the edit |
 | `--fail-on <severity>` | Exit 1 if anything at/above `note`/`warning`/`error` matched — lets CI blocking be scoped to *new* problems only |
@@ -153,6 +154,16 @@ terminal escape codes are removed before matching, and Swift 6.4's
 Duplicate diagnostics (same file/line/message, common in multi-target
 `xcodebuild` runs) are collapsed. See `steward help <subcommand>` for
 the full reference.
+
+Paths and messages come from the diff and the log, so both commands keep
+them in their place. Text output writes a control character, such as a
+terminal escape or a line break in a file name, as a Swift escape
+(`\u{1B}`), so each entry stays on its line and can't rewrite the
+terminal. It also breaks a workflow command's syntax, writing `##[` as
+`#\u{23}[` and a `::` that starts a line as `\u{3A}:`, so text output in
+a workflow's log holds no command. JSON writes `##[` as `\u0023#[`, the same value, so the GitHub
+Actions runner reads no workflow command in it, and annotations escape
+their properties and messages as GitHub documents.
 
 ### Getting the right diff
 
@@ -171,15 +182,21 @@ On GitHub you can also download the PR's diff directly
 ### CI recipes
 
 **GitHub Actions — zero-infrastructure annotations.** Emit workflow commands;
-GitHub attaches them to the PR's changed lines in the Files tab:
+GitHub attaches them to the PR's changed lines in the Files tab. The base
+branch's name reaches the scripts through `env:` rather than `${{ }}`
+inside `run:`, so no branch name can become part of a script:
 
 ```yaml
-- run: git fetch origin ${{ github.base_ref }}
+- env:
+    BASE_REF: ${{ github.base_ref }}
+  run: git fetch origin "$BASE_REF"
 - run: |
     set -o pipefail
     xcodebuild build ... 2>&1 | tee build.log
-- run: |
-    git diff origin/${{ github.base_ref }}...HEAD \
+- env:
+    BASE_REF: ${{ github.base_ref }}
+  run: |
+    git diff "origin/$BASE_REF...HEAD" \
       | .build/release/steward filter build.log --diff - \
           --format github --fail-on error
 ```
@@ -284,6 +301,8 @@ let kept = DiagnosticMatcher.match(
   for humans and coding agents alike. Read it before contributing.
 - [docs/github-api.md](docs/github-api.md) — the GitHub client Steward posts
   with, generated from GitHub's OpenAPI description, and how to update it.
+- [SECURITY.md](SECURITY.md) — what Steward guarantees about the pull
+  request's text and logs, and how to report a vulnerability.
 
 Steward's user docs are under [Where to start](#where-to-start).
 

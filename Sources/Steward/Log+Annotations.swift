@@ -1,3 +1,5 @@
+import OutputEscaping
+
 extension Log {
     /// Annotates each located finding in CI, so it shows on its line in
     /// the pull request's Files changed tab (docs/danger.md, section 6): a
@@ -24,8 +26,8 @@ extension Log {
         // but Files changed doesn't show it (docs/danger.md, Checks).
         let line = location.line.map { ",line=\($0)" } ?? ""
         return """
-            ::\(command) file=\(escapedProperty(location.path))\(line),title=Steward::\
-            \(escapedData(Markdown.unescaped(finding.text)))
+            ::\(command) file=\(RunnerOutput.escapedProperty(location.path))\(line),title=Steward::\
+            \(RunnerOutput.escapedData(Markdown.unescaped(finding.text)))
 
             """
     }
