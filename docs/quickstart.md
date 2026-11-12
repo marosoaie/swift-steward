@@ -338,7 +338,10 @@ into the latest base, not the pull request's head:
 ## A dry run
 
 Outside GitHub Actions, the Dangerfile is a dry run: it checks the branch
-you're on, prints the summary, and never posts.
+you're on, prints the summary, and never posts. Its output escapes the
+control characters and workflow-command syntax it finds in the pull
+request's text, such as a terminal escape as `\u{1B}`, so it can't
+rewrite your terminal or pass for a command in a CI log.
 
 ```sh
 swift run --package-path Dangerfile

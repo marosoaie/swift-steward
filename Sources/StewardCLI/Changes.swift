@@ -23,7 +23,11 @@ struct Changes: ParsableCommand {
     @Argument(help: "Path to a unified diff, or '-' for stdin.")
     var diffPath: String
 
-    @Option(help: "Output format: compact line ranges (json) or one greppable path:line per line (text).")
+    @Option(help: """
+        Output format: compact line ranges (json) or one greppable path:line \
+        per line (text), which escapes control characters and workflow \
+        command syntax.
+        """)
     var format: OutputFormat = .json
 
     func run() throws {

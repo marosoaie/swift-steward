@@ -67,9 +67,10 @@ struct Log: Sendable {
     }
 
     /// `text` for a terminal, as a dry run shows it: lines and tabs as they
-    /// are, any other control character escaped.
+    /// are, any other control character escaped, and a workflow command's
+    /// syntax broken, since a dry run's output may still land in a log.
     static func readable(_ text: String) -> String {
-        text.escapingControlCharacters(except: ["\n", "\t"])
+        text.escapedForReading(keeping: ["\n", "\t"])
     }
 
     private static func terminated(_ text: String) -> String {

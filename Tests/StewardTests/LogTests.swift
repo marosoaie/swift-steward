@@ -14,7 +14,18 @@ struct LogTests {
             log.error("Broken")
         }
         #expect(await recording.finish() == [
-            .error("::set-output name=x::y\n"), .error("warning: Careful\nnow\n"), .error("error: Broken\n"),
+            .error(#"\u{3A}:set-output name=x::y\#n"#), .error("warning: Careful\nnow\n"), .error("error: Broken\n"),
+        ])
+    }
+
+    @Test("a dry run breaks a workflow command's syntax on each line it logs")
+    func dryRunCommandSyntax() async {
+        let recording = RecordingConsole()
+        let log = Log(mode: .dryRun, console: recording.console)
+        log.write("::group::g\n  ::endgroup::\nmid ::a::b ##[c]")
+        log.warning("::x::y")
+        #expect(await recording.finish() == [
+            .error(#"\u{3A}:group::g\#n  \u{3A}:endgroup::\#nmid ::a::b #\u{23}[c]\#n"#), .error("warning: ::x::y\n"),
         ])
     }
 

@@ -758,7 +758,8 @@ posts. That's why the Action's documentation (4.8) sets the group.
    writes it out.
 4. **Render** the summary (section 5): to the log and appended to
    `$GITHUB_STEP_SUMMARY` in CI (a summary that can't be written only
-   warns), to standard output in a dry run.
+   warns), to standard output in a dry run, escaped as the log is
+   (below).
 5. **Post** through `PullRequestHost`, unless this is a dry run or the
    pull request comes from a fork (v1 checks `PullRequest.isFromFork`
    first, says why it won't post in a `::notice title=Steward::` annotation, and
@@ -796,7 +797,11 @@ run ignores the dry run's `--base` and `--pull-request`, with a warning:
 there, the event names the pull request. The log goes to standard error,
 grouped with `::group::` in Actions; text that could pass for a workflow
 command, such as a finding's, is logged with commands paused
-(`::stop-commands::`). The library's damage reports go there too; an
+(`::stop-commands::`). A dry run, whose output can still land in a log,
+writes its log and summary as a terminal should show them: control
+characters other than line breaks and tabs as Swift escapes (`\u{1B}`),
+`##[` as `#\u{23}[`, and a `::` that starts a line as `\u{3A}:`
+(question 86). The library's damage reports go there too; an
 abandoned file (`.error`) becomes a `::warning::` annotation, since the
 rules then saw an incomplete diff.
 
@@ -1430,6 +1435,13 @@ already reflects its answer.
     built-in rule's own escaping. A rule that puts a file name or an
     added line into a finding then shows it as written, and the text
     can't mention anyone or cross-reference an issue.
+86. **Command syntax in text output (S5). Answered 2026-11-12: escaped
+    everywhere.** A dry run's summary and log, and `steward`'s text
+    output, write `##[` as `#\u{23}[` and a `::` that starts a line as
+    `\u{3A}:`, in the pass that escapes control characters, wherever
+    they run. The alternative, pausing commands around that output only
+    when `GITHUB_ACTIONS` is set, would miss output that reaches a
+    workflow's log another way, such as a dry run's.
 
 ## Checks
 

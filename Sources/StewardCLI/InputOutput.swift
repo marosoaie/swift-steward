@@ -61,12 +61,13 @@ extension ChangedLines {
     }
 }
 
-/// `text` as a field of an output line people read: tabs as they are, and
-/// any other control character, line breaks included, escaped, so a path
-/// or a message from the input stays on its line and can't rewrite the
-/// terminal.
+/// `text` as the start of an output line people read: tabs as they are,
+/// any other control character, line breaks included, escaped, and a
+/// workflow command's syntax broken, so a path or a message from the input
+/// stays on its line, can't rewrite the terminal, and can't pass for a
+/// command in a workflow's log.
 func readable(_ text: String) -> String {
-    text.escapingControlCharacters(except: ["\t"])
+    text.escapedForReading(keeping: ["\t"])
 }
 
 enum JSON {

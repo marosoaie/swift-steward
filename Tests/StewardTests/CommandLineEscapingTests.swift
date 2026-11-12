@@ -8,11 +8,13 @@ import Testing
 /// runner reads no command but the annotations `--format github` writes.
 @Suite("steward's output on hostile input")
 struct CommandLineEscapingTests {
-    /// Paths with a terminal escape and a carriage return, and with a
+    /// Paths with a terminal escape and a carriage return; with a
     /// property's separators, an escape spelled out, and the older `##[`
-    /// command syntax. git quotes the first in a diff.
+    /// command syntax; and starting with a command. git quotes the first in
+    /// a diff.
     static let controlPath = "e\u{1B}[31mf\r.swift"
     static let propertyPath = "p##[group]q,line=9,title=E%2C.swift"
+    static let commandPath = "::notice::n.swift"
     static let diff = #"""
         diff --git "a/e\033[31mf\r.swift" "b/e\033[31mf\r.swift"
         new file mode 100644
@@ -26,23 +28,31 @@ struct CommandLineEscapingTests {
         +++ b/\#(propertyPath)
         @@ -0,0 +1 @@
         +let b = 1
+        diff --git a/\#(commandPath) b/\#(commandPath)
+        new file mode 100644
+        --- /dev/null
+        +++ b/\#(commandPath)
+        @@ -0,0 +1 @@
+        +let c = 1
 
         """#
     static let message = "50% %0A done\r\n::error::injected\r##[error]legacy \u{1B}[2J\u{9B}"
 
-    @Test("changes prints each path on its own line, with its control characters escaped")
+    @Test("changes prints each path on its own line, with its control characters and command syntax escaped")
     func changesText() throws {
         let output = try Self.steward(reading: [Self.diff]) { ["changes", $0[0], "--format", "text"] }
         #expect(output.split(separator: "\n", omittingEmptySubsequences: false) == [
-            #"e\u{1B}[31mf\u{D}.swift:1"#, "\(Self.propertyPath):1", "",
+            #"\u{3A}:notice::n.swift:1"#, #"e\u{1B}[31mf\u{D}.swift:1"#, #"p#\u{23}[group]q,line=9,title=E%2C.swift:1"#,
+            "",
         ])
+        #expect(WorkflowCommand.commands(in: output).isEmpty)
     }
 
     @Test("changes' JSON reads back as the paths, and holds no workflow command")
     func changesJSON() throws {
         let output = try Self.steward(reading: [Self.diff]) { ["changes", $0[0], "--format", "json"] }
         let paths = try JSONDecoder().decode([Entry].self, from: Data(output.utf8)).map(\.path)
-        #expect(paths == [Self.controlPath, Self.propertyPath])
+        #expect(paths == [Self.commandPath, Self.controlPath, Self.propertyPath])
         #expect(WorkflowCommand.commands(in: output).isEmpty)
     }
 
@@ -56,14 +66,15 @@ struct CommandLineEscapingTests {
         )])
     }
 
-    @Test("filter prints each diagnostic on one line, with its control characters escaped")
+    @Test("filter prints each diagnostic on one line, with its control characters and command syntax escaped")
     func filterText() throws {
         let output = try Self.filter("text")
         #expect(output == """
-            \(Self.propertyPath):1: warning: \
-            50% %0A done\\u{D}\\u{A}::error::injected\\u{D}##[error]legacy \\u{1B}[2J\\u{9B} (rule,a:b)
+            p#\\u{23}[group]q,line=9,title=E%2C.swift:1: warning: \
+            50% %0A done\\u{D}\\u{A}::error::injected\\u{D}#\\u{23}[error]legacy \\u{1B}[2J\\u{9B} (rule,a:b)
 
             """)
+        #expect(WorkflowCommand.commands(in: output).isEmpty)
     }
 
     @Test("filter's JSON reads back as the message, and holds no workflow command")

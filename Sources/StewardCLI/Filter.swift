@@ -63,7 +63,8 @@ struct Filter: ParsableCommand {
 
     @Option(help: """
         Output format: structured (json), GitHub workflow annotation \
-        commands (github), or clang-style lines (text).
+        commands (github), or clang-style lines (text), which escape \
+        control characters and workflow command syntax.
         """)
     var format: OutputFormat = .json
 
@@ -104,11 +105,12 @@ struct Filter: ParsableCommand {
         case .text:
             matched.forEach { diagnostic in
                 let column = diagnostic.column.map { ":\($0)" } ?? ""
-                let rule = diagnostic.rule.map { " (\(readable($0)))" } ?? ""
-                print("""
-                    \(readable(diagnostic.path)):\(diagnostic.line)\(column): \
-                    \(diagnostic.severity.rawValue): \(readable(diagnostic.message))\(rule)
-                    """)
+                let rule = diagnostic.rule.map { " (\($0))" } ?? ""
+                // The whole line at once, so only a `::` that starts it is escaped.
+                print(readable("""
+                    \(diagnostic.path):\(diagnostic.line)\(column): \
+                    \(diagnostic.severity.rawValue): \(diagnostic.message)\(rule)
+                    """))
             }
         }
 
