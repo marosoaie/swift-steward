@@ -16,8 +16,8 @@ From your repository's root, copy the template and check that it builds
 and its tests pass:
 
 ```sh
-curl -fsSL https://github.com/marosoaie/swift-steward/archive/refs/tags/v0.1.1.tar.gz \
-  | tar -xz --strip-components=2 swift-steward-0.1.1/Templates/Dangerfile
+curl -fsSL https://github.com/marosoaie/swift-steward/archive/refs/tags/v0.2.0.tar.gz \
+  | tar -xz --strip-components=2 swift-steward-0.2.0/Templates/Dangerfile
 swift build --package-path Dangerfile
 swift test --package-path Dangerfile
 ```
