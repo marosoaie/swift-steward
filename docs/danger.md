@@ -1126,7 +1126,11 @@ the fifteen of step 5.1's API review (R1–R15, numbered on from 70) on
 2026-11-08, the two that step 5.1's hardening raised (85 and 86)
 on 2026-11-12, and the eight that swift-steward#48's rule groups raised
 (87–94) on 2026-11-13. The sections refer to them by number, and each
-section above already reflects its answer.
+section above already reflects its answer. From 95 on, as the maintainer
+asked on 2026-11-13, questions are decided without waiting for an
+answer: each recommendation was checked independently by Fable 5.2
+(`claude-fable-5-2`), and the pull request that raised it lists both
+views, for the maintainer to overturn in review.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1559,6 +1563,15 @@ section above already reflects its answer.
 94. **The dry run (S2, S6). Answered 2026-11-13: groups match the dry
     run's diff,** as they would in CI, and the skip lines are in its log,
     on standard error. An empty diff skips every path group.
+95. **SwiftLint and an inline condition (S1). Decided 2026-11-13, checked
+    by Fable: keep `Rule.group(when:skipReason:_:)`, and name the
+    condition in the examples.** SwiftLint's default
+    `multiple_closures_with_trailing_closure` flags an inline closure
+    before the trailing group. `Rule.group(skipReason:when:rules:)` would
+    lint clean when written with two trailing closures, but it would drop
+    the `when` label, make the first trailing closure the condition in
+    one group form and the rules in the other, and reverse answer 88. A
+    named condition lints clean, so the examples use one and say why.
 
 ## Checks
 
