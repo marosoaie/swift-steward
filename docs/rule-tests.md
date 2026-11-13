@@ -101,6 +101,50 @@ struct ChangelogTests {
 throws what the rule throws. In a run, the runner adds the rule's name to
 each finding and turns a thrown error into a failure.
 
+## A rule in a group
+
+A group's rules keep its condition, so a test of one gets what a run
+gets. Name the group's rules as a static property, which `rules` lists
+like a rule, and take a rule from it:
+
+```swift
+static var rules: [Rule] {
+    changelog
+    sources
+}
+
+static let sources = Rule.group(whenChangesMatch: "Sources/**") {
+    Rule("Tests") { context in
+        try context.git.changes(matching: "Tests/**").diff.files.isEmpty
+            ? [.warning("Changes Sources without changing Tests.")] : []
+    }
+}
+```
+
+```swift
+@Test("the tests rule applies only where Sources changes")
+func testsRule() async throws {
+    let rule = try #require(Checks.sources.first)
+    let docs = try Context.fixture(diff: """
+        diff --git a/README.md b/README.md
+        index 1111111..2222222 100644
+        --- a/README.md
+        +++ b/README.md
+        @@ -1 +1 @@
+        -Old
+        +New
+        """)
+    #expect(try !rule.applies(to: docs))
+    #expect(try await rule.evaluate(docs).isEmpty)
+}
+```
+
+`applies(to:)` says whether the run would call the rule: whether every
+group around it holds. Where one doesn't, `evaluate(_:)` returns no
+findings, as the run would; `applies(to:)` tells that from a pass. Both
+throw what a group's condition throws, such as the error for a malformed
+pattern. Setting `evaluate` replaces the check and keeps the groups.
+
 ## The context
 
 `Context.fixture(diff:pullRequest:commits:workspace:)` builds the context

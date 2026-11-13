@@ -29,6 +29,20 @@ struct RuleGroupTests {
         }
     }
 
+    /// The README's and docs/rule-tests.md's group.
+    struct DocumentedGroup: Dangerfile {
+        static var rules: [Rule] {
+            sources
+        }
+
+        static let sources = Rule.group(whenChangesMatch: "Sources/**") {
+            Rule("Tests") { context in
+                try context.git.changes(matching: "Tests/**").diff.files.isEmpty
+                    ? [.warning("Changes Sources without changing Tests.")] : []
+            }
+        }
+    }
+
     private static func edit(_ path: String) -> String {
         """
         diff --git a/\(path) b/\(path)
@@ -78,6 +92,17 @@ struct RuleGroupTests {
             .error("Lint: skipped, no changed file matches Sources/**\n"),
             .error("Format: skipped, no changed file matches Sources/**\n"),
         ])
+    }
+
+    @Test("the documented group warns where Sources changes without Tests, and skips elsewhere")
+    func documented() async throws {
+        let sourcesOnly = try await Self.run(DocumentedGroup.rules, on: Self.edit("Sources/A.swift"))
+        let both = Self.edit("Sources/A.swift") + Self.edit("Tests/T.swift")
+        let withTests = try await Self.run(DocumentedGroup.rules, on: both)
+        let docs = try await Self.run(DocumentedGroup.rules, on: Self.edit("README.md"))
+        #expect(sourcesOnly.findings.map(\.text) == ["Changes Sources without changing Tests."])
+        #expect(withTests.findings.isEmpty)
+        #expect(docs.log == [.error("Tests: skipped, no changed file matches Sources/**\n")])
     }
 
     @Test("an empty diff skips every path group")
