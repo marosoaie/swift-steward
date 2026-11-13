@@ -76,6 +76,21 @@ by name: the template has a test for each rule, and one for the whole
 Dangerfile. [Testing a Dangerfile's rules](rule-tests.md) says how to
 write them.
 
+A helper that lists several rules, to share them or to keep `rules`
+short, needs `@RuleBuilder` written before it: only `rules` gets the
+attribute, from the `Dangerfile` protocol. Without it, the compiler
+reports "missing return in getter expected to return '[Rule]'".
+
+```swift
+@RuleBuilder
+static var reviewRules: [Rule] {
+    description
+    changelog
+}
+```
+
+`rules` then lists `reviewRules` as it lists a rule.
+
 **Diagnostics on changed lines.** `Rule.diagnosticsOnChangedLines(in:)`,
 built in and commented out in the template, reports the build and lint
 diagnostics that land on lines the pull request changes. It reads logs
