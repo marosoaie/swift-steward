@@ -249,8 +249,9 @@ struct RuleGroupTests {
         let plain = Rule("Plain") { _ in [] }
         #expect(try plain.applies(to: .stub()))
         let malformed = try #require(Rule.group(whenChangesMatch: "/Sources") { plain }.first)
-        #expect(throws: PathPatternError.leadingSlash("/Sources")) { try malformed.applies(to: .stub()) }
-        await #expect(throws: PathPatternError.leadingSlash("/Sources")) { try await malformed.evaluate(.stub()) }
+        let error = PathPatternError(pattern: "/Sources", kind: .leadingSlash)
+        #expect(throws: error) { try malformed.applies(to: .stub()) }
+        await #expect(throws: error) { try await malformed.evaluate(.stub()) }
     }
 
     @Test("groups build inside a rule builder: nested, in an if, and beside plain rules")

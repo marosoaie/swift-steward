@@ -1563,10 +1563,12 @@ views, for the maintainer to overturn in review.
     trailing `\`; building the matcher added an empty, `.` or `..`
     component, which git would rewrite away, and a `**` that isn't a
     whole component, where git's literal-prefix matching makes
-    `Sources**` match everything under `Sources/`. Every accepted pattern
-    matches exactly what git's does. The error names the pattern and the
-    problem; a compile-time check would need a macro, a logged error would
-    run the rules everywhere, and a trap would crash before any comment.
+    `Sources**` match everything under `Sources/`; and later a pattern
+    that ends in `/` and has a `*`, `?` or `\` (question 104). Every
+    accepted pattern matches exactly what git's does. The error names the
+    pattern and the problem; a compile-time check would need a macro, a
+    logged error would run the rules everywhere, and a trap would crash
+    before any comment.
 94. **The dry run (S2, S6). Answered 2026-11-13: groups match the dry
     run's diff,** as they would in CI, and the skip lines are in its log,
     on standard error. An empty diff skips every path group.
@@ -1634,6 +1636,29 @@ views, for the maintainer to overturn in review.
      keep the double run, whose findings are each reported twice, so
      `Rule.group`'s doc comments now say a rule placed in two groups
      runs once for each that holds.
+104. **Patterns that end in `/` (S1). Decided 2026-11-13, checked by
+     Fable: malformed when they have a `*`, `?` or `\`.** A file's path
+     never ends in `/`, so git matches such a pattern only as a leading
+     directory, by its bytes as written: `Sources/*/` matches only a
+     directory named `*`, and `mbk/\*/` only one named `\*`, so in
+     practice they match nothing, which #48 is against. It's
+     `Sources**` (question 93) again. Escaped patterns are malformed
+     too, though the first plan kept `mbk/\*/`: git showed it doesn't
+     match the directory named `*`. The error suggests the pattern with
+     `**` added, as in `Sources/*/**`, which matches what it means, and
+     a plain `mbk/` stays. Without the slash, an escape makes a pattern
+     name a file, never a directory, so `Sources/\[Legacy\]` matches
+     nothing under that directory; `PathPattern`'s doc comment says to
+     add `/**`.
+105. **`PathPatternError` (S1, S8). Decided 2026-11-13, checked by
+     Fable: public, a struct with the pattern and a `@nonexhaustive`
+     `Kind`,** as `PullRequestHostError` is, so a Dangerfile's test can
+     match the error by its kind (`error?.kind == .leadingSlash`) or as
+     a whole, `pattern` works for kinds a minor release adds, and a
+     property can join it without a break. `component` became
+     `invalidComponent` before it went public, and `unescapedBracket`'s
+     doc comment says it may retire once classes come.
+     `PathPattern.description` became a `let`.
 
 ## Checks
 
