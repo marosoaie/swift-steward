@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/marosoaie/git-diff-parser.git",
       "state" : {
-        "revision" : "bcceab9e8269cdcb229c464e806e8b452e1badd9",
-        "version" : "0.2.1"
+        "revision" : "072c60afa33686cab922cfb8320d23961d406cdc",
+        "version" : "0.3.0"
       }
     },
     {

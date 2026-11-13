@@ -54,10 +54,10 @@ extension ChangedLines {
     /// Parses the diff at `pathArgument` ("-" for stdin) without loading it
     /// into memory at once.
     init(streamingFrom pathArgument: String) throws {
-        var parser = DiffParser()
+        var parser = DiffEventParser(consumer: ChangedLines.Collector())
         // GitDiffKit doesn't import Foundation, so it takes bytes, not Data.
         try forEachChunk(ofInput: pathArgument) { parser.consume([UInt8]($0)) }
-        self = parser.finalize()
+        self = parser.finalize().changedLines
     }
 }
 

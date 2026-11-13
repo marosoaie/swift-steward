@@ -205,7 +205,7 @@ Add the package to `dependencies:` in `Dangerfile/Package.swift`, its
 product to the `Dangerfile` target, and its rules to `rules`, beside your
 own: `TeamRules.size(limit: 500)`. `rules` also takes an array, so a
 plugin can hand over several rules at once. Both depend on
-swift-steward, so their requirements must share a version, such as 0.1.x.
+swift-steward, so their requirements must share a version, such as 0.2.x.
 
 **SwiftLint.** danger-swift's `SwiftLint.lint(…)` runs SwiftLint itself.
 Steward's built-in rule reads the report an earlier step of the workflow
