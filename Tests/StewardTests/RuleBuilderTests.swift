@@ -56,6 +56,21 @@ struct RuleBuilderTests {
         static var rules: [Rule] {}
     }
 
+    /// Arrays of rules, which the overloads that reject findings must
+    /// leave to the ones that take rules.
+    enum ArrayChecks {
+        static let shared = [BranchingChecks.named("shared")]
+
+        @RuleBuilder
+        static var rules: [Rule] {
+            [BranchingChecks.named("literal 1"), BranchingChecks.named("literal 2")]
+            []
+            shared + [BranchingChecks.named("sum")]
+            shared.filter { _ in false }
+            Rule.group(whenChangesMatch: "**") { BranchingChecks.named("group") }
+        }
+    }
+
     @Test("the documented Dangerfile lists its rules in order, and they read the context")
     func documented() async throws {
         #expect(DocumentedChecks.rules.map(\.name) == ["Changelog", "No new Objective-C"])
@@ -80,6 +95,11 @@ struct RuleBuilderTests {
         let expected = ["first"] + (strict ? ["strict", "if", "switch strict"] : ["else", "switch lenient"])
             + ["loop 1", "loop 2", "available", "shared 1", "shared 2"]
         #expect(BranchingChecks.rules(strict: strict).map(\.name) == expected)
+    }
+
+    @Test("array literals, empty ones, and expressions of rules build beside the overloads that reject findings")
+    func arrays() {
+        #expect(ArrayChecks.rules.map(\.name) == ["literal 1", "literal 2", "shared", "sum", "group"])
     }
 
     @Test("an empty Dangerfile has no rules")

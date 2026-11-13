@@ -159,7 +159,8 @@ jobs:
   # template names main, which doesn't have this pull request's changes
   # yet. Then a dry run on the pull request, which may find what the
   # example rules look for (status 1), but must run (not status 2 or a
-  # crash).
+  # crash). Last, findings added outside any rule, which mustn't build,
+  # and must fail with RuleBuilder's message saying where they belong.
   dangerfile-template:
     runs-on: macos-26
     timeout-minutes: 30
@@ -194,6 +195,9 @@ jobs:
           echo "The Dangerfile exited with status $status."
           test "$status" -le 1
 
+      - name: Misplaced findings
+        run: Templates/check-misplaced-findings.sh "$RUNNER_TEMP/Dangerfile"
+
   dangerfile-template-linux:
     runs-on: ubuntu-latest
     container: swift:6.2
@@ -224,3 +228,6 @@ jobs:
           env -u GITHUB_ACTIONS "$bin/Dangerfile" --base "origin/$BASE_REF" || status=$?
           echo "The Dangerfile exited with status $status."
           test "$status" -le 1
+
+      - name: Misplaced findings
+        run: Templates/check-misplaced-findings.sh "$RUNNER_TEMP/Dangerfile"

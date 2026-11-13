@@ -15,7 +15,8 @@
 /// ```
 ///
 /// It works over the one concrete type `[Rule]`, so long lists stay cheap
-/// to type-check.
+/// to type-check. A finding among the rules, outside any rule, doesn't
+/// compile, and the compiler says it belongs inside one.
 @resultBuilder
 public enum RuleBuilder {
     /// One rule.
@@ -26,6 +27,23 @@ public enum RuleBuilder {
     /// Several rules at once, in order.
     public static func buildExpression(_ rules: [Rule]) -> [Rule] {
         rules
+    }
+
+    /// A finding outside any rule, which doesn't compile: findings come
+    /// from a rule's check.
+    ///
+    /// A finding on the line after a rule, as in `.warning("…")`, reads as
+    /// a member of that rule instead, and gets the compiler's own error.
+    @available(*, unavailable, message: "a finding belongs inside a rule: Rule(\"Name\") { context in [finding] }")
+    public static func buildExpression(_ finding: Finding) -> [Rule] {
+        []
+    }
+
+    /// Findings outside any rule, which don't compile: findings come from
+    /// a rule's check.
+    @available(*, unavailable, message: "findings belong inside a rule: Rule(\"Name\") { context in findings }")
+    public static func buildExpression(_ findings: [Finding]) -> [Rule] {
+        []
     }
 
     /// The statements of a block, in order.

@@ -181,7 +181,11 @@ concrete type, so it stays cheap to type-check, and it accepts `if`,
 `for`, and arrays of rules (a shared helper can add several at once). The
 two hand-written rules above, with this builder and stub types,
 type-check under Swift 6.4 in Swift 6 mode, implicit-member `.failure`
-inside `map` included.
+inside `map` included. A finding, or an array of findings, among the
+rules but outside any rule doesn't compile, and the compiler says where
+it belongs (`'buildExpression' is unavailable: a finding belongs inside
+a rule: …`) instead of that no overload matches (swift-steward#50,
+questions 96–98).
 
 The details:
 
@@ -1572,6 +1576,27 @@ views, for the maintainer to overturn in review.
     the `when` label, make the first trailing closure the condition in
     one group form and the rules in the other, and reverse answer 88. A
     named condition lints clean, so the examples use one and say why.
+96. **Which findings outside a rule get a message (S1). Decided
+    2026-11-13, checked by Fable: a finding and an array of findings.**
+    `RuleBuilder` has two unavailable `buildExpression` overloads, for a
+    `Finding` and for `[Finding]`. The first alone would leave
+    `[.warning("…")]`, a `[Finding]` value, and a mixed
+    `[Finding.warning("a"), .warning("b")]` with errors that point the
+    wrong way. Neither covers `.warning("…")` on the line after a rule,
+    which Swift reads as a member of that rule. Type-checking a
+    300-statement `rules` took the same time with neither, one or both.
+97. **The messages (S1). Decided 2026-11-13, checked by Fable:** "a
+    finding belongs inside a rule: Rule("Name") { context in [finding] }"
+    and "findings belong inside a rule: Rule("Name") { context in
+    findings }", lowercase and without a full stop, as the compiler's own
+    messages read.
+98. **Testing a compiler message (S8). Decided 2026-11-13, checked by
+    Fable: in PR CI's template jobs.** After the dry run,
+    `Templates/check-misplaced-findings.sh` adds the four forms to the
+    template's copy, which then must fail to build with each message, on
+    macOS and Linux. A test in the suite would build another package on
+    every run, or depend on where SwiftPM and Xcode put module files; the
+    jobs already build the copy, so the check costs seconds.
 
 ## Checks
 
