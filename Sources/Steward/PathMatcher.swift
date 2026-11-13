@@ -67,7 +67,7 @@ struct PathMatcher: Sendable {
             }
         }
         // Checked last, so the `**` form the error suggests is well formed.
-        if bytes.last == .slash, bytes.contains(where: [.star, .questionMark, .backslash].contains) {
+        if bytes.last == .slash, bytes.contains(where: { [.star, .questionMark, .backslash].contains($0) }) {
             throw PathPatternError(pattern: pattern, kind: .nonliteralDirectory)
         }
         self.pattern = bytes
