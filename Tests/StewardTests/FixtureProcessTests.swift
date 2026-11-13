@@ -32,7 +32,7 @@ struct FixtureProcessTests {
         let short = fixture.head.prefix(7)
         #expect(outcome.status == (asksToThrow ? 1 : 0))
         #expect(outcome.output.isEmpty)
-        #expect(summary.hasPrefix("**\(asksToThrow ? "1 failure, " : "")1 warning, 5 messages, 1 note** on \(short)"))
+        #expect(summary.hasPrefix("**\(asksToThrow ? "1 failure, " : "")1 warning, 6 messages, 1 note** on \(short)"))
         #expect(summary.contains("Rule “Fixture marker” failed") == asksToThrow)
         #expect(summary.hasSuffix("""
             <sub>Steward \(Release.version) · [workflow run](https://github.com/marosoaie/swift-steward/actions/runs/42) · \(short)</sub>
@@ -60,6 +60,34 @@ struct FixtureProcessTests {
             ::warning file=gone.swift,title=Steward::Deleted
             ::notice file=a.swift,line=10,title=Steward::First added line
             ::notice file=moved.swift,line=5,title=Steward::First added line
+            ::notice file=new.swift,title=Steward::Renamed from `old.swift`
+
+            """))
+        // The group on old.swift runs by the rename's old path; the other
+        // matches nothing.
+        #expect(outcome.log.contains("""
+            Commits: 1 finding
+            Renames: 1 finding
+            Unmatched: skipped, no changed file matches steward-fixture/unmatched/**
+
+            """))
+    }
+
+    @Test("a dry run matches the groups against the local diff, and logs the skipped one on standard error")
+    func dryRunGroups() throws {
+        let fixture = try DryRunTests.checkedOutFixture()
+        defer { fixture.remove() }
+        let outcome = try FixtureDangerfile.run(
+            ["--base", "main"],
+            environment: TestRepository.runEnvironment(adding: [:]),
+            in: fixture.repository.url
+        )
+        #expect(outcome.status == 0)
+        #expect(outcome.output.contains("| :book: | Renamed from `old.swift`<br>`new.swift` |"))
+        #expect(!outcome.output.contains("Unmatched"))
+        #expect(outcome.log.contains("""
+            Renames: 1 finding
+            Unmatched: skipped, no changed file matches steward-fixture/unmatched/**
 
             """))
     }

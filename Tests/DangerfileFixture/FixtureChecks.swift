@@ -2,8 +2,8 @@ import Steward
 
 /// The Dangerfile the end-to-end tests run on real pull requests: every
 /// kind of finding, with a location and without, a failure past a size,
-/// a rule that throws when the title asks it to, and the built-in
-/// diagnostics rule when the environment names reports for it.
+/// a rule that throws when the title asks it to, two groups, and the
+/// built-in diagnostics rule when the environment names reports for it.
 ///
 /// Each of its own rules is a static property, as docs/rule-tests.md
 /// recommends, so StewardTesting's tests call one by name.
@@ -21,6 +21,8 @@ struct FixtureChecks: Dangerfile {
         firstEdits
         largePullRequest
         commits
+        renames
+        unmatched
         fixtureMarker
         if let diagnosticSources {
             Rule.diagnosticsOnChangedLines(in: diagnosticSources)
@@ -59,6 +61,22 @@ struct FixtureChecks: Dangerfile {
         context.git.commits.isEmpty ? [] : [.markdown(context.git.commits.map { commit in
             "- `\(commit.sha.prefix(7))` \(commit.subject)"
         }.joined(separator: "\n"))]
+    }
+
+    /// Runs where the pull request changes `old.swift`, which the
+    /// end-to-end tests' own pull request renames: it matches by the old
+    /// path alone.
+    static let renames = Rule.group(whenChangesMatch: "old.swift") {
+        Rule("Renames") { context in
+            try context.git.changes(matching: "old.swift").renamedFiles.map { rename in
+                .message("Renamed from \(Markdown.codeSpan(rename.from))", at: Location(path: rename.to))
+            }
+        }
+    }
+
+    /// Never runs: no pull request the tests run on changes its files.
+    static let unmatched = Rule.group(whenChangesMatch: "steward-fixture/unmatched/**") {
+        Rule("Unmatched") { _ in [.failure("A group ran where no changed file matches it")] }
     }
 
     static let fixtureMarker = Rule("Fixture marker") { context in

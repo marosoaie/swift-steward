@@ -83,6 +83,14 @@ struct FixtureDangerfileTests {
 
     static let serverURL = URL(string: "https://github.com")!
 
+    /// What the log says of the fixture's groups, which no file of these
+    /// pull requests matches.
+    static let skippedGroups = """
+        Renames: skipped, no changed file matches old.swift
+        Unmatched: skipped, no changed file matches steward-fixture/unmatched/**
+
+        """
+
     /// `summary` with the footer naming Steward alone, not its release.
     static func versionless(_ summary: String) -> String {
         summary.replacingOccurrences(of: "<sub>Steward \(Release.version) · ", with: "<sub>Steward · ")
@@ -109,6 +117,7 @@ struct FixtureDangerfileTests {
             Pull request #\(pullRequest.number) in \(pullRequest.repository):\u{20}
             """))
         #expect(run.outcome.log.contains("::endgroup::\n::group::Rules\nSize: 1 finding\n"))
+        #expect(run.outcome.log.contains(Self.skippedGroups))
         // Without a token, the process posts nothing to these real pull
         // requests, and says so; then, last, it annotates the located
         // findings.
@@ -149,6 +158,7 @@ struct FixtureDangerfileTests {
         #expect(try Self.report(at: reportURL) == expected)
         #expect(log.hasPrefix("Pull request #0 in \(pullRequest.repository): HEAD into \(pullRequest.base)\n"))
         #expect(!log.contains("::"))
+        #expect(log.contains(Self.skippedGroups))
 
         // The executable, whose hosts would go to the network: the same.
         let process = try FixtureDangerfile.run(
