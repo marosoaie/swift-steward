@@ -115,7 +115,7 @@ even when they fail, so it reports a broken build's errors:
   run: >-
     docker run --rm -v "$PWD:$PWD" -w "$PWD" ghcr.io/realm/swiftlint:0.65.1
     lint --quiet > swiftlint.log || [ $? -eq 2 ]
-- uses: marosoaie/steward-action@v0.1.0
+- uses: marosoaie/steward-action@v0.1.1
   if: ${{ !cancelled() }}
 ```
 
@@ -169,7 +169,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: marosoaie/steward-action@v0.1.0
+      - uses: marosoaie/steward-action@v0.1.1
 ```
 
 **Pinning the Action.** Pin an exact tag, as above, or a full commit
