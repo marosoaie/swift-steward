@@ -124,7 +124,7 @@ struct PathMatcher: Sendable {
 
     private func matchesAsGlob(_ path: [UInt8]) -> Bool {
         path.reduce(reachable(from: [0], atComponentStart: true)) { positions, byte in
-            reachable(from: positions.flatMap { successors(of: $0, on: byte) }, atComponentStart: byte == .slash)
+            reachable(from: positions.lazy.flatMap { successors(of: $0, on: byte) }, atComponentStart: byte == .slash)
         }
         .contains(tokens.count)
     }
@@ -132,11 +132,17 @@ struct PathMatcher: Sendable {
     /// `positions`, and every position after tokens that can match nothing
     /// there.
     private func reachable(from positions: some Sequence<Int>, atComponentStart: Bool) -> Set<Int> {
-        Set(positions.flatMap { position in
-            sequence(first: position) { next in
-                next < tokens.count && tokens[next].matchesNothing(atComponentStart: atComponentStart) ? next + 1 : nil
+        positions.reduce(into: []) { reached, position in
+            // Imperative: a chain stops at a position reached before, whose
+            // chain is in already, so each position is visited once per path
+            // byte; following every chain to its end would be quadratic in a
+            // run of `**/`.
+            var next = position
+            while reached.insert(next).inserted, next < tokens.count,
+                  tokens[next].matchesNothing(atComponentStart: atComponentStart) {
+                next += 1
             }
-        })
+        }
     }
 
     private func successors(of position: Int, on byte: UInt8) -> [Int] {

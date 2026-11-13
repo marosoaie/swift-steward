@@ -11,6 +11,7 @@ extension Rule {
         let findings: [Finding]
         do {
             if let reason = try skipReason(in: context) {
+                guard !Task.isCancelled else { throw CancellationError() }
                 log.write("\(name): skipped, \(reason)")
                 return []
             }

@@ -214,6 +214,20 @@ struct RuleGroupTests {
         #expect(log.last == .error("Second: 1 finding, 1 failing\n"))
     }
 
+    @Test("cancelling the run in a condition that doesn't hold stops it before the skip line")
+    func cancellation() async {
+        let cancels: @Sendable (Context) -> Bool = { _ in
+            unsafe withUnsafeCurrentTask { unsafe $0?.cancel() }
+            return false
+        }
+        let rules = Rule.group(when: cancels, skipReason: "cancelled") { Rule("Last") { _ in [] } }
+        let recording = RecordingConsole()
+        let log = Log(mode: .dryRun, console: recording.console)
+        let outcome = await Task { try await rules.findings(in: .stub(), log: log) }.result
+        #expect(throws: CancellationError.self) { try outcome.get() }
+        #expect(await recording.finish().isEmpty)
+    }
+
     @Test("evaluate and applies(to:) give what a run gives, and setting evaluate keeps the groups")
     func evaluate() async throws {
         var rule = try #require(GroupedChecks.rules.last)

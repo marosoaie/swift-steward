@@ -99,6 +99,7 @@ struct PathPatternOracleTests {
         arguments: [
             (String(repeating: "*a", count: 30) + "b", String(repeating: "a", count: 5_000)),
             (String(repeating: "**/a/", count: 15) + "b", String(repeating: "a/", count: 2_000) + "c"),
+            (String(repeating: "**/", count: 500) + "b", String(repeating: "a/", count: 1_000) + "c"),
         ]
     )
     func matchingDoesNotBacktrack(pattern: String, path: String) throws {
