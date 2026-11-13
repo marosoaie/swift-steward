@@ -139,6 +139,32 @@ struct DangerfileRunTests {
         #expect(await host.requests.isEmpty)
     }
 
+    /// The fixture's rules twice over, so every name is shared.
+    struct TwiceChecked: Dangerfile {
+        static var rules: [Rule] {
+            FixtureChecks.rules
+            FixtureChecks.rules
+        }
+    }
+
+    @Test("rules that share a name get one warning, before the rules run, and the run goes on as before")
+    func sharedNames() async throws {
+        var context = try Context.fixture(diff: SampleDiff.mixed)
+        context.run.mode = .dryRun
+        let once = await FixtureChecks.run(on: context)
+        let twice = await TwiceChecked.run(on: context)
+        let names = FixtureChecks.rules.map { "“\($0.name)” (2 rules)" }.joined(separator: ", ")
+        #expect(twice.log.contains("""
+            warning: Some rules share a name, so the log and the report can't tell their findings apart: \
+            \(names). List each rule once, under its own name.
+            Size: 1 finding
+            """))
+        #expect(twice.log.ranges(of: "warning: ").count == 1)
+        #expect(!once.log.contains("share a name"))
+        #expect(twice.exitStatus == once.exitStatus)
+        #expect(twice.report?.findings.count == (once.report?.findings.count ?? 0) * 2)
+    }
+
     @Test("run(on:) posts to a fake host of its own, as run(on:postingTo:) does to a fresh one")
     func ownHost() async throws {
         let context = try Context.fixture(diff: SampleDiff.mixed)
