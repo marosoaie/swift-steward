@@ -1,13 +1,13 @@
 {
-  "originHash" : "87d63fd2a9c21039d04df4e8a55ddfc4f1b7a8df27e1ab417a6105250da22d1a",
+  "originHash" : "6ab92edb9415fce3218e667a68d3447140d3e9855636611f841c3b3455490849",
   "pins" : [
     {
       "identity" : "git-diff-parser",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/marosoaie/git-diff-parser.git",
       "state" : {
-        "revision" : "bcceab9e8269cdcb229c464e806e8b452e1badd9",
-        "version" : "0.2.1"
+        "revision" : "072c60afa33686cab922cfb8320d23961d406cdc",
+        "version" : "0.3.0"
       }
     },
     {

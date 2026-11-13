@@ -42,6 +42,7 @@ extension DamageReport {
         case .malformedBinaryPatch: "a binary patch ends early"
         case .headerTooLarge: "the file's header is too large"
         case .tooManyParents: "a combined diff has more than 64 parents"
+        @unknown default: "a problem this version of Steward doesn't describe (\(reason))"
         }
     }
 }

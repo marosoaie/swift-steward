@@ -3,5 +3,5 @@ package enum Release {
     /// `MAJOR.MINOR.PATCH`: what `steward --version` prints and what
     /// Steward's reports name. Changed only by the release procedure in
     /// AGENTS.md, whose workflow checks the built binary against it.
-    package static let version = "0.1.1"
+    package static let version = "0.2.0"
 }

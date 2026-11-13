@@ -44,8 +44,8 @@ A group runs its rules only when the pull request changes a file its
 pattern matches, in git's `:(glob)` syntax, or when a condition of your
 own holds, and the run's log names the rules it skipped.
 
-Steward's first release is 0.1.0. Until 1.0, a minor release may change
-its API, so a Dangerfile depends on 0.1.x.
+Steward is at 0.2. Until 1.0, a minor release may change its API, so a
+Dangerfile depends on 0.2.x.
 
 ## Where to start
 
@@ -251,7 +251,7 @@ needs:
 
 | Product | What it does |
 |---|---|
-| `GitDiffKit` | Unified git diffs → changed files and line ranges (`DiffParser`, `ChangedLines`). From the [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library |
+| `GitDiffKit` | Unified git diffs → changed files and line ranges (`ChangedLines`, `DiffEventParser`). From the [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library |
 | `BuildLogKit` | Build/lint logs → diagnostics. `ClangStyleLogParser` handles any clang-style log; `XcodeLogParser`, `SwiftLintLogParser`, and `SwiftFormatLogParser` additionally extract the violated rule. All conform to `LogParsing` |
 | `DiffDiagnostics` | The join: `DiagnosticMatcher` filters diagnostics to the lines a diff touches (depends on both of the above) |
 | `Steward` | A pure-Swift Danger: a `Dangerfile` package's rules, and a built-in one for build and lint diagnostics on changed lines, check a pull request in GitHub Actions and post one summary comment ([quickstart](docs/quickstart.md), [design](docs/danger.md)). Re-exports `GitDiffKit` |
@@ -259,8 +259,8 @@ needs:
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/marosoaie/git-diff-parser.git", .upToNextMinor(from: "0.2.1")),
-.package(url: "https://github.com/marosoaie/swift-steward.git", .upToNextMinor(from: "0.1.0")),
+.package(url: "https://github.com/marosoaie/git-diff-parser.git", .upToNextMinor(from: "0.3.0")),
+.package(url: "https://github.com/marosoaie/swift-steward.git", .upToNextMinor(from: "0.2.0")),
 // target dependencies (pick what you need):
 .product(name: "GitDiffKit", package: "git-diff-parser"),
 .product(name: "BuildLogKit", package: "swift-steward"),
@@ -275,11 +275,11 @@ import BuildLogKit
 import DiffDiagnostics
 import GitDiffKit
 
-// Whole-string convenience — or stream chunks into a DiffParser for
-// inputs that shouldn't be held in memory:
-var parser = DiffParser()
+// Whole-string convenience — or stream chunks through a DiffEventParser
+// for inputs that shouldn't be held in memory:
+var parser = DiffEventParser(consumer: ChangedLines.Collector())
 while let chunk = nextChunk() { parser.consume(chunk) }   // [UInt8], ArraySlice<UInt8>, or String
-let changes = parser.finalize()                           // == ChangedLines(diff: wholeText)
+let changes = parser.finalize().changedLines              // == ChangedLines(diff: wholeText)
 
 changes.contains(line: 42, in: "Sources/App/Foo.swift")   // binary search
 let kept = DiagnosticMatcher.match(
