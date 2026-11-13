@@ -176,16 +176,17 @@ struct PullRequestChecks: Dangerfile {
 ```
 
 `Dangerfile` declares `@RuleBuilder static var rules: [Rule] { get }`,
-so conformers get the builder without writing it. The builder is over one
-concrete type, so it stays cheap to type-check, and it accepts `if`,
-`for`, and arrays of rules (a shared helper can add several at once). The
-two hand-written rules above, with this builder and stub types,
-type-check under Swift 6.4 in Swift 6 mode, implicit-member `.failure`
-inside `map` included. A finding, or an array of findings, among the
-rules but outside any rule doesn't compile, and the compiler says where
-it belongs (`'buildExpression' is unavailable: a finding belongs inside
-a rule: …`) instead of that no overload matches (swift-steward#50,
-questions 96–98).
+so conformers get the builder without writing it; a helper that lists
+rules the same way writes the attribute itself (swift-steward#51). The
+builder is over one concrete type, so it stays cheap to type-check, and
+it accepts `if`, `for`, and arrays of rules (a shared helper can add
+several at once). The two hand-written rules above, with this builder
+and stub types, type-check under Swift 6.4 in Swift 6 mode,
+implicit-member `.failure` inside `map` included. A finding, or an array
+of findings, among the rules but outside any rule doesn't compile, and
+the compiler says where it belongs (`'buildExpression' is unavailable: a
+finding belongs inside a rule: …`) instead of that no overload matches
+(swift-steward#50, questions 96–98).
 
 The details:
 

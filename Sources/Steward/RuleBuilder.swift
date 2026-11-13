@@ -14,6 +14,19 @@
 /// }
 /// ```
 ///
+/// Only `Dangerfile.rules` gets the builder, from the protocol. A helper
+/// that lists rules the same way needs the attribute written, or the
+/// compiler reports "missing return in getter expected to return
+/// '[Rule]'":
+///
+/// ```swift
+/// @RuleBuilder
+/// static var sharedRules: [Rule] {
+///     Rule("Description") { context in … }
+///     Rule("Changelog") { context in … }
+/// }
+/// ```
+///
 /// It works over the one concrete type `[Rule]`, so long lists stay cheap
 /// to type-check. A finding among the rules, outside any rule, doesn't
 /// compile, and the compiler says it belongs inside one.

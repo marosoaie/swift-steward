@@ -52,6 +52,24 @@ struct RuleBuilderTests {
         }
     }
 
+    /// docs/quickstart.md's helper list, which writes the attribute, and
+    /// the template's rules it lists.
+    struct HelperChecks: Dangerfile {
+        static var rules: [Rule] {
+            reviewRules
+            BranchingChecks.named("last")
+        }
+
+        @RuleBuilder
+        static var reviewRules: [Rule] {
+            description
+            changelog
+        }
+
+        static let description = BranchingChecks.named("Description")
+        static let changelog = BranchingChecks.named("Changelog")
+    }
+
     struct EmptyChecks: Dangerfile {
         static var rules: [Rule] {}
     }
@@ -100,6 +118,11 @@ struct RuleBuilderTests {
     @Test("array literals, empty ones, and expressions of rules build beside the overloads that reject findings")
     func arrays() {
         #expect(ArrayChecks.rules.map(\.name) == ["literal 1", "literal 2", "shared", "sum", "group"])
+    }
+
+    @Test("a helper list that writes the attribute builds, and rules lists it as it lists a rule")
+    func helper() {
+        #expect(HelperChecks.rules.map(\.name) == ["Description", "Changelog", "last"])
     }
 
     @Test("an empty Dangerfile has no rules")
