@@ -34,7 +34,7 @@ replaced (question 83).
 
 | # | Topic | Recommendation | Alternatives considered |
 |---|---|---|---|
-| S1 | Rule shape | **Decided 2026-10-26.** `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
+| S1 | Rule shape | **Decided 2026-10-26; groups 2026-11-13.** `Rule`: a name plus a pure `@Sendable (Context) async throws -> [Finding]`; rules composed with a result builder; a thrown error becomes a failure of that rule; a group runs its rules only where a changed path or a condition holds, and logs the ones it skips | An `inout` report; a `Rule` protocol; danger-swift's global `danger` and free `warn()` |
 | S2 | Context | **Paths, the dry-run placeholder, `Run`'s fields, and the activity types decided 2026-10-26.** One immutable `Context`: `pullRequest` from the event payload (no API call), `git` from the local checkout through the full model, eagerly; `String` paths in the file lists, bytes in `diff`; a placeholder pull request in a local dry run without `--pull-request`; `Run` carries the line map and the API and server URLs; `ready_for_review` joins the accepted activity types | Lazy git data; reading the PR through the API; a `github` namespace; `[DiffPath]` lists |
 | S3 | Line numbers | **Decided 2026-10-26; the built-in rule's paths and severities 2026-10-27.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default, or the head when only the head is checked out) to the head before matching; Steward leaves `safe.directory` to the workflow. The built-in rule resolves a path the checkout has exactly before trying suffixes, and fails on diagnostics at or above a severity, errors by default | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | **Generator decided 2026-10-26:** `Steward <version>`, the version the CLI prints. A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
@@ -214,6 +214,77 @@ behavior on 2026-10-26 (questions 1 and 2). **Decided 2026-10-26
 (question 20):** `markdown(_:at:)` takes a location like the other three
 factories, since section 7 maps danger-swift's `markdown(message:file:line:)`
 to it.
+
+**Groups (swift-steward#48, decided 2026-11-13, questions 87–94).**
+Rules that concern one part of a repository go in a group, which runs
+them only where its condition holds and otherwise skips them:
+
+```swift
+static var rules: [Rule] {
+    CommitMessageRule.rule
+    Rule.group(whenChangesMatch: "mbk/**") {
+        MBKImagesRule.rule
+        Rule("MBK strings") { context in
+            try context.git.changes(matching: "mbk/**/*.xcstrings").modifiedFiles.map { path in
+                .message("Check the translations in \(Markdown.codeSpan(path)).", at: Location(path: path))
+            }
+        }
+    }
+    Rule.group(when: isReadyForReview, skipReason: "the pull request is a draft") {
+        ReviewReadinessRule.rule
+    }
+}
+
+static func isReadyForReview(_ context: Context) -> Bool {
+    !context.pullRequest.isDraft
+}
+```
+
+- **Two forms.** `Rule.group(whenChangesMatch:_:)` runs its rules when a
+  file the pull request changes matches a `PathPattern`: a created or
+  modified file, a deleted file by its old path, a renamed file by
+  either, and a copy by its new path. `Rule.group(when:skipReason:_:)`
+  takes any condition on the context, which may throw. A group returns
+  `[Rule]`, which the builder accepts, so groups nest and sit inside `if`
+  and `for`. Matching nothing, they skip; a damaged diff runs a path
+  group, since the file it lost might have matched.
+- **The log, not the report.** A skipped rule writes `MBK images:
+  skipped, no changed file matches mbk/**` (or `skipped, <skipReason>`)
+  where a rule that ran writes its count, on standard error in CI and in
+  a dry run alike. The report and the summary list findings, so they
+  don't change. A dry run matches its own diff, from the merge base of
+  `--base` and `HEAD`.
+- **Nesting.** A rule keeps the conditions of every group around it,
+  outermost first, in an internal property apart from its check. The run
+  checks them in order, runs the rule only when all hold, and logs the
+  first false one's reason.
+- **Errors are the rule's.** What a condition throws, a malformed
+  pattern included, is each of its rules' failure, as a rule's own error
+  is (`Rule “MBK images” failed: The path pattern “mbk/[x” has an
+  unescaped “[”…`), and none of them runs.
+- **The pattern** is git's `:(glob)` pathspec dialect, anchored at the
+  root and compared as git's bytes, so case-sensitive: `*` within a
+  component, `?` one byte, `**` as a whole component any number of
+  directories, and a pattern without wildcards matches that file or
+  everything under that directory. It matches exactly what `git ls-files
+  ':(glob)<pattern>'` lists, which the tests check against git. Classes
+  (`[...]`) aren't supported yet: a literal `[` is `\[`, and `\` escapes
+  any character. Malformed, and so a failure where used: an empty
+  pattern, a leading `/`, an empty, `.` or `..` component, an unescaped
+  `[`, a trailing `\`, and a `**` that isn't a whole component. Matching
+  keeps the set of pattern positions each path byte reaches, so it never
+  backtracks.
+- **For rules and their tests.** `context.git.changes(matching:)` is the
+  same `GitChanges` with only the matching files, so its lists and
+  `file(at:)` work as before. `rule.applies(to:)` says whether the run
+  would call a rule, and getting `evaluate` gives what a run gives: no
+  findings where a group doesn't hold. Setting `evaluate` replaces the
+  check and keeps the groups.
+
+The condition is named because SwiftLint's
+`multiple_closures_with_trailing_closure`, on by default, flags an inline
+closure before the trailing group (question 95). An inline condition
+works the same.
 
 ## 2. The context (S2)
 
@@ -1052,9 +1123,14 @@ swift-steward#36 (numbered on from 51) on 2026-10-28, the two that
 step 4.10 raised in swift-steward#37 (62 and 63) the same day, and the
 five that step 5.0 raised in swift-steward#38 (64–68) that day too, and
 the fifteen of step 5.1's API review (R1–R15, numbered on from 70) on
-2026-11-08, and the two that step 5.1's hardening raised (85 and 86)
-on 2026-11-12. The sections refer to them by number, and each section above
-already reflects its answer.
+2026-11-08, the two that step 5.1's hardening raised (85 and 86)
+on 2026-11-12, and the eight that swift-steward#48's rule groups raised
+(87–94) on 2026-11-13. The sections refer to them by number, and each
+section above already reflects its answer. From 95 on, as the maintainer
+asked on 2026-11-13, questions are decided without waiting for an
+answer: each recommendation was checked independently by Fable 5.2
+(`claude-fable-5-2`), and the pull request that raised it lists both
+views, for the maintainer to overturn in review.
 
 1. **Rule shape (S1). Answered 2026-10-26: pure closures** ("pure
    closures"). Rules are pure `(Context) async throws -> [Finding]`
@@ -1445,6 +1521,57 @@ already reflects its answer.
     they run. The alternative, pausing commands around that output only
     when `GITHUB_ACTIONS` is set, would miss output that reaches a
     workflow's log another way, such as a dry run's.
+87. **The path group's name (S1). Answered 2026-11-13:
+    `Rule.group(whenChangesMatch:_:)`** ("Please build it with the 8
+    recommendations", for 87–94), which reads as prose and says what's
+    matched. `forChangesIn:` suits a directory better than `**/*.swift`,
+    and `matching:` reads as if the rules' names matched.
+88. **The predicate form (S1). Answered 2026-11-13:
+    `Rule.group(when:skipReason:_:)`,** both required, with a condition
+    of type `@Sendable (Context) throws -> Bool`. The log line has the
+    path form's shape, `Name: skipped, <skipReason>`, and the condition
+    can use `changes(matching:)`. What it throws is the rule's failure,
+    and the rule doesn't run.
+89. **The pattern type (S1). Answered 2026-11-13: `PathPattern`, in
+    `Steward`,** a string literal, `Sendable` and `Hashable`. Its matching
+    stays internal; a public `matches(_:)` can come later.
+90. **The filtered view (S2). Answered 2026-11-13:
+    `GitChanges.changes(matching:) throws -> GitChanges`,** the same type
+    with the diff's files limited to the matching ones, and the commits,
+    merge base and head unchanged. A rename stays one entry, with both
+    paths, when either matches, and the diff keeps its damage reports.
+91. **Whether a rule applies (S1, S8). Answered 2026-11-13:
+    `rule.applies(to:) throws -> Bool`,** true when every group around the
+    rule holds, as the run decides it.
+92. **`evaluate` and the groups (S1, question 33). Answered 2026-11-13:
+    it honours them.** Getting it checks the groups first and returns no
+    findings when one doesn't hold, and throws a condition's error, so a
+    test gets what a run gets; setting it replaces the check and keeps
+    the groups.
+93. **The pattern's dialect and malformed patterns (S1). Answered
+    2026-11-13: no classes yet, and a malformed pattern throws where it's
+    used.** A literal `[` is `\[`, and `\` escapes any character, so
+    classes can come later without changing a pattern that works today.
+    Malformed are an empty pattern, a leading `/`, an unescaped `[` and a
+    trailing `\`; building the matcher added an empty, `.` or `..`
+    component, which git would rewrite away, and a `**` that isn't a
+    whole component, where git's literal-prefix matching makes
+    `Sources**` match everything under `Sources/`. Every accepted pattern
+    matches exactly what git's does. The error names the pattern and the
+    problem; a compile-time check would need a macro, a logged error would
+    run the rules everywhere, and a trap would crash before any comment.
+94. **The dry run (S2, S6). Answered 2026-11-13: groups match the dry
+    run's diff,** as they would in CI, and the skip lines are in its log,
+    on standard error. An empty diff skips every path group.
+95. **SwiftLint and an inline condition (S1). Decided 2026-11-13, checked
+    by Fable: keep `Rule.group(when:skipReason:_:)`, and name the
+    condition in the examples.** SwiftLint's default
+    `multiple_closures_with_trailing_closure` flags an inline closure
+    before the trailing group. `Rule.group(skipReason:when:rules:)` would
+    lint clean when written with two trailing closures, but it would drop
+    the `when` label, make the first trailing closure the condition in
+    one group form and the rules in the other, and reverse answer 88. A
+    named condition lints clean, so the examples use one and say why.
 
 ## Checks
 
@@ -1505,6 +1632,19 @@ How the factual claims were verified (2026-10-25/26):
   where one commit renames `A.txt` to `B.txt`, `git diff -M --name-status
   HEAD~1 HEAD -- A.txt` reports `D A.txt`, and the same diff without the
   pathspec reports `R100 A.txt B.txt` (section 3's mapping).
+- **Path patterns** (2026-11-12), by experiment with git 2.54's
+  `git ls-files ':(glob)<pattern>'` in a scratch repository, then pinned
+  by `PathPatternOracleTests`, which builds an index of paths that
+  includes names that aren't UTF-8, names that differ only in case, and
+  names with the pattern characters, and compares the matcher with git on
+  about 100 patterns. Beside the issue's table: `?` is one byte, so it
+  doesn't match `é`; `\` escapes; an unclosed `[` silently matches
+  nothing; a leading `/` is an error; a path equal to the pattern, or
+  under it as a directory, matches even when the pattern has wildcards;
+  `//`, `./` and `..` are rewritten away; `Sources**` matches everything
+  under `Sources/`; and `**/` matches no directories only where it
+  starts, so `**/b` doesn't match `ab`. The matching rules come from
+  `match_pathspec_item` in git's `dir.c` and `dowild` in `wildmatch.c`.
 - **SwiftPM and a moving tag**, by experiment under Swift 6.4: a scratch
   library tagged `1.0.0` on one commit and `v1` on the next resolves
   `from: "1.0.0"` to `1.0.0` on the first commit (the bare `v1` is

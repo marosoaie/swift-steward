@@ -49,6 +49,25 @@ struct RuleTests {
         #expect(findings == [.markdown("- `0123456` Add the parser")])
     }
 
+    @Test("a grouped rule applies only where its group holds, and evaluate gives what a run gives")
+    func groupedRule() async throws {
+        let renamed = try Context.fixture(diff: """
+            diff --git a/old.swift b/new.swift
+            similarity index 100%
+            rename from old.swift
+            rename to new.swift
+
+            """)
+        let elsewhere = try Context.fixture(diff: SampleDiff.mixed)
+        let rule = try #require(FixtureChecks.renames.first)
+        #expect(try rule.applies(to: renamed))
+        #expect(try !rule.applies(to: elsewhere))
+        #expect(try await rule.evaluate(renamed) == [
+            .message("Renamed from `old.swift`", at: Location(path: "new.swift")),
+        ])
+        #expect(try await rule.evaluate(elsewhere).isEmpty)
+    }
+
     @Test("a rule that throws throws to its test")
     func throwingRule() async throws {
         let context = try Context.fixture(

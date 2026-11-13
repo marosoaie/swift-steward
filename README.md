@@ -29,9 +29,20 @@ struct Checks: Dangerfile {
             guard !context.git.modifiedFiles.contains("CHANGELOG.md") else { return [] }
             return [.warning("Add a CHANGELOG entry.")]
         }
+
+        Rule.group(whenChangesMatch: "Sources/**") {
+            Rule("Tests") { context in
+                try context.git.changes(matching: "Tests/**").diff.files.isEmpty
+                    ? [.warning("Changes Sources without changing Tests.")] : []
+            }
+        }
     }
 }
 ```
+
+A group runs its rules only when the pull request changes a file its
+pattern matches, in git's `:(glob)` syntax, or when a condition of your
+own holds, and the run's log names the rules it skipped.
 
 Steward's first release is 0.1.0. Until 1.0, a minor release may change
 its API, so a Dangerfile depends on 0.1.x.

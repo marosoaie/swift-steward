@@ -23,6 +23,7 @@ struct DangerfileRunTests {
         #expect(outcome.log.contains("""
             Posted the summary comment: https://github.com/octocat/hello-world/pull/1#issuecomment-1
             """))
+        #expect(outcome.log.contains("Renames: skipped, no changed file matches old.swift\n"))
     }
 
     @Test("the report names the pull request, its repository, and its head")
