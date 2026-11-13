@@ -11,11 +11,17 @@ struct ColouredDiffTests {
             .appendingPathComponent("steward-coloured-diff-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
+        // Global and system configuration shut out, so a user's signing,
+        // hooks, or external diff tool can't change or stop the fixture.
         func git(_ arguments: String...) throws -> Data {
-            try Subprocess.output(
-                of: ["git", "-c", "user.name=Steward", "-c", "user.email=steward@example.com"] + arguments,
-                in: directory
-            )
+            try Subprocess.output(of: ["git"] + arguments, in: directory, environment: [
+                "GIT_CONFIG_GLOBAL": "/dev/null",
+                "GIT_CONFIG_NOSYSTEM": "1",
+                "GIT_AUTHOR_NAME": "Ada Lovelace",
+                "GIT_AUTHOR_EMAIL": "ada@example.com",
+                "GIT_COMMITTER_NAME": "Charles Babbage",
+                "GIT_COMMITTER_EMAIL": "charles@example.com",
+            ])
         }
         func write(_ text: String, to path: String) throws {
             try Data(text.utf8).write(to: directory.appendingPathComponent(path))
