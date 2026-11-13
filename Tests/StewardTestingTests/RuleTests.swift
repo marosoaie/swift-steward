@@ -68,6 +68,17 @@ struct RuleTests {
         #expect(try await rule.evaluate(elsewhere).isEmpty)
     }
 
+    @Test("a malformed path pattern throws an error a test can match by its kind and pattern")
+    func malformedPattern() async throws {
+        let context = try Context.fixture(diff: SampleDiff.mixed)
+        let error = #expect(throws: PathPatternError.self) { try context.git.changes(matching: "Sources/*/") }
+        #expect(error?.kind == .nonliteralDirectory)
+        #expect(error?.pattern == "Sources/*/")
+        let rule = try #require(Rule.group(whenChangesMatch: "/Sources") { Rule("Plain") { _ in [] } }.first)
+        let leadingSlash = PathPatternError(pattern: "/Sources", kind: .leadingSlash)
+        await #expect(throws: leadingSlash) { try await rule.evaluate(context) }
+    }
+
     @Test("a rule that throws throws to its test")
     func throwingRule() async throws {
         let context = try Context.fixture(

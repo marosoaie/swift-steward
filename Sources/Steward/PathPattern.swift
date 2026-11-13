@@ -6,7 +6,10 @@
 /// byte, and `**` as a whole component any number of directories:
 /// `Sources/*` matches the files directly in `Sources`, `**/*.swift` every
 /// Swift file, and `mbk/**` everything under `mbk`. A pattern without
-/// wildcards matches that file and everything under that directory.
+/// wildcards or escapes matches that file and everything under that
+/// directory, and may end in `/`. An escape makes a pattern name a file,
+/// never a directory: for everything under a directory whose name needs
+/// one, add `/**`, as in `Sources/\[Legacy\]/**`.
 ///
 /// A pattern matches exactly the paths `git ls-files ':(glob)<pattern>'`
 /// lists, compared as git's bytes: matching is case-sensitive, and `?`
@@ -14,14 +17,16 @@
 ///
 /// The dialect is a subset of git's: `[...]` classes aren't supported yet,
 /// so a literal `[` is written `\[`, and `\` escapes any character. A
-/// malformed pattern doesn't trap: whatever uses it throws an error that
-/// names it and says what's wrong. Malformed are an empty pattern (`**`
-/// matches every file), a leading `/`, an empty, `.` or `..` component, an
-/// unescaped `[`, a trailing `\`, and a `**` that isn't a whole component,
-/// such as `Sources**`.
+/// malformed pattern doesn't trap: whatever uses it throws a
+/// `PathPatternError` that names it and says what's wrong. Malformed are
+/// an empty pattern (`**` matches every file), a leading `/`, an empty,
+/// `.` or `..` component, an unescaped `[`, a trailing `\`, a `**` that
+/// isn't a whole component, such as `Sources**`, and a pattern that ends
+/// in `/` and has a `*`, `?` or `\`, such as `Sources/*/`, which git
+/// matches only as written: `Sources/*/**` matches what it means.
 public struct PathPattern: Sendable, Hashable, ExpressibleByStringLiteral, CustomStringConvertible {
     /// The pattern as written.
-    public var description: String
+    public let description: String
 
     /// Creates a pattern from its text, which is checked only where the
     /// pattern is used.

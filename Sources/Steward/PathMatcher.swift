@@ -38,9 +38,8 @@ struct PathMatcher: Sendable {
     private let tokens: [Token]
 
     init(_ pattern: PathPattern) throws(PathPatternError) {
-        let text = pattern.description
-        let bytes = Array(text.utf8)
-        try Self.checkComponents(of: text)
+        let bytes = Array(pattern.description.utf8)
+        try Self.checkComponents(of: pattern)
         var tokens: [Token] = []
         var index = 0
         // Imperative: a cursor that an escape or a run of stars moves by
@@ -48,22 +47,28 @@ struct PathMatcher: Sendable {
         while index < bytes.count {
             switch bytes[index] {
             case .backslash:
-                guard index + 1 < bytes.count else { throw .trailingBackslash(text) }
+                guard index + 1 < bytes.count else {
+                    throw PathPatternError(pattern: pattern, kind: .trailingBackslash)
+                }
                 tokens.append(.byte(bytes[index + 1]))
                 index += 2
             case .openingBracket:
-                throw .unescapedBracket(text)
+                throw PathPatternError(pattern: pattern, kind: .unescapedBracket)
             case .questionMark:
                 tokens.append(.anyByte)
                 index += 1
             case .star:
-                let (token, end) = try Self.starToken(in: bytes, at: index, pattern: text)
+                let (token, end) = try Self.starToken(in: bytes, at: index, pattern: pattern)
                 tokens.append(token)
                 index = end
             case let byte:
                 tokens.append(.byte(byte))
                 index += 1
             }
+        }
+        // Checked last, so the `**` form the error suggests is well formed.
+        if bytes.last == .slash, bytes.contains(where: [.star, .questionMark, .backslash].contains) {
+            throw PathPatternError(pattern: pattern, kind: .nonliteralDirectory)
         }
         self.pattern = bytes
         self.tokens = tokens
@@ -74,15 +79,16 @@ struct PathMatcher: Sendable {
     private static func starToken(
         in bytes: [UInt8],
         at index: Int,
-        pattern: String
+        pattern: PathPattern
     ) throws(PathPatternError) -> (Token, end: Int) {
         let end = bytes[index...].firstIndex { $0 != .star } ?? bytes.count
         guard end - index > 1 else { return (.anyBytesInComponent, end) }
-        guard index == 0 || bytes[index - 1] == .slash else { throw .partialGlobstar(pattern) }
+        let partialGlobstar = PathPatternError(pattern: pattern, kind: .partialGlobstar)
+        guard index == 0 || bytes[index - 1] == .slash else { throw partialGlobstar }
         if end == bytes.count {
             return (.anyBytes, end)
         }
-        guard bytes[end] == .slash else { throw .partialGlobstar(pattern) }
+        guard bytes[end] == .slash else { throw partialGlobstar }
         return (.anyDirectories, end + 1)
     }
 
@@ -106,14 +112,15 @@ struct PathMatcher: Sendable {
     /// Git's checks of a pattern's components, before matching: it rejects
     /// a leading `/` and rewrites empty, `.` and `..` components away,
     /// which would make a pattern match what it doesn't say.
-    private static func checkComponents(of pattern: String) throws(PathPatternError) {
-        guard !pattern.isEmpty else { throw .empty }
-        guard !pattern.hasPrefix("/") else { throw .leadingSlash(pattern) }
-        let components = pattern.split(separator: "/", omittingEmptySubsequences: false)
+    private static func checkComponents(of pattern: PathPattern) throws(PathPatternError) {
+        let text = pattern.description
+        guard !text.isEmpty else { throw PathPatternError(pattern: pattern, kind: .empty) }
+        guard !text.hasPrefix("/") else { throw PathPatternError(pattern: pattern, kind: .leadingSlash) }
+        let components = text.split(separator: "/", omittingEmptySubsequences: false)
         // A trailing `/` is git's: `mbk/` matches what `mbk` does.
         let checked = components.last?.isEmpty == true ? components.dropLast() : components[...]
         if let component = checked.first(where: { ["", ".", ".."].contains($0) }) {
-            throw .component(pattern, component: String(component))
+            throw PathPatternError(pattern: pattern, kind: .invalidComponent(String(component)))
         }
     }
 
