@@ -43,6 +43,19 @@ struct RuleGroupTests {
         }
     }
 
+    /// docs/danger.md's predicate group, with its named condition.
+    struct ReadinessGroup: Dangerfile {
+        static var rules: [Rule] {
+            Rule.group(when: isReadyForReview, skipReason: "the pull request is a draft") {
+                Rule("Review readiness") { _ in [.message("ready")] }
+            }
+        }
+
+        static func isReadyForReview(_ context: Context) -> Bool {
+            !context.pullRequest.isDraft
+        }
+    }
+
     private static func edit(_ path: String) -> String {
         """
         diff --git a/\(path) b/\(path)
@@ -103,6 +116,21 @@ struct RuleGroupTests {
         #expect(sourcesOnly.findings.map(\.text) == ["Changes Sources without changing Tests."])
         #expect(withTests.findings.isEmpty)
         #expect(docs.log == [.error("Tests: skipped, no changed file matches Sources/**\n")])
+    }
+
+    @Test("the documented predicate group, with a named condition, skips a draft")
+    func documentedPredicate() async throws {
+        var draft = Context.stub()
+        draft.pullRequest.isDraft = true
+        let recording = RecordingConsole()
+        let log = Log(mode: .dryRun, console: recording.console)
+        let ready = try await ReadinessGroup.rules.findings(in: .stub(), log: log)
+        let skipped = try await ReadinessGroup.rules.findings(in: draft, log: log)
+        #expect(ready.map(\.text) == ["ready"])
+        #expect(skipped.isEmpty)
+        #expect(await recording.finish() == [
+            .error("Review readiness: 1 finding\n"), .error("Review readiness: skipped, the pull request is a draft\n"),
+        ])
     }
 
     @Test("an empty diff skips every path group")

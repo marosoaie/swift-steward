@@ -230,9 +230,13 @@ static var rules: [Rule] {
             }
         }
     }
-    Rule.group(when: { !$0.pullRequest.isDraft }, skipReason: "the pull request is a draft") {
+    Rule.group(when: isReadyForReview, skipReason: "the pull request is a draft") {
         ReviewReadinessRule.rule
     }
+}
+
+static func isReadyForReview(_ context: Context) -> Bool {
+    !context.pullRequest.isDraft
 }
 ```
 
@@ -277,9 +281,10 @@ static var rules: [Rule] {
   findings where a group doesn't hold. Setting `evaluate` replaces the
   check and keeps the groups.
 
-SwiftLint's `multiple_closures_with_trailing_closure` flags an inline
-condition before the trailing group; a named condition, such as a static
-function, keeps it quiet.
+The condition is named because SwiftLint's
+`multiple_closures_with_trailing_closure`, on by default, flags an inline
+closure before the trailing group (question 95). An inline condition
+works the same.
 
 ## 2. The context (S2)
 

@@ -33,10 +33,18 @@ extension Rule {
     /// otherwise the run skips them, logging `Name: skipped, <skipReason>`.
     ///
     /// ```swift
-    /// Rule.group(when: { !$0.pullRequest.isDraft }, skipReason: "the pull request is a draft") {
+    /// Rule.group(when: isReadyForReview, skipReason: "the pull request is a draft") {
     ///     ReviewReadinessRule.rule
     /// }
+    ///
+    /// static func isReadyForReview(_ context: Context) -> Bool {
+    ///     !context.pullRequest.isDraft
+    /// }
     /// ```
+    ///
+    /// A named condition, as here, keeps SwiftLint's default
+    /// `multiple_closures_with_trailing_closure` quiet, which flags an
+    /// inline closure before the trailing one.
     ///
     /// What `condition` throws is each rule's failure, and none of them
     /// runs. Groups nest, and a rule runs only where every group around
