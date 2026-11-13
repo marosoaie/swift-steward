@@ -14,6 +14,9 @@
 /// ```
 public struct Rule: Sendable {
     /// Names the rule in the report and the log.
+    ///
+    /// The report and the log tell rules apart by name, so a run whose
+    /// rules share one warns, once, before they run.
     public var name: String
     /// The check itself, called only where the rule applies.
     ///

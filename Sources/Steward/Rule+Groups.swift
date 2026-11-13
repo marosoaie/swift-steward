@@ -17,7 +17,8 @@ extension Rule {
     /// malformed pattern is each rule's failure, and none of them runs.
     ///
     /// Groups nest, and a rule runs only where every group around it
-    /// holds.
+    /// holds. A rule placed in two groups runs once for each that holds,
+    /// and reports its findings each time.
     public static func group(whenChangesMatch pattern: PathPattern, @RuleBuilder _ rules: () -> [Rule]) -> [Rule] {
         group(
             when: { context in
@@ -49,7 +50,8 @@ extension Rule {
     /// What `condition` throws is each rule's failure, and none of them
     /// runs. Groups nest, and a rule runs only where every group around
     /// it holds; the run checks the outermost first, and logs the reason
-    /// of the first that doesn't.
+    /// of the first that doesn't. A rule placed in two groups runs once
+    /// for each that holds, and reports its findings each time.
     public static func group(
         when condition: @escaping @Sendable (Context) throws -> Bool,
         skipReason: String,

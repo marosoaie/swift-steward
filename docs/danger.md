@@ -39,7 +39,7 @@ replaced (question 83).
 | S3 | Line numbers | **Decided 2026-10-26; the built-in rule's paths and severities 2026-10-27.** Head coordinates everywhere: `context.git` is `base...head`, and build-log lines are mapped from the built tree (the merge commit by default, or the head when only the head is checked out) to the head before matching; Steward leaves `safe.directory` to the workflow. The built-in rule resolves a path the checkout has exactly before trying suffixes, and fails on diagnostics at or above a severity, errors by default | Merge coordinates throughout; build the head instead; two diffs |
 | S4 | Report | **Generator decided 2026-10-26:** `Steward <version>`, the version the CLI prints. A `Codable` `Report` of findings (not rendered text), versioned, with fixed snake-case keys; v1 runs evaluate → report → post in one process; a later fork flow posts from `workflow_run` and takes the target from its trusted payload | Pre-rendered Markdown in the artifact; `pull_request_target` |
 | S5 | Summary comment | **Clean case, markers, the headline's notes, and the size budget's step decided 2026-10-26; the author option and the budget's API 2026-10-27.** The 3.5 marker on the first line, only the token's own comments (`--summary-author` names another account); danger-style tables per kind with head-commit links; 65,536 UTF-8 bytes, cut from the end, everything in the job summary or the report artifact; "all clear" in place of a resolved summary; skip posting when the head moved | Keyed markers in v1; lists instead of tables; deleting or always posting when clean |
-| S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27; the annotations 2026-10-28.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice; in CI, each finding with a location is also an annotation on its head line (5.0) | Always fail; fail on configuration errors only; refusing to run on forks |
+| S6 | Posting failures | **Decided 2026-10-26; the wait's API and the fork notice 2026-10-27; the annotations 2026-10-28; shared rule names 2026-11-13.** Findings alone decide the exit code (0 clean, 1 failures, 2 Steward broken); a posting failure is a warning annotation plus the job summary, one retry for transient errors, waiting as long as `retryAfter` says, and `--fail-on-post-error` opts into failing; on fork pull requests the rules run and posting is skipped with a notice; in CI, each finding with a location is also an annotation on its head line (5.0); a run whose rules share a name warns once, before they run | Always fail; fail on configuration errors only; refusing to run on forks |
 | S7 | danger-swift mapping | Same vocabulary, reshaped: static factories for the four kinds, `context.git` and `context.pullRequest` for `danger.git` and `danger.github.pullRequest`, packages instead of `fileImport`/inline deps; no suggestions, reviews, or API access in v1 | Source compatibility (ruled out by the plan) |
 | S8 | Packaging and the Action | `Steward` and `StewardTesting` products; the user's `Dangerfile/` is an ordinary package beside theirs; **decided 2026-10-26:** the Action in a separate `steward-action` repository (decision 3), both products in 4.6, and `Steward` re-exports `GitDiffKit` and `PullRequestHosting`; **`StewardTesting` decided 2026-10-27:** an actor for the fake host, a typed error for a damaged fixture diff, fixed fixture values, and `package` hooks into the runner; **the template decided 2026-10-27:** `Templates/Dangerfile`, copied with one `curl \| tar` line, on `branch: "main"` until a release ships `Steward`, and built and tested in CI against the pull request's own code; **the dogfood decided 2026-10-28:** this repository's `Dangerfile/` depends on its own checkout and git-diff-parser's on `main`, pinned, each run by the Action in the job that builds and lints, failing on warnings on changed lines; **since 0.1.0 (2026-11-03):** the template and git-diff-parser's Dangerfile on 0.1.x | `action.yml` at swift-steward's root with a moving `v1` tag |
 
@@ -831,7 +831,9 @@ posts. That's why the Action's documentation (4.8) sets the group.
 2. **Context** (section 2) and the line map (section 3). An unsupported
    event, a missing payload, or a git failure ends the run here.
 3. **Rules** (section 1), into a `Report` (section 4); `--report <path>`
-   writes it out.
+   writes it out. The log and the report tell rules apart by name, so
+   when rules share one, a warning before them lists each shared name
+   with how many rules have it (swift-steward#52, questions 99–103).
 4. **Render** the summary (section 5): to the log and appended to
    `$GITHUB_STEP_SUMMARY` in CI (a summary that can't be written only
    warns), to standard output in a dry run, escaped as the log is
@@ -1598,6 +1600,40 @@ views, for the maintainer to overturn in review.
     macOS and Linux. A test in the suite would build another package on
     every run, or depend on where SwiftPM and Xcode put module files; the
     jobs already build the copy, so the check costs seconds.
+99. **Rules that share a name (S6). Decided 2026-11-13, checked by
+    Fable: a warning in the log, before the rules run.** Not a finding
+    or a failure: the summary and the comment don't show rule names, and
+    one rule placed in two groups is a valid Dangerfile, so the report,
+    the summary, the comment and the exit status stay as the rules give
+    them.
+100. **What counts as the same name (S6). Decided 2026-11-13, checked by
+     Fable: equal `String`s,** as the log and the report compare them.
+     Names that differ in case or by a trailing space are told apart
+     there, so they don't warn; canonically equivalent spellings, which
+     `==` takes as equal, do.
+101. **Where the check runs (S6, S8). Decided 2026-11-13, checked by
+     Fable: just before the "Rules" group,** outside any group, so
+     Actions doesn't fold it, and in the part of the run that
+     `Dangerfile.run(on:postingTo:)` shares with `main()`, so a
+     Dangerfile's tests see the warning in the run's log. A run that
+     ends before its rules, such as `--help` or a missing payload,
+     doesn't warn.
+102. **One warning, or one per name (S6). Decided 2026-11-13, checked by
+     Fable: one warning listing every shared name,** once each, in the
+     order it first appears, with how many rules have it. GitHub shows
+     only a step's first 10 warning annotations, and a list of rules
+     reused in two groups shares every name, so a warning per name could
+     crowd out the findings'. No public API: a test reads the run's log,
+     or compares `Set(rules.map(\.name)).count` with `rules.count`.
+     Fable suggested listing at most five names; the list isn't capped,
+     since it's one annotation either way.
+103. **The warning's advice (S6). Decided 2026-11-13, checked by Fable:
+     "List each rule once, under its own name."** It fits both causes:
+     two rules given one name, and one rule listed twice. Renaming one
+     copy of a rule placed in two groups would quiet the warning and
+     keep the double run, whose findings are each reported twice, so
+     `Rule.group`'s doc comments now say a rule placed in two groups
+     runs once for each that holds.
 
 ## Checks
 

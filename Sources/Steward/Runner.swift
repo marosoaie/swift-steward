@@ -97,6 +97,9 @@ struct Runner: Sendable {
     /// The run once its context is built: the rules, the report, the
     /// summary, and posting it, in `context.run.mode`.
     func run(_ rules: [Rule], in context: Context, options: Options, log: Log) async -> Checked {
+        if let warning = rules.sharedNamesWarning {
+            log.warning(warning)
+        }
         let findings: [Finding]
         do {
             findings = try await log.group("Rules") { () async throws(CancellationError) in
