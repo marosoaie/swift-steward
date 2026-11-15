@@ -223,16 +223,16 @@ iteration), never narration of the next line.
   The maintainer drives version numbers — never change the version outside
   this procedure.
   Users start from the latest minor release,
-  `.upToNextMinor(from: "0.1.0")`, in `Templates/Dangerfile/Package.swift`,
+  `.upToNextMinor(from: "0.2.0")`, in `Templates/Dangerfile/Package.swift`,
   `docs/quickstart.md`, `docs/rule-tests.md`, and the README, and in the
   `Dangerfile/Package.swift` of git-diff-parser and of steward-action; a
   new minor release moves them all to it. The quickstart's tarball URL
   names the latest release's tag; every release's version-bump PR moves
   it to the new tag, so each tag's quickstart copies that tag's template.
   The quickstart's two pins of steward-action and `pr.yml`'s name the
-  Action's latest release, `@v0.1.0`, as git-diff-parser's `ci.yml` does;
+  Action's latest release, `@v0.1.1`, as git-diff-parser's `ci.yml` does;
   a new release of the Action moves them all to its tag.
   Versions restarted at 0.1.0 on 2026-11-02 (v1.0.0–v2.0.0 were
   withdrawn). Under 0.x a minor release may break, so workflows pin an
-  exact tag such as `@v0.1.0`, or a SHA; a moving `v1` tag waits for 1.0,
+  exact tag such as `@v0.1.1`, or a SHA; a moving `v1` tag waits for 1.0,
   which follows the maintainer's own external testing.
