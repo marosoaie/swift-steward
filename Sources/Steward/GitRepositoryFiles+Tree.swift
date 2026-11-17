@@ -1,7 +1,8 @@
 extension GitRepositoryFiles {
     /// One record of `git ls-tree -z --long`:
     /// `<mode> SP <type> SP <object> SP <size> TAB <path> NUL`, the size
-    /// padded with spaces, or `-` for a directory or a submodule.
+    /// padded with spaces, `-` for a directory or a submodule, or `BAD`
+    /// for a blob the repository doesn't have.
     struct TreeEntry: Sendable, Hashable {
         /// Six octal digits: `100644` or `100755` for a regular file,
         /// `120000` for a symbolic link, `160000` for a submodule,
@@ -9,15 +10,17 @@ extension GitRepositoryFiles {
         var mode: String
         var type: String
         var object: String
+        /// Nil for a directory or a submodule, and for a blob the
+        /// repository is missing, as a partial clone may be.
         var size: Int?
         /// The path from the repository's root, byte for byte.
         var path: [UInt8]
 
-        /// The size of a regular file, or nil for anything else. Read
-        /// from the mode, which git sets apart from the object's type, so
-        /// a symbolic link, a blob whose mode is `120000`, isn't one.
-        var regularFileSize: Int? {
-            mode.hasPrefix("100") && type == "blob" ? size : nil
+        /// Whether it's a regular file. Read from the mode, which git sets
+        /// apart from the object's type, so a symbolic link, a blob whose
+        /// mode is `120000`, isn't one.
+        var isRegularFile: Bool {
+            mode.hasPrefix("100") && type == "blob"
         }
 
         /// The record's entry, or nil when it isn't one `ls-tree` writes.

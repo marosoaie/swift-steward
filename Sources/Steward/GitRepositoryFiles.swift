@@ -32,11 +32,23 @@ struct GitRepositoryFiles: RepositoryFiles {
             in: commit,
             pathBytesPerCall: pathBytesPerCall
         )
-        let readable = entries.values.filter { $0.regularFileSize.map { $0 <= limit } ?? false }
+        let readable = entries.values.filter { $0.isRegularFile && $0.size.map { $0 <= limit } ?? false }
         let objects = try await objects(Set(readable.map(\.object)).sorted())
         return try names.map { name in
             guard let name, let entry = entries[name] else { return .noSuchFile }
-            guard let size = entry.regularFileSize else { return .notRegularFile }
+            guard entry.isRegularFile else { return .notRegularFile }
+            // `ls-tree` says `BAD` for a blob it can't find, and succeeds:
+            // a file to report, not to take for something other than one.
+            guard let size = entry.size else {
+                throw ContextError.gitFailed(
+                    arguments: ["ls-tree", "--long"],
+                    status: 0,
+                    message: """
+                        gave no size for \(String(decoding: name, as: UTF8.self)): the repository lacks its \
+                        object \(entry.object), as a partial clone can
+                        """
+                )
+            }
             guard size <= limit else { return .tooLarge(size: size) }
             guard let object = objects[entry.object] else {
                 throw ContextError.gitFailed(

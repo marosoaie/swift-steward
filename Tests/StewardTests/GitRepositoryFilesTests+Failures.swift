@@ -61,6 +61,29 @@ extension GitRepositoryFilesTests {
         ])
     }
 
+    @Test("a file whose blob the repository lacks fails the read, rather than read as something else")
+    func missingBlob() async throws {
+        let fixture = try FilesFixture()
+        defer { fixture.remove() }
+        // As in a partial clone that can't fetch it: `ls-tree --long`
+        // says `BAD` for its size, and succeeds.
+        let object = try fixture.oracle.text(["rev-parse", "\(fixture.head):ab.swift"])
+        let objects = fixture.repository.url.appendingPathComponent(".git/objects", isDirectory: true)
+        try FileManager.default.removeItem(
+            at: objects.appendingPathComponent("\(object.prefix(2))/\(object.dropFirst(2))")
+        )
+        let listing = try fixture.oracle.text(["ls-tree", "--long", fixture.head, "--", "ab.swift"])
+        #expect(listing.contains(" BAD\t"))
+        let reader = Self.reader(of: fixture.repository)
+        let error = await #expect(throws: ContextError.self) {
+            try await reader.contents(ofFilesAt: ["Changed.swift", "ab.swift"], in: fixture.head, limit: .max)
+        }
+        #expect(error?.description.contains(object) == true)
+        // A read that doesn't need its size is untouched.
+        #expect(try await reader.contents(ofFileAt: "Changed.swift", in: fixture.head, limit: .max)
+            == .bytes(Array("after\n".utf8)))
+    }
+
     @Test("a read fails, naming the tool, when xargs or git isn't on PATH", arguments: ["xargs", "git"])
     func missingTool(tool: String) async throws {
         let fixture = try FilesFixture()

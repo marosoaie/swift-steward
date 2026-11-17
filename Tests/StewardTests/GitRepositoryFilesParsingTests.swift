@@ -24,22 +24,35 @@ struct GitRepositoryFilesParsingTests {
         #expect(file.object == Self.first)
         #expect(file.size == 12)
         #expect(file.path == Array("dir/a\tb\nc.swift".utf8))
-        #expect(file.regularFileSize == 12)
+        #expect(file.isRegularFile)
         let executable = try #require(TreeEntry(record: Self.record("100755 blob \(Self.third) 0\tscript.sh")))
-        #expect(executable.regularFileSize == 0)
+        #expect(executable.isRegularFile)
+        #expect(executable.size == 0)
+        let missing = try #require(TreeEntry(record: Self.record("100644 blob \(Self.first)     BAD\tgone.swift")))
+        #expect(missing.isRegularFile)
+        #expect(missing.size == nil)
         #expect(executable.object.count == 64)
         let latin1 = try #require(TreeEntry(record: ArraySlice(Array("100644 blob \(Self.first) 1\t".utf8) + [0xE9])))
         #expect(latin1.path == [0xE9])
     }
 
-    @Test("only a regular file has a size to read: not a link, a submodule, or a directory", arguments: [
+    @Test("a link, a submodule, or a directory isn't a regular file, whatever its size", arguments: [
         "120000 blob \(first) 13\tlink", "160000 commit \(first) -\tVendor", "040000 tree \(first) -\tSources",
-        "100644 tree \(first) 12\todd", "100644 blob \(first) -\tno-size",
-        "100644 blob \(first) 99999999999999999999\toverflow",
+        "100644 tree \(first) 12\todd", "100644 commit \(first) -\todd",
     ])
     func notRegular(record: String) throws {
         let entry = try #require(TreeEntry(record: Self.record(record)))
-        #expect(entry.regularFileSize == nil)
+        #expect(!entry.isRegularFile)
+    }
+
+    @Test("a size that isn't a number, or doesn't fit, is no size", arguments: [
+        "100644 blob \(first) -\tno-size", "100644 blob \(first) BAD\tmissing",
+        "100644 blob \(first) 99999999999999999999\toverflow",
+    ])
+    func noSize(record: String) throws {
+        let entry = try #require(TreeEntry(record: Self.record(record)))
+        #expect(entry.isRegularFile)
+        #expect(entry.size == nil)
     }
 
     @Test("a record ls-tree doesn't write is refused", arguments: [
