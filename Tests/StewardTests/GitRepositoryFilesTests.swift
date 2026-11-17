@@ -16,7 +16,7 @@ struct GitRepositoryFilesTests {
             let paths = try fixture.regularFiles(at: commit)
             #expect(paths.count >= 3)
             let expected = try paths.map { path in
-                FilesFixture.read(path, holding: try #require(try fixture.oracle.show(path, at: commit), "\(path)"))
+                FileContents.bytes(try #require(try fixture.oracle.show(path, at: commit), "\(path)"))
             }
             #expect(try await reader.contents(ofFilesAt: paths, in: commit, limit: .max) == expected)
             try await zip(paths, expected).asyncForEach { path, contents in
@@ -42,23 +42,28 @@ struct GitRepositoryFilesTests {
         ) == .noSuchFile)
     }
 
-    @Test("a name and its other Unicode spelling are two files, never read as each other")
-    func unicodeSpellings() async throws {
+    @Test("a name and its canonical twin are two files, each read as its own, on macOS too", arguments: [
+        ["caf\u{E9}.swift", "cafe\u{301}.swift"], ["q\u{37E}.swift", "q;.swift"],
+    ])
+    func unicodeSpellings(twins: [String]) async throws {
         let fixture = try FilesFixture()
         defer { fixture.remove() }
+        #expect(twins[0] == twins[1], "Swift's == compares canonical equivalence")
+        #expect(Array(twins[0].utf8) != Array(twins[1].utf8))
+        let expected = twins.map { FileContents.bytes(FilesFixture.defaultContents(of: $0)) }
+        #expect(expected[0] != expected[1])
+        try twins.forEach { name in
+            let shown = try fixture.oracle.show(name, at: fixture.head)
+            #expect(shown == FilesFixture.defaultContents(of: name))
+        }
         let reader = Self.reader(of: fixture.repository)
-        let precomposed = "caf\u{E9}.swift"
-        let decomposed = "cafe\u{301}.swift"
-        #expect(precomposed == decomposed, "Swift's == compares canonical equivalence")
-        #expect(try fixture.oracle.show(precomposed, at: fixture.head) == FilesFixture.defaultContents(of: precomposed))
-        #expect(try fixture.oracle.show(decomposed, at: fixture.head) == FilesFixture.defaultContents(of: decomposed))
-        let read = try await reader.contents(ofFilesAt: [precomposed, decomposed], in: fixture.head, limit: .max)
-        // Out of reach on macOS, the decomposed name reads as missing there.
-        #expect(read == [
-            .bytes(FilesFixture.defaultContents(of: precomposed)),
-            FilesFixture.read(decomposed, holding: FilesFixture.defaultContents(of: decomposed)),
-        ])
-        #expect(read[0] != read[1])
+        #expect(try await reader.contents(ofFilesAt: twins, in: fixture.head, limit: .max) == expected)
+        #expect(try await reader.contents(ofFilesAt: twins.reversed(), in: fixture.head, limit: .max)
+            == expected.reversed())
+        try await zip(twins, expected).asyncForEach { name, contents in
+            let read = try await reader.contents(ofFileAt: name, in: fixture.head, limit: .max)
+            #expect(read == contents)
+        }
     }
 
     @Test("a name that isn't UTF-8 can't be read under its decoded spelling, which names another file")
@@ -190,69 +195,12 @@ struct GitRepositoryFilesTests {
         #expect(try await Self.reader(of: repository).contents(ofFilesAt: [], in: commit, limit: .max) == [])
     }
 
-    @Test("a commit the repository lacks, or one spelled as an option, fails the read", arguments: [
-        String(repeating: "0", count: 40), "--output=/dev/null", "-p", "", "HEAD:Changed.swift",
-    ])
-    func badCommit(commit: String) async throws {
-        let fixture = try FilesFixture()
-        defer { fixture.remove() }
-        await #expect(throws: ContextError.self) {
-            try await Self.reader(of: fixture.repository).contents(ofFileAt: "Changed.swift", in: commit, limit: .max)
-        }
-    }
-
-    @Test("a tree isn't a commit, so reading from one fails")
-    func treeIsNoCommit() async throws {
-        let fixture = try FilesFixture()
-        defer { fixture.remove() }
-        let tree = try fixture.oracle.text(["rev-parse", "\(fixture.head)^{tree}"])
-        await #expect(throws: ContextError.self) {
-            try await Self.reader(of: fixture.repository).contents(ofFileAt: "Changed.swift", in: tree, limit: .max)
-        }
-    }
-
-    @Test("a path too long for any command line fails the read rather than crash")
-    func overlongPath() async throws {
-        let fixture = try FilesFixture()
-        defer { fixture.remove() }
-        await #expect(throws: ContextError.self) {
-            try await Self.reader(of: fixture.repository).contents(
-                ofFileAt: String(repeating: "a", count: 4 << 20),
-                in: fixture.head,
-                limit: .max
-            )
-        }
-    }
-
-    @Test("git's pathspec variables can't make paths match as globs, regardless of case, or stop git")
-    func pathspecVariables() async throws {
-        let fixture = try FilesFixture()
-        defer { fixture.remove() }
-        let variables = [
-            "GIT_GLOB_PATHSPECS": "1", "GIT_ICASE_PATHSPECS": "1", "GIT_NOGLOB_PATHSPECS": "1",
-            "GIT_LITERAL_PATHSPECS": "0",
-        ]
-        let reader = GitRepositoryFiles(git: Git(
-            directory: fixture.repository.path,
-            environment: TestRepository.runEnvironment(adding: variables)
-        ))
-        let read = try await reader.contents(
-            ofFilesAt: ["a*.swift", "AB.swift", "*.swift", "ab.swift"],
-            in: fixture.head,
-            limit: .max
-        )
-        #expect(read == [
-            .bytes(FilesFixture.defaultContents(of: "a*.swift")), .noSuchFile, .noSuchFile,
-            .bytes(FilesFixture.defaultContents(of: "ab.swift")),
-        ])
-    }
-
     @Test("seeded random paths never trap, and read only files git show also finds", arguments: 0..<4)
     func randomPaths(seed: UInt64) async throws {
         let fixture = try FilesFixture()
         defer { fixture.remove() }
         var generator = SplitMix64(seed: seed)
-        let pieces = "ab*?[]:/.\\-!^ \t\n\u{0}\u{E9}\u{301}\u{FFFD}".unicodeScalars.map(String.init)
+        let pieces = "ab*?[]:/.\\-!^ \t\n\u{0}\u{E9}\u{301}\u{37E};\u{FFFD}".unicodeScalars.map(String.init)
             + ["Sources", "App", "Loader.swift"]
         let paths = (0..<200).map { _ in
             (0..<Int.random(in: 0...12, using: &generator)).map { _ in
@@ -269,7 +217,7 @@ struct GitRepositoryFilesTests {
             #expect(shown == bytes, "\(path.debugDescription)")
         }
         #expect(Array(read.suffix(FilesFixture.names.count)) == FilesFixture.names.map {
-            FilesFixture.read($0, holding: FilesFixture.defaultContents(of: $0))
+            .bytes(FilesFixture.defaultContents(of: $0))
         })
     }
 

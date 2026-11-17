@@ -393,19 +393,21 @@ Where each part comes from (step 4.2):
   log is read with NUL-separated `--format` fields, so any subject parses.
 - **`files`** from the local repository, through git (Phase 6, step C1).
   `git ls-tree` gives each path's mode, object, and size at the commit.
-  Paths are taken literally (`a*.swift` is that file, not a pattern) and
-  matched byte for byte, so `./a`, `dir/`, and a name's other Unicode
-  spelling name nothing. A symbolic link, a submodule, or a directory is
-  reported by its mode and never followed, and a file over the limit by
-  its size, before anything is read. `git cat-file --batch`, fed object
-  IDs only, then reads the rest: two processes for any number of files,
-  with no textconv, filters, or line-ending conversion. The head is the
+  Paths reach it through `xargs -0`, on standard input, because macOS's
+  `Process` rewrites its arguments to their canonical decomposition
+  (`é` into `e` and an accent, the Greek question mark into `;`), which
+  no git setting undoes. They're taken literally (`a*.swift` is that
+  file, not a pattern) and matched byte for byte, so `./a`, `dir/`, and a
+  name's other Unicode spelling name nothing. A symbolic link, a
+  submodule, or a directory is reported by its mode and never followed,
+  and a file over the limit by its size, before anything is read.
+  `git cat-file --batch`, fed object IDs only, then reads the rest: two
+  git processes for any number of files (another `ls-tree` per 64 KiB of
+  paths), with no textconv, filters, or line-ending conversion. The head is the
   pull request's head, not the merge commit the run checked out (section
   3), and the merge base is `git.mergeBase`, not the base branch's tip.
   A name that isn't UTF-8 can't be spelled as a `String`, so it's out of
-  reach. On macOS, Foundation decomposes a process's arguments and git
-  composes them back, so a name stored decomposed reads as `.noSuchFile`
-  there. The limit, 1 MiB unless a rule passes another, keeps one huge
+  reach. The limit, 1 MiB unless a rule passes another, keeps one huge
   file from filling memory.
 - **`run`** from the environment: `GITHUB_ACTIONS`, `GITHUB_WORKSPACE`,
   and `GITHUB_SHA` (the commit the workflow checked out, which for

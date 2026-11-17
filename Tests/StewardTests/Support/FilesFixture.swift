@@ -1,5 +1,4 @@
 import Foundation
-@testable import Steward
 
 /// A repository whose two commits hold every kind of entry a reader of
 /// files must tell apart, under names that may hold any byte but NUL:
@@ -19,13 +18,16 @@ struct FilesFixture {
 
     /// Names of regular files at the head, each holding
     /// `defaultContents(of:)`: spaces, line breaks, glob and pathspec
-    /// syntax, a leading dash, and a name in its precomposed and its
-    /// decomposed spelling, which Swift's `==` takes for one.
+    /// syntax, a leading dash, and names Swift's `==` takes for their
+    /// canonical twins, which macOS would rewrite as `Process` arguments:
+    /// `é` precomposed and decomposed, and the Greek question mark beside
+    /// a semicolon.
     static let names = [
         "Sources/App/Loader.swift", "with space.swift", "tab\t.swift", "new\nline.swift", "trailing space ",
         "a*.swift", "ab.swift", "[ab].swift", "?.swift", "*", ":(glob)*.swift", ":/top.swift",
         "-dash.swift", "back\\slash.swift", "quote\".swift", ".hidden",
-        "caf\u{E9}.swift", "cafe\u{301}.swift", "caf\u{FFFD}.swift", "\u{65E5}\u{672C}.swift",
+        "caf\u{E9}.swift", "cafe\u{301}.swift", "q\u{37E}.swift", "q;.swift", "caf\u{FFFD}.swift",
+        "\u{65E5}\u{672C}.swift",
     ]
 
     /// Regular files at the head whose contents test the reader's bytes.
@@ -51,24 +53,6 @@ struct FilesFixture {
     ]
 
     static let submodule = "Vendor/Library"
-
-    /// Whether the reader can find a file stored under `name` where the
-    /// tests run: on macOS, `Process` decomposes an argument's accented
-    /// letters and git composes them back, so a name stored decomposed is
-    /// out of its reach there.
-    static func isReachable(_ name: String) -> Bool {
-        #if canImport(Darwin)
-        Array(name.utf8) == Array(name.precomposedStringWithCanonicalMapping.utf8)
-        #else
-        true
-        #endif
-    }
-
-    /// What the reader gives for a file stored under `name` holding
-    /// `bytes`.
-    static func read(_ name: String, holding bytes: [UInt8]) -> FileContents {
-        isReachable(name) ? .bytes(bytes) : .noSuchFile
-    }
 
     static func defaultContents(of name: String) -> [UInt8] {
         Array("contents of \(name)\n".utf8)

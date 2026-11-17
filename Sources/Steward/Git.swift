@@ -48,15 +48,19 @@ struct Git: Sendable {
     /// Runs git with `arguments` and `input` as its standard input,
     /// handing its standard output to `consume` in chunks as it arrives,
     /// starting from `initial`.
+    ///
+    /// With a `launcher`, such as `xargs -0`, that runs instead, with git's
+    /// command line after its own, and `input` is the launcher's.
     func run<Output: Sendable>(
         _ arguments: [String],
         input: [UInt8] = [],
+        through launcher: [String] = [],
         into initial: Output,
         consume: @escaping @Sendable (inout Output, ArraySlice<UInt8>) -> Void
     ) async throws -> Outcome<Output> {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git", "-C", directory, "--no-pager"] + arguments
+        process.arguments = launcher + ["git", "-C", directory, "--no-pager"] + arguments
         process.environment = environment
         let standardOutput = Pipe()
         let standardError = Pipe()
@@ -104,6 +108,37 @@ struct Git: Sendable {
     /// `ContextError.gitFailed` when it exits with a failure.
     func output(_ arguments: [String]) async throws -> [UInt8] {
         let outcome = try await run(arguments, into: [UInt8]()) { $0.append(contentsOf: $1) }
+        try Self.requireSuccess(outcome, arguments)
+        return outcome.output
+    }
+
+    /// Runs git with `arguments` and then `trailing`, each one more
+    /// argument exactly as its bytes are, and returns its standard output,
+    /// throwing as `output(_:)` does.
+    ///
+    /// The trailing ones reach git through `xargs -0`, on its standard
+    /// input: as arguments of `Process`, macOS rewrites text to its
+    /// canonical decomposition, `é` into `e` and a combining accent and the
+    /// Greek question mark into `;`, which no setting of git's undoes.
+    /// None of them may hold a NUL, which ends one. Never with none, for
+    /// which GNU's xargs would still run git once.
+    func output(_ arguments: [String], appending trailing: [[UInt8]]) async throws -> [UInt8] {
+        guard !trailing.isEmpty else { return try await output(arguments) }
+        let outcome = try await run(
+            arguments,
+            input: trailing.flatMap { $0 + [0] },
+            through: ["xargs", "-0"],
+            into: [UInt8]()
+        ) { $0.append(contentsOf: $1) }
+        // `env` and `xargs` exit with 127 when what they'd run isn't on
+        // `PATH`; git itself never does. Any other failure, xargs reports
+        // as its own, 1 or 123, after git's message.
+        guard outcome.status != 127 else {
+            throw ContextError.gitUnavailable("""
+                it runs through xargs -0 to be given paths exactly, and one of the two isn't on PATH: \
+                \(outcome.standardError.trimmingCharacters(in: .whitespacesAndNewlines))
+                """)
+        }
         try Self.requireSuccess(outcome, arguments)
         return outcome.output
     }

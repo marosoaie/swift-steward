@@ -1,7 +1,8 @@
-/// Reads files from a local repository's commits through git, in two
+/// Reads files from a local repository's commits through git, in two git
 /// processes however many files a call reads: `ls-tree` for each path's
 /// mode, object and size, then `cat-file --batch`, fed only the objects of
-/// regular files within the limit.
+/// regular files within the limit. Past 64 KiB of paths, `ls-tree` runs
+/// again for the rest.
 ///
 /// A path's own bytes never reach `cat-file`'s input, which is one object
 /// ID a line: a path may hold a line break, an ID can't.
@@ -10,7 +11,7 @@ struct GitRepositoryFiles: RepositoryFiles {
 
     /// How many bytes of paths one `ls-tree` is given; more go to another.
     /// Far below any system's limit on a command's arguments, which the
-    /// environment shares.
+    /// environment shares, and GNU xargs's 128 KiB.
     static let pathBytesPerCall = 64 << 10
 
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {

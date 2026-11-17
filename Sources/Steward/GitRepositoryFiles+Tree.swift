@@ -49,18 +49,18 @@ extension GitRepositoryFiles {
     /// The tree entries of `commit` whose paths are among `names`, by
     /// path.
     ///
-    /// Paths are taken literally (`--literal-pathspecs`): `a*.swift` is
-    /// the file of that name, and `:(glob)` is no magic. `--full-tree`
-    /// makes them the root's, wherever the checkout is, and `-t` lists a
-    /// directory even when another path leads into it. Entries are
-    /// matched to `names` as bytes, since git answers `./a` with `a` and
-    /// `dir/` with what's in it, and Swift's `==` takes a name's
-    /// precomposed and decomposed spellings for one.
+    /// Paths reach git byte for byte, through `xargs -0`, and are taken
+    /// literally (`--literal-pathspecs`): `a*.swift` is the file of that
+    /// name, and `:(glob)` is no magic. Git on macOS mustn't compose a
+    /// decomposed name it's given (`core.precomposeUnicode`, which Linux's
+    /// git ignores). `--full-tree` makes them the root's, wherever the
+    /// checkout is, and `-t` lists a directory even when another path
+    /// leads into it. Entries are matched to `names` as bytes, since git
+    /// answers `./a` with `a` and `dir/` with what's in it, and Swift's
+    /// `==` takes a name's precomposed and decomposed spellings for one.
     ///
-    /// On macOS, `Process` decomposes every argument's accented letters,
-    /// so git turns them back (`core.precomposeUnicode`, which Linux's
-    /// git ignores): a name stored precomposed, as git stores names on
-    /// macOS, is found; one stored decomposed isn't, there.
+    /// Each call is well within any `xargs`'s command line, so that it runs
+    /// git once, and a path too long for one fails only its own call.
     func entries(
         named names: Set<[UInt8]>,
         in commit: String,
@@ -69,11 +69,13 @@ extension GitRepositoryFiles {
         var entries: [[UInt8]: TreeEntry] = [:]
         // Imperative: each call awaits git, which the combinators can't.
         for paths in Self.calls(for: names.sorted { $0.lexicographicallyPrecedes($1) }, upTo: pathBytesPerCall) {
-            let arguments = [
-                "--literal-pathspecs", "-c", "core.precomposeUnicode=true",
-                "ls-tree", "-z", "-t", "--long", "--full-tree", "--end-of-options", "\(commit)^{commit}", "--",
-            ] + paths.map { String(decoding: $0, as: UTF8.self) }
-            let output = try await git.output(arguments)
+            let output = try await git.output(
+                [
+                    "--literal-pathspecs", "-c", "core.precomposeUnicode=false",
+                    "ls-tree", "-z", "-t", "--long", "--full-tree", "--end-of-options", "\(commit)^{commit}", "--",
+                ],
+                appending: paths
+            )
             TreeEntry.entries(in: output)
                 .filter { names.contains($0.path) }
                 .forEach { entries[$0.path] = $0 }

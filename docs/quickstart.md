@@ -8,7 +8,8 @@ runner. This page sets one up for GitHub Actions.
 [danger.md](danger.md) is the design behind it.
 
 You need Swift 6.2 or later, on macOS 26 or Linux, git 2.41 or later,
-and GitHub Actions `pull_request` workflows.
+an `xargs` with `-0` (macOS's, GNU's, and BusyBox's all have it), and
+GitHub Actions `pull_request` workflows.
 
 ## 1. Add the Dangerfile package
 
