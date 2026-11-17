@@ -64,6 +64,32 @@ enum SampleDiff {
 
         """
 
+    /// Rewrites A.txt's one line, after which the file ends without a
+    /// newline.
+    static let noNewline = """
+        diff --git a/A.txt b/A.txt
+        index 1111111..2222222 100644
+        --- a/A.txt
+        +++ b/A.txt
+        @@ -1 +1 @@
+        -old
+        +new
+        \\ No newline at end of file
+
+        """
+
+    /// Adds a line to A.txt, whose lines end in CRLF.
+    static let crlf = """
+        diff --git a/A.txt b/A.txt
+        index 1111111..2222222 100644
+        --- a/A.txt
+        +++ b/A.txt
+        @@ -1 +1,2 @@
+         a\r
+        +b\r
+
+        """
+
     /// A hunk that claims three lines on each side and has one.
     static let cutShort = """
         diff --git a/A.swift b/A.swift

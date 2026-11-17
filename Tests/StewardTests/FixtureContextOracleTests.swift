@@ -4,10 +4,12 @@ import GitDiffKit
 import StewardTesting
 import Testing
 
-/// StewardTesting's `Context.fixture(diff:)` against the context a real
-/// run builds for the same changes: on this project's merged pull
+/// StewardTesting's `Context.fixture(diff:files:)` against the context a
+/// real run builds for the same changes: on this project's merged pull
 /// requests, and on two large ranges of public repositories, with the
-/// diff git writes for Steward and the one GitHub's compare page serves.
+/// diff git writes for Steward and the one GitHub's compare page serves,
+/// and the files the diff leaves at the head, which the fixture finds in
+/// agreement with it and reads as the run does.
 ///
 /// Clones and downloads into the fixture cache once; set
 /// `GIT_DIFF_PARSER_SKIP_NETWORK_TESTS` to skip. Serialized, as the
@@ -66,11 +68,15 @@ struct FixtureContextOracleTests {
         #expect(sized.changedFiles == real.pullRequest.changedFiles)
         #expect(sized.commits == real.pullRequest.commits)
 
-        // Given the real pull request, the fixture is the real context,
-        // but for the merge base and the built commit: a fixture's are the
-        // pull request's base and head.
+        // Given the real pull request and the head's files, the fixture is
+        // the real context, but for the merge base and the built commit: a
+        // fixture's are the pull request's base and head. `==` leaves the
+        // readers out, so the reads are compared one by one.
+        let files = try await Self.headFiles(of: real)
+        #expect(!files.isEmpty)
         var given = try Context.fixture(
             diff: text,
+            files: files,
             pullRequest: real.pullRequest,
             commits: real.git.commits,
             workspace: mirror.path
@@ -80,6 +86,11 @@ struct FixtureContextOracleTests {
         given.run.lineMap = real.run.lineMap
         let isReal = given == real
         #expect(isReal, "the fixture differs from the real context beyond the merge base and the built commit")
+        try await files.asyncForEach { path, text in
+            let read = try await given.contents(ofFileAt: path)
+            #expect(read == .bytes(Array(text.utf8)), "\(path)")
+            #expect(try await real.contents(ofFileAt: path) == read, "\(path)")
+        }
     }
 
     @Test("a fixture from git's diff, or GitHub's, has the files and lines of a real run's context",
@@ -94,8 +105,11 @@ struct FixtureContextOracleTests {
         let real = try await Self.context(of: payload, in: mirror, built: head)
         #expect(real.git.diff.files.count > 50, "\(real.git.diff.files.count) files")
 
+        let files = try await Self.headFiles(of: real)
+        #expect(files.count > 50, "\(files.count) files")
         let fromGit = try Context.fixture(
             diff: try await Self.diffText(of: real, in: mirror),
+            files: files,
             pullRequest: .fixture(base: real.pullRequest.base, head: real.pullRequest.head),
             commits: real.git.commits
         )
@@ -104,8 +118,18 @@ struct FixtureContextOracleTests {
         // GitHub abbreviates blob ids to 9 digits and fills in hunk
         // headings from the repository's attributes; the rest is git's.
         let compare = try await RepositoryMirror.compareDiff(of: range.repository, from: baseTag, to: headTag)
-        let fromGitHub = try Context.fixture(diff: compare)
+        let fromGitHub = try Context.fixture(diff: compare, files: files)
         Self.expectSameFilesAndLines(fromGitHub.git, real.git)
+
+        // The check bites on real files too: a line put before the first
+        // of the file the diff says most about moves every line it checks.
+        let busiest = try #require(real.git.diff.files
+            .filter { $0.header.newPath.map { files[$0.string] != nil } ?? false }
+            .max { $0.lines.count < $1.lines.count }?.header.newPath?.string)
+        let error = #expect(throws: Context.FixtureError.self) {
+            try Context.fixture(diff: compare, files: files.merging([busiest: "\n" + (files[busiest] ?? "")]) { $1 })
+        }
+        #expect(error?.mismatches.map(\.path) == [busiest])
     }
 
     /// The context a run in Actions builds for `payload`'s pull request,
@@ -119,6 +143,23 @@ struct FixtureContextOracleTests {
             "GITHUB_WORKSPACE": mirror.path,
             "GITHUB_SHA": built,
         ])
+    }
+
+    /// The files `context`'s diff leaves at the head that a test can give
+    /// `fixture(diff:files:)`, read as the run reads them: the regular
+    /// ones, with UTF-8 contents.
+    private static func headFiles(of context: Context) async throws -> [String: String] {
+        let reader = try #require(context.files as? GitRepositoryFiles)
+        let paths = context.git.diff.files
+            .filter { $0.header.change != .deleted }
+            .compactMap { $0.header.newPath?.string }
+        let read = try await reader.contents(ofFilesAt: paths, in: context.git.head, limit: .max)
+        return Dictionary(zip(paths, read).compactMap { path, contents -> (String, String)? in
+            guard case .bytes(let bytes) = contents, let text = String(validating: bytes, as: UTF8.self) else {
+                return nil
+            }
+            return (path, text)
+        }) { first, _ in first }
     }
 
     /// The text of the diff a run reads for `context`: git's, with the

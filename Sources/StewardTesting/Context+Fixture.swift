@@ -1,29 +1,4 @@
 extension Context {
-    /// A diff given to `fixture(diff:pullRequest:commits:workspace:)` isn't
-    /// one git writes: the parser reported damage in it, so the context
-    /// would differ from a real run's.
-    ///
-    /// Usually a hunk header whose line counts don't match its lines.
-    public struct FixtureError: Error, Sendable, Equatable, CustomStringConvertible {
-        /// What the parser reported, in diff order.
-        public var damage: [DamageReport]
-
-        /// Creates an error for the damage the parser reported.
-        public init(damage: [DamageReport]) {
-            self.damage = damage
-        }
-
-        /// Each damage report on a line, after a sentence saying what's
-        /// wrong.
-        public var description: String {
-            """
-            Context.fixture(diff:) needs a diff git could write, and this one is damaged; \
-            check each hunk header's line counts against its lines.
-            \(damage.map(\.sentence).joined(separator: "\n"))
-            """
-        }
-    }
-
     /// The context a run in GitHub Actions builds for a pull request with
     /// this diff, for testing rules.
     ///
@@ -33,14 +8,20 @@ extension Context {
     /// lines that are only a space may lose it, as editors trim them.
     ///
     /// The run is in `.actions` mode, built on the head commit, with
-    /// GitHub's URLs. Its `files` holds none, so every
-    /// `contents(ofFileAt:at:limit:)` is `.noSuchFile`. Every part is a
-    /// `var`, so a test changes what it needs afterwards, such as
-    /// `run.mode`, `run.builtCommit`, or `files`, to a `RepositoryFiles`
-    /// of its own.
+    /// GitHub's URLs. Its `files` reads `files` at the head, and nothing
+    /// at the merge base. Every part is a `var`, so a test changes what
+    /// it needs afterwards, such as `run.mode`, `run.builtCommit`, or
+    /// `files`, to a `RepositoryFiles` of its own, which isn't checked.
     ///
     /// - Parameters:
     ///   - diff: The pull request's diff, from the merge base to the head.
+    ///   - files: Files as the head commit has them, by path, for
+    ///     `contents(ofFileAt:at:limit:)`. Each one the diff changes must
+    ///     hold the diff's context and added lines at the numbers its hunk
+    ///     headers give, and end in a line break unless the diff says it
+    ///     doesn't; none may be a file the diff deletes, renames away, or
+    ///     makes a symbolic link or a submodule. Files the diff doesn't
+    ///     touch aren't checked.
     ///   - pullRequest: The pull request. Nil for `PullRequest.fixture()`
     ///     with its additions, deletions, changed files, and commits
     ///     counted from `diff` and `commits` as GitHub counts them; a pull
@@ -52,15 +33,20 @@ extension Context {
     ///     as build logs.
     /// - Returns: The context, with `git.mergeBase` and `git.head` the pull
     ///   request's base and head commits.
-    /// - Throws: `FixtureError` when the parser reports damage in `diff`.
+    /// - Throws: `FixtureError` when the parser reports damage in `diff`,
+    ///   or a file disagrees with it.
     public static func fixture(
         diff: String,
+        files: [String: String] = [:],
         pullRequest: PullRequest? = nil,
         commits: [Commit]? = nil,
         workspace: String = "/workspace"
     ) throws(FixtureError) -> Context {
         let parsed = Diff(diff: diff)
         guard parsed.damage.isEmpty else { throw FixtureError(damage: parsed.damage) }
+        let contents = files.mapValues { Array($0.utf8) }
+        let mismatches = FixtureError.mismatches(between: parsed, and: contents)
+        guard mismatches.isEmpty else { throw FixtureError(mismatches: mismatches) }
         let request = pullRequest ?? .fixture()
         let changes = GitChanges(
             diff: parsed,
@@ -86,7 +72,7 @@ extension Context {
                 apiURL: FixtureDefaults.apiURL,
                 serverURL: FixtureDefaults.serverURL
             ),
-            files: NoRepositoryFiles()
+            files: FakeRepositoryFiles([request.head.commit: contents])
         )
     }
 }
