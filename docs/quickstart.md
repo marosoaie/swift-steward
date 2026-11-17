@@ -338,7 +338,10 @@ into the latest base, not the pull request's head:
   base to the head, and findings' line numbers are the head's.
 - A rule that reads a file from disk, such as `Package.swift`, reads the
   merge commit's. That's the head's file unless the base changed the same
-  file since the branch was cut. To report a line of it, map it with
+  file since the branch was cut. `try await context.contents(ofFileAt:)`
+  reads the head's instead, through git, so its lines are the head's,
+  and `at: .mergeBase` the file as it was before the pull request. To
+  report a line of a file from disk, map it with
   `context.run.lineMap.headLocation(ofLine:inFile:)`, which gives the
   head's location, or nil for a line the head doesn't have, such as one
   the base changed: leave those out, as the diagnostics rule does.

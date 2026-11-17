@@ -131,7 +131,7 @@ changes from the local checkout, once, before the first rule runs.
 | `.base.ref`, `.base.sha`, `.base.repo` (and `head`) | `.base.name`, `.base.commit`, `.base.repository` (and `head`) | `repository` is `owner/name` |
 | `danger.github.issue.labels` | `context.pullRequest.labels` | Label names, as they were when the event fired |
 | `danger.github.commits` | `context.git.commits` | From git, not the API |
-| `danger.utils.readFile(_:)` | `try String(contentsOfFile: "\(context.run.workspace)/\(path)", encoding: .utf8)`, with Foundation | `context.run.workspace` is the checkout's root, a `String`. The checkout is the merge commit, so a file the base branch also changed reads as merged |
+| `danger.utils.readFile(_:)` | `try await context.contents(ofFileAt: path)`, whose `.bytes` hold the head's file | Read through git, from the pull request's head, or its merge base with `at: .mergeBase`; a link, a submodule, or a file over 1 MiB is reported, not read. From disk, under `context.run.workspace`, a file is the merge commit's, so one the base branch also changed reads as merged |
 | `danger.utils.exec(_:arguments:)`, `.spawn(_:arguments:)` | Foundation's `Process` | Rules are `async throws`: a tool that fails can throw |
 | `danger.utils.environment` | `ProcessInfo.processInfo.environment` | |
 
