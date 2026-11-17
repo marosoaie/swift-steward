@@ -54,7 +54,8 @@ extension Context {
                 lineMap: .identity,
                 apiURL: apiURL,
                 serverURL: serverURL
-            )
+            ),
+            files: GitRepositoryFiles(git: git)
         )
     }
 

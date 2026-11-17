@@ -46,6 +46,8 @@ struct HostileConfigurationTests {
         "GIT_OBJECT_DIRECTORY": "/nonexistent",
         "GIT_ALTERNATE_OBJECT_DIRECTORIES": "/nonexistent",
         "GIT_NAMESPACE": "elsewhere",
+        "GIT_GLOB_PATHSPECS": "1",
+        "GIT_ICASE_PATHSPECS": "1",
     ]
 
     @Test("the context with every hostile setting is the context without them")
@@ -81,6 +83,14 @@ struct HostileConfigurationTests {
         #expect(hostile.git.createdFiles.contains("vendor/library"))
         #expect(hostile.git.renamedFiles.contains(GitChanges.Rename(from: "a.swift", to: "renamed.swift")))
         #expect(hostile.git.commits.last?.subject == "Add a submodule and blank lines")
+        try await ["a.swift", "renamed.swift", "blank.txt", "vendor/library", "image.png", "A.SWIFT", "*.swift"]
+            .asyncForEach { path in
+                try await [Context.Side.head, .mergeBase].asyncForEach { side in
+                    let read = try await hostile.contents(ofFileAt: path, at: side)
+                    #expect(read == (try await plain.contents(ofFileAt: path, at: side)), "\(path) at \(side)")
+                }
+            }
+        #expect(try await hostile.contents(ofFileAt: "vendor/library") == .notRegularFile)
     }
 
     @Test("git's environment can't reshape the diffs or point git at another repository")
@@ -97,6 +107,14 @@ struct HostileConfigurationTests {
         let map = try await LineMap(fixture, git: hostile)
         #expect(changes == (try await GitChanges(base: fixture.base, head: fixture.head, git: plain)))
         #expect(map == (try await LineMap(fixture, git: plain)))
+        let paths = ["a.swift", "A.SWIFT", "*.swift", "gone.swift", "image.png"]
+        let read = try await GitRepositoryFiles(git: hostile).contents(ofFilesAt: paths, in: fixture.head, limit: .max)
+        #expect(read == (try await GitRepositoryFiles(git: plain).contents(
+            ofFilesAt: paths,
+            in: fixture.head,
+            limit: .max
+        )))
+        #expect(read[1...3] == [.noSuchFile, .noSuchFile, .noSuchFile])
     }
 
     @Test("an attributes file outside the repository can't make its files binary", arguments: [

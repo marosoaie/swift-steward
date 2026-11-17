@@ -46,7 +46,8 @@ extension Context {
                 lineMap: try await LineMap(built: built, head: head, attributesFrom: changes.mergeBase, git: git),
                 apiURL: apiURL,
                 serverURL: serverURL
-            )
+            ),
+            files: GitRepositoryFiles(git: git)
         )
     }
 

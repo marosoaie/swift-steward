@@ -176,9 +176,24 @@ a GitHub Actions run builds for a pull request with that diff:
   file, such as a build log, reads it under `context.run.workspace`).
   `context.git.mergeBase` and `context.git.head` are the pull request's
   base and head commits.
+- **The files** are none: `context.contents(ofFileAt:at:limit:)` is
+  `.noSuchFile` for every path.
 
 Every part of a `Context` is a `var`, so a test changes what it needs
-afterwards, such as `context.run.mode = .dryRun`.
+afterwards, such as `context.run.mode = .dryRun`, or `context.files`,
+to any `RepositoryFiles` of its own for a rule that reads files:
+
+```swift
+struct Files: RepositoryFiles {
+    var head: [String: String]
+
+    func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
+        head[path].map { .bytes(Array($0.utf8)) } ?? .noSuchFile
+    }
+}
+
+context.files = Files(head: ["Package.swift": "// swift-tools-version: 6.2\n"])
+```
 
 ## The whole Dangerfile
 

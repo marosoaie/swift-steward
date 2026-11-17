@@ -116,4 +116,23 @@ struct ContextFixtureTests {
         #expect(error?.description.contains("The diff is damaged at line") == true)
         #expect(error?.description.contains("(A.swift)") == true)
     }
+
+    @Test("a fixture holds no files, and a test can give it a reader of its own")
+    func files() async throws {
+        var context = try Context.fixture(diff: SampleDiff.mixed)
+        #expect(try await context.contents(ofFileAt: "Sources/App.swift") == .noSuchFile)
+        #expect(try await context.contents(ofFileAt: "Docs/Old.md", at: .mergeBase) == .noSuchFile)
+        context.files = EchoingFiles()
+        #expect(try await context.contents(ofFileAt: "Sources/App.swift", at: .mergeBase, limit: 3)
+            == .bytes(Array("Sources/App.swift \(context.git.mergeBase) 3".utf8)))
+        #expect(try await context.contents(ofFileAt: "Sources/App.swift")
+            == .bytes(Array("Sources/App.swift \(context.git.head) \(FileContents.defaultLimit)".utf8)))
+    }
+}
+
+/// Reads every file as the path, commit, and limit it was asked for.
+private struct EchoingFiles: RepositoryFiles {
+    func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
+        .bytes(Array("\(path) \(commit) \(limit)".utf8))
+    }
 }

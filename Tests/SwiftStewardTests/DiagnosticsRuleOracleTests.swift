@@ -136,7 +136,8 @@ struct DiagnosticsRuleOracleTests {
                 lineMap: .identity,
                 apiURL: try #require(URL(string: "https://api.github.com")),
                 serverURL: try #require(URL(string: "https://github.com"))
-            )
+            ),
+            files: GitRepositoryFiles(git: Git(directory: workspace))
         )
     }
 }

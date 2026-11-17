@@ -297,10 +297,29 @@ works the same.
 first rule runs and then immutable:
 
 ```swift
-public struct Context: Sendable {
+public struct Context: Sendable, Equatable {
     public var pullRequest: PullRequest   // PullRequestHosting's model
     public var git: GitChanges            // the pull request's changes, base...head
     public var run: Run                   // where Steward runs, and on which trees
+    public var files: any RepositoryFiles // the commits' files; == doesn't compare it
+
+    public func contents(                 // a file at the head or the merge base
+        ofFileAt path: String,
+        at side: Side = .head,            // .head or .mergeBase
+        limit: Int = FileContents.defaultLimit
+    ) async throws -> FileContents
+}
+
+public protocol RepositoryFiles: Sendable {
+    func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents
+}
+
+public enum FileContents: Sendable, Hashable {
+    case bytes([UInt8])                   // what `git show <commit>:<path>` prints
+    case noSuchFile                       // missing, or a path no file can have
+    case notRegularFile                   // a symbolic link, a submodule, a directory
+    case tooLarge(size: Int)              // over the limit, and not read
+    public static let defaultLimit: Int   // 1 MiB
 }
 
 public struct GitChanges: Sendable {
@@ -372,6 +391,24 @@ Where each part comes from (step 4.2):
   from the user's or the system's attributes file: a pull request could
   mark its own files `-diff`, and git would show none of their lines. The
   log is read with NUL-separated `--format` fields, so any subject parses.
+- **`files`** from the local repository, through git (Phase 6, step C1).
+  `git ls-tree` gives each path's mode, object, and size at the commit.
+  Paths reach it through `xargs -0`, on standard input, because macOS's
+  `Process` rewrites its arguments to their canonical decomposition
+  (`é` into `e` and an accent, the Greek question mark into `;`), which
+  no git setting undoes. They're taken literally (`a*.swift` is that
+  file, not a pattern) and matched byte for byte, so `./a`, `dir/`, and a
+  name's other Unicode spelling name nothing. A symbolic link, a
+  submodule, or a directory is reported by its mode and never followed,
+  and a file over the limit by its size, before anything is read.
+  `git cat-file --batch`, fed object IDs only, then reads the rest: two
+  git processes for any number of files (another `ls-tree` per 64 KiB of
+  paths), with no textconv, filters, or line-ending conversion. The head is the
+  pull request's head, not the merge commit the run checked out (section
+  3), and the merge base is `git.mergeBase`, not the base branch's tip.
+  A name that isn't UTF-8 can't be spelled as a `String`, so it's out of
+  reach. The limit, 1 MiB unless a rule passes another, keeps one huge
+  file from filling memory.
 - **`run`** from the environment: `GITHUB_ACTIONS`, `GITHUB_WORKSPACE`,
   and `GITHUB_SHA` (the commit the workflow checked out, which for
   `pull_request` is the merge commit; see section 3). `GITHUB_API_URL` and
@@ -426,12 +463,13 @@ Alternatives weighed:
   .pullRequest`): GitHub is the only host in v1 but sits behind the seam,
   and `PullRequest` is host-neutral, so the context says `pullRequest`.
   Host-specific extras, if they come, go in a `github` property then.
-- **Exposing the working tree's files**: the checkout in a `pull_request`
+- **Reading the working tree's files**: the checkout in a `pull_request`
   run is the merge commit, not the head (section 3), so a rule that reads
-  `Package.swift` from disk sees the merged file. Steward doesn't wrap
-  file reading in v1; the quickstart (4.7) documents the caveat, and
-  `GitChanges` can grow a `contents(of:at:)` that reads a blob
-  from either commit when a rule needs it.
+  `Package.swift` from disk sees the merged file. v1 left file reading
+  to Foundation, with the caveat in the quickstart (4.7). Since step C1,
+  `context.contents(ofFileAt:at:)` reads either side's file through git,
+  behind a protocol that a test replaces; the working tree remains the
+  place for files the run writes, such as build logs.
 
 ## 3. Which tree line numbers refer to (S3)
 
