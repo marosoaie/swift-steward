@@ -40,7 +40,8 @@ extension Context {
                 lineMap: .identity,
                 apiURL: URL(string: "https://api.github.com")!,
                 serverURL: URL(string: "https://github.com")!
-            )
+            ),
+            files: NoRepositoryFiles()
         )
     }
 }

@@ -33,8 +33,11 @@ extension Context {
     /// lines that are only a space may lose it, as editors trim them.
     ///
     /// The run is in `.actions` mode, built on the head commit, with
-    /// GitHub's URLs. Every part is a `var`, so a test changes what it
-    /// needs afterwards, such as `run.mode` or `run.builtCommit`.
+    /// GitHub's URLs. Its `files` holds none, so every
+    /// `contents(ofFileAt:at:limit:)` is `.noSuchFile`. Every part is a
+    /// `var`, so a test changes what it needs afterwards, such as
+    /// `run.mode`, `run.builtCommit`, or `files`, to a `RepositoryFiles`
+    /// of its own.
     ///
     /// - Parameters:
     ///   - diff: The pull request's diff, from the merge base to the head.
@@ -82,7 +85,8 @@ extension Context {
                 lineMap: .identity,
                 apiURL: FixtureDefaults.apiURL,
                 serverURL: FixtureDefaults.serverURL
-            )
+            ),
+            files: NoRepositoryFiles()
         )
     }
 }

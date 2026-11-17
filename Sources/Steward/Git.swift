@@ -21,11 +21,14 @@ struct Git: Sendable {
     let environment: [String: String]
 
     /// Variables no `-c` or option can override. `GIT_DIFF_OPTS` beats
-    /// even an explicit `--unified`; the others replace the repository
-    /// `-C` names.
+    /// even an explicit `--unified`; the next seven replace the repository
+    /// `-C` names. The pathspec ones would make paths match as globs or
+    /// regardless of case, and beside `--literal-pathspecs` git refuses to
+    /// run at all.
     static let ignoredVariables: Set<String> = [
         "GIT_DIFF_OPTS", "GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE",
         "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE",
+        "GIT_LITERAL_PATHSPECS", "GIT_GLOB_PATHSPECS", "GIT_NOGLOB_PATHSPECS", "GIT_ICASE_PATHSPECS",
     ]
 
     init(directory: String, environment: [String: String] = ProcessInfo.processInfo.environment) {
@@ -42,10 +45,12 @@ struct Git: Sendable {
     /// an error message.
     static let maximumErrorLength = 64 << 10
 
-    /// Runs git with `arguments`, handing its standard output to `consume`
-    /// in chunks as it arrives, starting from `initial`.
+    /// Runs git with `arguments` and `input` as its standard input,
+    /// handing its standard output to `consume` in chunks as it arrives,
+    /// starting from `initial`.
     func run<Output: Sendable>(
         _ arguments: [String],
+        input: [UInt8] = [],
         into initial: Output,
         consume: @escaping @Sendable (inout Output, ArraySlice<UInt8>) -> Void
     ) async throws -> Outcome<Output> {
@@ -55,7 +60,9 @@ struct Git: Sendable {
         process.environment = environment
         let standardOutput = Pipe()
         let standardError = Pipe()
-        process.standardInput = FileHandle.nullDevice
+        let standardInput = try input.isEmpty ? FileHandle.nullDevice : Self.handle(reading: input)
+        defer { if !input.isEmpty { try? standardInput.close() } }
+        process.standardInput = standardInput
         process.standardOutput = standardOutput
         process.standardError = standardError
         // Not `waitUntilExit()`: on Darwin it never returns on a thread
@@ -99,6 +106,26 @@ struct Git: Sendable {
         let outcome = try await run(arguments, into: [UInt8]()) { $0.append(contentsOf: $1) }
         try Self.requireSuccess(outcome, arguments)
         return outcome.output
+    }
+
+    /// A handle that reads `input` from a temporary file, which is gone
+    /// from the directory by the time it returns.
+    ///
+    /// A file, not a pipe: once git exits, as it does on an error before
+    /// reading all of its input, a write to its pipe raises SIGPIPE, which
+    /// ends this process on macOS and Linux alike.
+    private static func handle(reading input: [UInt8]) throws -> FileHandle {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("steward-git-input-\(UUID().uuidString)", isDirectory: false)
+        do {
+            try Data(input).write(to: url, options: .withoutOverwriting)
+            // An open file outlives its name, so nothing is left behind if
+            // this process ends early.
+            defer { try? FileManager.default.removeItem(at: url) }
+            return try FileHandle(forReadingFrom: url)
+        } catch {
+            throw ContextError.gitUnavailable("couldn't write its input to \(url.path): \(error.localizedDescription)")
+        }
     }
 
     static func requireSuccess(_ outcome: Outcome<some Sendable>, _ arguments: [String]) throws {
