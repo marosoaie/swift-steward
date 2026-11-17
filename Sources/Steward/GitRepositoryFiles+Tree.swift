@@ -87,7 +87,9 @@ extension GitRepositoryFiles {
         paths.reduce(into: (calls: [[[UInt8]]](), bytes: 0)) { state, path in
             // One more for the separator the arguments come with.
             let size = path.count + 1
-            if !state.calls.isEmpty, size <= bytes - state.bytes {
+            // Paths in memory can't sum past `Int.max`; `bytes` minus
+            // anything could, were it negative.
+            if !state.calls.isEmpty, state.bytes + size <= bytes {
                 state.calls[state.calls.count - 1].append(path)
                 state.bytes += size
             } else {
