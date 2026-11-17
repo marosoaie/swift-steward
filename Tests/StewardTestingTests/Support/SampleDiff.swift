@@ -78,6 +78,45 @@ enum SampleDiff {
 
         """
 
+    /// Deletes A.txt's last line, which has no newline, and adds one after
+    /// it to B.txt's; C.txt keeps one line of two, D.txt none of one.
+    static let endTrimmed = """
+        diff --git a/A.txt b/A.txt
+        index 1111111..2222222 100644
+        --- a/A.txt
+        +++ b/A.txt
+        @@ -1,2 +1 @@
+         keep
+        -old
+        \\ No newline at end of file
+        diff --git a/B.txt b/B.txt
+        index 1111111..2222222 100644
+        --- a/B.txt
+        +++ b/B.txt
+        @@ -1,2 +1,2 @@
+         keep
+        -old
+        \\ No newline at end of file
+        +new
+        diff --git a/C.txt b/C.txt
+        index 1111111..2222222 100644
+        --- a/C.txt
+        +++ b/C.txt
+        @@ -1,2 +1 @@
+        -gone
+        -old
+        \\ No newline at end of file
+        +kept
+        diff --git a/D.txt b/D.txt
+        index 1111111..2222222 100644
+        --- a/D.txt
+        +++ b/D.txt
+        @@ -1 +0,0 @@
+        -old
+        \\ No newline at end of file
+
+        """
+
     /// Creates Sources/New.swift with one line, Empty.swift with none, and
     /// Two.txt with two, the second without a final newline.
     static let created = """
