@@ -78,6 +78,31 @@ enum SampleDiff {
 
         """
 
+    /// Creates Sources/New.swift with one line, Empty.swift with none, and
+    /// Two.txt with two, the second without a final newline.
+    static let created = """
+        diff --git a/Sources/New.swift b/Sources/New.swift
+        new file mode 100644
+        index 0000000..4444444
+        --- /dev/null
+        +++ b/Sources/New.swift
+        @@ -0,0 +1 @@
+        +struct New {}
+        diff --git a/Empty.swift b/Empty.swift
+        new file mode 100644
+        index 0000000..e69de29
+        diff --git a/Two.txt b/Two.txt
+        new file mode 100644
+        index 0000000..5555555
+        --- /dev/null
+        +++ b/Two.txt
+        @@ -0,0 +1,2 @@
+        +one
+        +two
+        \\ No newline at end of file
+
+        """
+
     /// Adds a line to A.txt, whose lines end in CRLF.
     static let crlf = """
         diff --git a/A.txt b/A.txt

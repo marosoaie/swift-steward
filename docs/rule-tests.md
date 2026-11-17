@@ -241,7 +241,8 @@ context a GitHub Actions run builds for a pull request with that diff:
   files can stay out. Each file you give must agree with the diff: hold
   its context and added lines at the numbers its hunk headers give, and
   end in a line break unless the diff says `\ No newline at end of
-  file`. A file the diff deletes, renames away, or makes a symbolic link
+  file`; a file the diff creates holds its lines and nothing more. A
+  file the diff deletes, renames away, or makes a symbolic link
   or a submodule can't be given. Where one disagrees, the fixture throws
   `Context.FixtureError`, naming the file and its first line that does.
 

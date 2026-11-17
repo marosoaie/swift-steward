@@ -51,7 +51,8 @@ extension Context.FixtureError {
     }
 
     /// The first of `file`'s context and added lines that `contents`
-    /// doesn't hold at its number, or whose end of file disagrees.
+    /// doesn't hold at its number, or whose end of file disagrees; for a
+    /// file the diff creates, a line past the diff's last.
     private static func firstDifference(
         between file: DiffFile,
         and contents: [UInt8]
@@ -60,10 +61,10 @@ extension Context.FixtureError {
         let parts = contents.split(separator: UInt8(ascii: "\n"), omittingEmptySubsequences: false)
         // A final line break ends the last line rather than start another.
         let lines = endsWithNewline || contents.isEmpty ? parts.dropLast() : parts[...]
-        return file.lines.lazy.compactMap { line -> (line: Int, reason: String)? in
+        let differing = file.lines.lazy.compactMap { line -> (line: Int, reason: String)? in
             guard line.info.kind != .deletion, let number = line.info.newNumber else { return nil }
             guard number >= 1, number <= lines.count else {
-                return (number, "the diff has a line \(number), and the file has \(lines.count) lines")
+                return (number, "the diff has a line \(number), and the file has \(count(lines.count))")
             }
             let actual = lines[lines.startIndex + number - 1]
             let expected = Array(line.content) + (line.info.endsWithCarriageReturn ? [UInt8(ascii: "\r")] : [])
@@ -85,6 +86,17 @@ extension Context.FixtureError {
             return nil
         }
         .first
+        // A created file is all in the diff, so it ends where the diff does:
+        // one created empty has no lines.
+        guard differing == nil, file.header.change == .added, !file.header.isBinary else { return differing }
+        let created = file.lines.count { $0.info.kind != .deletion }
+        guard lines.count > created else { return nil }
+        return (created + 1, "the diff creates the file with \(count(created)), and the file has \(lines.count)")
+    }
+
+    /// `number` lines, in words.
+    private static func count(_ number: Int) -> String {
+        number == 1 ? "1 line" : "\(number) lines"
     }
 
     /// `bytes` as a Swift string literal, escapes and all, so whitespace

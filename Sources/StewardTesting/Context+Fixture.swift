@@ -19,9 +19,10 @@ extension Context {
     ///     `contents(ofFileAt:at:limit:)`. Each one the diff changes must
     ///     hold the diff's context and added lines at the numbers its hunk
     ///     headers give, and end in a line break unless the diff says it
-    ///     doesn't; none may be a file the diff deletes, renames away, or
-    ///     makes a symbolic link or a submodule. Files the diff doesn't
-    ///     touch aren't checked.
+    ///     doesn't; one the diff creates holds its lines and nothing more.
+    ///     None may be a file the diff deletes, renames away, or makes a
+    ///     symbolic link or a submodule. Files the diff doesn't touch
+    ///     aren't checked.
     ///   - pullRequest: The pull request. Nil for `PullRequest.fixture()`
     ///     with its additions, deletions, changed files, and commits
     ///     counted from `diff` and `commits` as GitHub counts them; a pull

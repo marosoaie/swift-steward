@@ -117,6 +117,8 @@ struct ContextFixtureFilesTests {
         case crlf = "a file with CRLF line endings"
         case recreatedAsLink = "a file that becomes a link, given nowhere"
         case untouched = "only files the diff doesn't touch"
+        case createdEmpty = "an empty file the diff creates"
+        case createdUnterminated = "a file the diff creates without a final newline"
 
         var diff: String {
             switch self {
@@ -124,6 +126,7 @@ struct ContextFixtureFilesTests {
             case .noNewline: SampleDiff.noNewline
             case .crlf: SampleDiff.crlf
             case .recreatedAsLink: SampleDiff.typeChange
+            case .createdEmpty, .createdUnterminated: SampleDiff.created
             }
         }
 
@@ -134,6 +137,8 @@ struct ContextFixtureFilesTests {
             case .crlf: ["A.txt": "a\r\nb\r\n"]
             case .recreatedAsLink: [:]
             case .untouched: ["Docs/New.md": "# New\n", "Package.swift": ""]
+            case .createdEmpty: ["Empty.swift": ""]
+            case .createdUnterminated: ["Two.txt": "one\ntwo"]
             }
         }
     }
@@ -149,6 +154,8 @@ struct ContextFixtureFilesTests {
         case terminated = "a final newline where the diff says there's none"
         case lineFeeds = "LF where the diff has CRLF"
         case link = "a file where the diff makes a link"
+        case createdLonger = "more lines than the diff creates"
+        case createdNotEmpty = "a line in a file the diff creates empty"
 
         var diff: String {
             switch self {
@@ -156,6 +163,7 @@ struct ContextFixtureFilesTests {
             case .terminated: SampleDiff.noNewline
             case .lineFeeds: SampleDiff.crlf
             case .link: SampleDiff.typeChange
+            case .createdLonger, .createdNotEmpty: SampleDiff.created
             }
         }
 
@@ -170,6 +178,8 @@ struct ContextFixtureFilesTests {
             case .terminated: ["A.txt": "new\n"]
             case .lineFeeds: ["A.txt": "a\nb\n"]
             case .link: ["link": "target"]
+            case .createdLonger: ["Sources/New.swift": "struct New {}\nextra\n"]
+            case .createdNotEmpty: ["Empty.swift": "\n"]
             }
         }
 
@@ -183,7 +193,8 @@ struct ContextFixtureFilesTests {
             case .tooShort: 3
             case .trailingSpace: 4
             case .deleted, .renamedAway, .link: nil
-            case .unterminated, .terminated, .lineFeeds: 1
+            case .unterminated, .terminated, .lineFeeds, .createdNotEmpty: 1
+            case .createdLonger: 2
             }
         }
 
@@ -192,6 +203,8 @@ struct ContextFixtureFilesTests {
             switch self {
             case .otherLine: #"the diff has "import Logging", and the file has "import Logger""#
             case .tooShort: "the diff has a line 3, and the file has 2 lines"
+            case .createdLonger: "the diff creates the file with 1 line, and the file has 2"
+            case .createdNotEmpty: "the diff creates the file with 0 lines, and the file has 1"
             case .trailingSpace: "they differ only in trailing whitespace"
             case .deleted: "the diff deletes it, so the head has no such file"
             case .renamedAway: "renames it to Sources/After.swift"
