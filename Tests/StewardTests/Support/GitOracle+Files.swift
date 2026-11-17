@@ -42,3 +42,19 @@ extension GitOracle {
         )
     }
 }
+
+extension GitOracle {
+    /// Each path of `commit`'s tree, files and directories alike, with
+    /// its mode, as `git ls-tree -r -t` lists them: UTF-8 names only, as
+    /// a `String` names no other.
+    func modes(at commit: String) throws -> [String: String] {
+        try output(["ls-tree", "-r", "-t", "-z", "--full-tree", commit])
+            .split(separator: 0)
+            .reduce(into: [:]) { modes, record in
+                guard let tab = record.firstIndex(of: UInt8(ascii: "\t")),
+                      let path = String(validating: record[record.index(after: tab)...], as: UTF8.self)
+                else { return }
+                modes[path] = String(decoding: record.prefix { $0 != UInt8(ascii: " ") }, as: UTF8.self)
+            }
+    }
+}
