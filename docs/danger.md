@@ -333,6 +333,12 @@ public struct GitChanges: Sendable {
     public var deletedFiles: [String] { get }
     public var renamedFiles: [Rename] { get }   // from, to
     public func file(at path: String) -> DiffFile?
+    public var changedLines: ChangedLines { get }   // the head's added lines, by path
+    public func changedLines(in path: String) -> LineRangeSet
+}
+
+extension LineRangeSet {                  // GitDiffKit's merged ranges
+    public func overlaps(_ lines: ClosedRange<Int>) -> Bool
 }
 
 public struct Commit: Sendable, Hashable {
@@ -423,6 +429,23 @@ renamed files under their new path, which matches what a reviewer sees
 as "changed" in the Files tab. Steward passes `-M` but not `-C`, so a
 copy shows up as a created file. Binary and mode-only changes are listed
 like any other.
+
+**Changed lines** are the head's lines the pull request adds: git writes
+a rewritten line as a deletion and an addition, so the additions cover
+both, and a deletion alone leaves no line at the head. `changedLines` is
+what GitDiffKit's `ChangedLines(diff:)` reads from the same diff, and the
+diagnostics rule matches against it; `changedLines(in:)` reads one
+file's alone, as merged ranges, and `overlaps(_:)` asks whether a range
+of lines, such as a declaration's, shares a line with them:
+
+```swift
+let header = 1...3
+let touched = context.git.modifiedFiles.filter { context.git.changedLines(in: $0).overlaps(header) }
+```
+
+`overlaps(_:)` extends GitDiffKit's type from `Steward`; were GitDiffKit
+to gain the method, `Steward`'s would go in the same release. **Added
+in step C3 (2026-11-18)** of the steward-lang-swift plan.
 
 **Paths are `String`s in the conveniences, bytes in `diff`.** Rules
 compare paths with literals (`contains("CHANGELOG.md")`), and findings,

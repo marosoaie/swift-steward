@@ -154,7 +154,7 @@ struct HostileConfigurationTests {
     func pullRequestAttributes(attributes: String) async throws {
         let hostile = try await Self.context(addingAttributes: attributes)
         let plain = try await Self.context(addingAttributes: "# none")
-        #expect(hostile.changes.addedLines == plain.changes.addedLines)
+        #expect(hostile.changes.changedLines == plain.changes.changedLines)
         #expect(hostile.map == plain.map)
         #expect(hostile.changes.diff.files.count { $0.header.isBinary } == 1)
     }

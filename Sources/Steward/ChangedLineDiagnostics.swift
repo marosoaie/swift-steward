@@ -23,7 +23,7 @@ enum ChangedLineDiagnostics {
         in context: Context,
         log: Log
     ) async throws -> [Finding] {
-        let changes = context.git.addedLines
+        let changes = context.git.changedLines
         let lineMaps = await lineMaps(for: sources, in: context)
         var findings: [Finding] = []
         var reported: Set<MatchedDiagnostic> = []

@@ -2,8 +2,8 @@ import GitDiffKit
 @testable import Steward
 import Testing
 
-@Suite("The lines a pull request adds, read from its diff")
-struct GitChangesAddedLinesTests {
+@Suite("The lines a pull request adds or rewrites, read from its diff")
+struct GitChangesChangedLinesTests {
     private static let diff = """
         diff --git a/Added.swift b/Added.swift
         new file mode 100644
@@ -60,12 +60,47 @@ struct GitChangesAddedLinesTests {
     @Test("they're what ChangedLines(diff:) reads from the same diff, files without added lines left out")
     func parity() {
         let changes = GitChanges(diff: Diff(diff: Self.diff), commits: [], mergeBase: "a", head: "b")
-        #expect(changes.addedLines == ChangedLines(diff: Self.diff))
-        #expect(changes.addedLines.files == [
+        #expect(changes.changedLines == ChangedLines(diff: Self.diff))
+        #expect(changes.changedLines.files == [
             "Added.swift": LineRangeSet([1...2]),
             "Modified.swift": LineRangeSet([1...1, 11...12]),
             "Renamed.swift": LineRangeSet([2...2]),
         ])
+    }
+
+    @Test("a file's lines are its lines in the whole set, and none for a file without added lines", arguments: [
+        "Added.swift", "Modified.swift", "Renamed.swift", "Old.swift", "Deleted.swift", "Moved2.swift",
+        "image.png", "run.sh", "Missing.swift", "", "added.swift",
+    ])
+    func oneFile(path: String) {
+        let changes = GitChanges(diff: Diff(diff: Self.diff), commits: [], mergeBase: "a", head: "b")
+        #expect(changes.changedLines(in: path) == changes.changedLines.files[path] ?? LineRangeSet())
+    }
+
+    @Test("a path given twice, as git writes a file that becomes a link, gets both entries' lines")
+    func typeChange() {
+        let diff = """
+            diff --git a/link b/link
+            deleted file mode 120000
+            index 1111111..0000000
+            --- a/link
+            +++ /dev/null
+            @@ -1 +0,0 @@
+            -target
+            \\ No newline at end of file
+            diff --git a/link b/link
+            new file mode 100644
+            index 0000000..2222222
+            --- /dev/null
+            +++ b/link
+            @@ -0,0 +1,2 @@
+            +now
+            +a file
+
+            """
+        let changes = GitChanges(diff: Diff(diff: diff), commits: [], mergeBase: "a", head: "b")
+        #expect(changes.changedLines(in: "link") == LineRangeSet([1...2]))
+        #expect(changes.changedLines.files == ["link": LineRangeSet([1...2])])
     }
 
     @Test("a long run of added lines is one range")
@@ -81,6 +116,6 @@ struct GitChangesAddedLinesTests {
             \(String(repeating: "+line\n", count: count))
             """
         let changes = GitChanges(diff: Diff(diff: diff), commits: [], mergeBase: "a", head: "b")
-        #expect(changes.addedLines.files["Big.swift"]?.ranges == [1...count])
+        #expect(changes.changedLines.files["Big.swift"]?.ranges == [1...count])
     }
 }
