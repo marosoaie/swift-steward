@@ -225,7 +225,7 @@ iteration), never narration of the next line.
   The maintainer drives version numbers — never change the version outside
   this procedure.
   Users start from the latest minor release,
-  `.upToNextMinor(from: "0.2.0")`, in `Templates/Dangerfile/Package.swift`,
+  `.upToNextMinor(from: "0.3.0")`, in `Templates/Dangerfile/Package.swift`,
   `docs/quickstart.md`, `docs/rule-tests.md`, and the README, and in the
   `Dangerfile/Package.swift` of git-diff-parser and of steward-action; a
   new minor release moves them all to it. The quickstart's tarball URL
