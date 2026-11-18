@@ -19,6 +19,8 @@ extension LineMap {
         /// Where the run of changed lines in progress starts, and how many
         /// head lines it has removed so far.
         private var run: (start: Int, removed: Int)?
+        /// The built paths of files with a hunk cut short.
+        private var cutShort: Set<String> = []
 
         mutating func beginFile(_ header: FileHeader, rawHeader: Span<UInt8>) {
             endFile()
@@ -50,16 +52,24 @@ extension LineMap {
             endRun()
             if let header, let builtPath = header.newPath?.string {
                 map.files[builtPath] = Self.file(header, changes: changes)
+                if cutShort.contains(builtPath) { map.files[builtPath]?.shifts = nil }
             }
             header = nil
             changes = []
         }
 
         /// An abandoned file would otherwise look unchanged, mapping every
-        /// line to itself.
+        /// line to itself. A hunk cut short ends before the lines its
+        /// header counts, so neither says where the base's change ends:
+        /// none of its file's lines map.
         mutating func damage(_ report: DamageReport) {
-            guard report.severity == .error, let builtPath = report.file?.newPath?.string else { return }
-            map.files[builtPath] = File(headPath: nil, shifts: nil)
+            guard let builtPath = report.file?.newPath?.string else { return }
+            if report.severity == .error {
+                map.files[builtPath] = File(headPath: nil, shifts: nil)
+            } else if report.reason == .hunkCutShort {
+                cutShort.insert(builtPath)
+                map.files[builtPath]?.shifts = nil
+            }
         }
 
         private mutating func endRun() {

@@ -17,7 +17,8 @@ public struct LineMap: Sendable, Hashable {
         /// Nil when the head has no counterpart: the file is new in the
         /// built commit, or its diff was too damaged to read.
         var headPath: String?
-        /// Nil when no line maps: a binary file, or offsets beyond `Int`.
+        /// Nil when no line maps: a binary file, a hunk cut short, or
+        /// offsets beyond `Int`.
         var shifts: [Shift]?
     }
 
