@@ -93,6 +93,48 @@ struct LinesAfterDeletionsTests {
         #expect(git.changedLines == ChangedLines(files: ["New.swift": LineRangeSet([1...1])]))
     }
 
+    @Test("a renamed file's lines are under its new path, and two entries for one path give both entries' lines")
+    func renamedAndRepeated() throws {
+        let git = try Context.fixture(diff: """
+            diff --git a/Old.swift b/New.swift
+            similarity index 75%
+            rename from Old.swift
+            rename to New.swift
+            index 1111111..2222222 100644
+            --- a/Old.swift
+            +++ b/New.swift
+            @@ -1,4 +1,3 @@
+             a
+            -b
+             c
+             d
+            diff --git a/A.swift b/A.swift
+            index 3333333..4444444 100644
+            --- a/A.swift
+            +++ b/A.swift
+            @@ -1,3 +1,2 @@
+             a
+            -b
+             c
+            diff --git a/A.swift b/A.swift
+            index 4444444..5555555 100644
+            --- a/A.swift
+            +++ b/A.swift
+            @@ -4,3 +4,2 @@
+             d
+            -e
+             f
+
+            """).git
+        #expect(git.linesAfterDeletions == ChangedLines(files: [
+            "New.swift": LineRangeSet([2...2]),
+            "A.swift": LineRangeSet([2...2, 5...5]),
+        ]))
+        #expect(git.linesAfterDeletions(in: "New.swift").allLines == [2])
+        #expect(git.linesAfterDeletions(in: "Old.swift").isEmpty)
+        #expect(git.linesAfterDeletions(in: "A.swift").allLines == [2, 5])
+    }
+
     /// `A.swift` at the base: three functions, the second with an
     /// attribute above it and a comment below it.
     static let functions = """

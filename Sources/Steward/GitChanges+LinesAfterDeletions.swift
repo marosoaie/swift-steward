@@ -9,18 +9,26 @@ extension GitChanges {
     /// Beside `changedLines`, it tells whether a declaration lost lines:
     /// one that spans `lines` changed when
     /// `changedLines.overlaps(lines) || linesAfterDeletions.overlaps(lines)`.
-    /// That holds for a deletion inside the declaration and for one
-    /// directly above its first line, such as an attribute on a line of its
-    /// own, and not for one directly below its last line: deleting a
-    /// function doesn't mark the one before it. A rewritten line is a
-    /// deletion too, and the line after it is its replacement's first.
+    /// That holds for a deletion inside the declaration and for any
+    /// deletion directly above its first line: an attribute on a line of
+    /// its own, but also a blank line or a whole function deleted there,
+    /// which only the base's text tells apart. It doesn't hold for one
+    /// directly below its last line: deleting a function doesn't mark the
+    /// one before it. A rewritten line is a deletion too, and the line
+    /// after it is its replacement's first.
+    ///
+    /// One past the file's last line is in none of its line ranges: a
+    /// scope that runs to the file's end, such as its top-level code,
+    /// counts that line as its own, or a file that only lost its last
+    /// lines reads as unchanged. An emptied file gives line 1, which it
+    /// doesn't have.
     ///
     /// Deleted files are left out, and so is a file whose changes delete no
     /// line, such as a pure rename, a binary file, or a new one. The
     /// numbers are those of the diff Steward reads, which has context: git
-    /// can align a repeated line differently in one without, so
-    /// `git diff --unified=0` may put a deletion a few identical lines
-    /// away.
+    /// can align repeated lines differently in one without, so
+    /// `git diff --unified=0` may place, split or join a run differently
+    /// among repeated lines, such as blank ones or lone braces.
     ///
     /// Computed on each read, from every line of the diff: read it once,
     /// before a loop over the files, not in it.

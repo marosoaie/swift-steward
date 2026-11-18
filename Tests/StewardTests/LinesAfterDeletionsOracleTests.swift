@@ -9,13 +9,15 @@ import Testing
 /// it adds none, and `newStart` when it adds some.
 ///
 /// Steward reads its diff with three lines of context, and git trims the
-/// end two files share only when there's none, so it can align a
-/// repeated line elsewhere at `-U0` (swift-steward#68). The test tells
-/// that from a wrong answer by reading the lines after deletions off each
-/// diff's alignment, the old lines it deletes and the new lines it adds,
-/// by a rule of its own that `-U0`'s hunks confirm on every file. Steward's
-/// answer is its own diff's alignment's; where it isn't `-U0`'s, the two
-/// alignments differ, deleting and adding the same text in other places.
+/// end two files share only when there's none, so it can place, split or
+/// join a run differently among repeated lines at `-U0`
+/// (swift-steward#68). The test tells that from a wrong answer by reading
+/// the lines after deletions off each diff's alignment, the old lines it
+/// deletes and the new lines it adds, by a rule of its own that `-U0`'s
+/// hunks confirm on every file. Steward's answer is its own diff's
+/// alignment's; where it isn't `-U0`'s, the two diffs still make the same
+/// change: by each line's text, what one deletes less what it adds is
+/// what the other does, as both are the base less the head.
 ///
 /// Clones and downloads into the fixture cache once; set
 /// `GIT_DIFF_PARSER_SKIP_NETWORK_TESTS` to skip. Serialized, as the
@@ -54,8 +56,8 @@ struct LinesAfterDeletionsOracleTests {
         let real = try await FixtureContextOracleTests.context(of: payload, in: mirror, built: head)
         let tally = try await Self.check(real, in: mirror)
         #expect(tally.deletions > 500, "\(tally.deletions) deletions")
-        // Git's own alignments: where it puts a run among repeated lines
-        // at -U0 isn't where it puts it with context.
+        // Git's own alignments: it places, splits or joins runs among
+        // repeated lines differently at -U0 than with context.
         let realigned: [String] = switch range {
         case .swiftArgumentParser: []
         case .redis: ["src/sentinel.c", "tests/unit/pause.tcl"]
@@ -102,8 +104,8 @@ struct LinesAfterDeletionsOracleTests {
     /// Expects `context`'s lines after deletions to be those of its diff's
     /// alignment, and `git diff --unified=0`'s where the alignments agree;
     /// the rule they're read by to be `-U0`'s hunks' on every file; and
-    /// where Steward's answer isn't `-U0`'s, the two alignments to delete
-    /// and add the same text in other places.
+    /// where Steward's answer isn't `-U0`'s, the two diffs to make the same
+    /// change.
     static func check(_ context: Context, in mirror: URL) async throws -> Tally {
         let text = try await FixtureContextOracleTests.diffText(of: context, in: mirror, contextLines: 0)
         let withoutContext = try Self.headFiles(of: Context.fixture(diff: text).git.diff)
@@ -123,8 +125,7 @@ struct LinesAfterDeletionsOracleTests {
             let lines = Set(steward.files[path]?.allLines ?? [])
             #expect(lines == stewards.linesAfterDeletions, "\(path)")
             guard lines != hunks else { return }
-            #expect(stewards != gits, "\(path): the same alignment, and other lines")
-            #expect(stewards.text == gits.text, "\(path): other text deleted or added")
+            #expect(stewards.change == gits.change, "\(path): another change")
             tally.realigned.append(Realignment(
                 path: path,
                 withContext: lines.subtracting(hunks).sorted(),
@@ -143,35 +144,30 @@ struct LinesAfterDeletionsOracleTests {
 
 /// How a diff aligns a file: the old lines it deletes and the new lines
 /// it adds.
-struct DiffAlignment: Equatable {
+struct DiffAlignment {
     /// The deleted lines' numbers at the base, ascending.
     var deleted: [Int] = []
     /// The added lines' numbers at the head, ascending.
     var added: [Int] = []
-    /// The deleted and the added lines' text, each sorted: what the
-    /// diff changes, wherever it puts it.
-    var text: [[UInt8]] = []
+    /// By each line's text, how many more times the diff deletes it than
+    /// adds it, leaving out the text it deletes as often as it adds: the
+    /// base less the head, the same for any diff of the two files, however
+    /// it aligns them.
+    var change: [[UInt8]: Int] = [:]
 
     init(of file: DiffFile) {
-        var deletedText: [[UInt8]] = []
-        var addedText: [[UInt8]] = []
         file.lines.forEach { line in
             switch line.info.kind {
             case .deletion:
                 deleted.append(line.info.oldNumber ?? 0)
-                deletedText.append(Array(line.content))
+                change[Array(line.content), default: 0] += 1
             case .addition:
                 added.append(line.info.newNumber ?? 0)
-                addedText.append(Array(line.content))
+                change[Array(line.content), default: 0] -= 1
             case .context: break
             }
         }
-        let sorted = { (lines: [[UInt8]]) in lines.sorted { $0.lexicographicallyPrecedes($1) } }
-        text = sorted(deletedText) + [[]] + sorted(addedText)
-    }
-
-    static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.deleted == rhs.deleted && lhs.added == rhs.added
+        change = change.filter { $0.value != 0 }
     }
 
     /// The head line after each run of deleted lines. A run that
