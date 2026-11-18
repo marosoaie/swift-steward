@@ -132,8 +132,12 @@ extension Rule {
                             .compactMap(\.self)
                         continue
                     }
-                    let lines = GitChanges.addedLines(of: entry.file, into: LineRangeSet())
-                    let changed = ChangedFile(path: entry.path, contents: bytes, changedLines: lines)
+                    let changed = ChangedFile(
+                        path: entry.path,
+                        contents: bytes,
+                        changedLines: GitChanges.addedLines(of: entry.file, into: LineRangeSet()),
+                        linesAfterDeletions: GitChanges.linesAfterDeletions(of: entry.file, into: LineRangeSet())
+                    )
                     findings += try await check(changed, log)
                 }
             }

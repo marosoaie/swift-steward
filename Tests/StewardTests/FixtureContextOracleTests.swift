@@ -146,7 +146,7 @@ struct FixtureContextOracleTests {
 
     /// The context a run in Actions builds for `payload`'s pull request,
     /// in `mirror`, with `built` as the commit Actions checked out.
-    private static func context(of payload: EventPayload, in mirror: URL, built: String) async throws -> Context {
+    static func context(of payload: EventPayload, in mirror: URL, built: String) async throws -> Context {
         let event = try payload.writeTemporary()
         defer { try? FileManager.default.removeItem(at: event) }
         return try await Context.actions(environment: [
@@ -176,7 +176,7 @@ struct FixtureContextOracleTests {
 
     /// The text of the diff a run reads for `context`: git's, with the
     /// options Steward pins, and `contextLines` lines of context.
-    private static func diffText(of context: Context, in mirror: URL, contextLines: Int = 3) async throws -> String {
+    static func diffText(of context: Context, in mirror: URL, contextLines: Int = 3) async throws -> String {
         let output = try await Git(directory: mirror.path).output(
             Git.diffConfiguration + ["diff"] + Git.diffOptions
                 + ["--unified=\(contextLines)", context.git.mergeBase, context.git.head, "--"]

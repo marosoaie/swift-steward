@@ -311,8 +311,9 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
   deleted one. A pure rename or a mode change counts, with no changed
   lines. Each file is checked once, in diff order.
 - **What the check gets.** A `ChangedFile`: the path, the bytes at the
-  head, and the lines the pull request adds or rewrites, as
-  `changedLines(in:)` gives them.
+  head, the lines the pull request adds or rewrites, as
+  `changedLines(in:)` gives them, and the lines that follow what it
+  deletes, as `linesAfterDeletions(in:)` gives them (step C9, below).
 - **Skipped, in the report and the log.** A symbolic link or a
   submodule, which has no contents to check, and a file over `limit:`
   (1 MiB by default). Git gives no mode for a link or a submodule it
@@ -460,6 +461,8 @@ public struct GitChanges: Sendable {
     public func file(at path: String) -> DiffFile?
     public var changedLines: ChangedLines { get }   // the head's added lines, by path
     public func changedLines(in path: String) -> LineRangeSet
+    public var linesAfterDeletions: ChangedLines { get }   // the head line after each deleted run
+    public func linesAfterDeletions(in path: String) -> LineRangeSet
 }
 
 extension LineRangeSet {                  // GitDiffKit's merged ranges
@@ -584,6 +587,55 @@ read `changedLines` once, as the second example does, since asking
 `overlaps(_:)` extends GitDiffKit's type from `Steward`; were GitDiffKit
 to gain the method, `Steward`'s would go in the same release. **Added
 in step C3 (2026-11-18)** of the steward-lang-swift plan.
+
+**Lines after deletions (step C9 of the steward-lang-swift plan,
+2026-11-18).** A deletion leaves no line at the head, so a function
+that only lost a line has no changed line, and a rule that asks whether
+a declaration changed would pass it by. `linesAfterDeletions` gives,
+for each run of deleted lines, the head line that now stands where the
+run was, or one past the file's last line when the run was its end;
+`linesAfterDeletions(in:)` gives one file's, and `ChangedFile` carries
+its own:
+
+```swift
+let declaration = 12...30
+let changed = file.changedLines.overlaps(declaration) || file.linesAfterDeletions.overlaps(declaration)
+```
+
+- **The line after, not both neighbours.** The test above is then true
+  for a deletion inside the declaration and for any deletion directly
+  above its first line, and false for one directly below its last:
+  deleting a function doesn't mark the one before it. A rewritten line
+  counts in both sets.
+- **Any deletion above, not only an attribute.** A deleted attribute on
+  a line of its own marks the declaration below it, and so does a
+  deleted blank line or a whole function deleted there: only the base's
+  text tells them apart, and the rule has the head's. That is the known
+  false positive.
+- **One past the end is in no range.** A run that was the file's end
+  gives the line after its last, which no scope of the file spans, so a
+  scope that runs to the end (top-level code, say) counts that line as
+  its own, or a file that only lost its last lines reads as unchanged.
+  An emptied file gives line 1, which it doesn't have.
+- **`changedLines` keeps its meaning,** and so does the diagnostics
+  rule: a diagnostic on a line that follows a deletion isn't on a
+  changed line.
+- **A deleted file gives nothing,** having no head path; nor does a
+  created file, a pure rename, or a binary file.
+- **Checked against git.** On this project's merged pull requests and
+  on two ranges of public repositories, each hunk of
+  `git diff --unified=0` that deletes lines gives `newStart + 1` when it
+  adds none and `newStart` when it adds some. Steward reads its diff
+  with context, and git trims the end two files share only without
+  context, so it can place, split or join a run differently among
+  repeated lines at `-U0`: two of redis's files, and the commits
+  swift-steward#68 pinned. A frequent line, a blank one or a lone
+  brace, can be kept in one diff and deleted and added back in the
+  other. There the test reads the answer off the context diff's own
+  alignment, by a rule `-U0`'s hunks confirm on every file, and checks
+  that the two diffs make the same change: by each line's text, what one
+  deletes less what it adds is what the other's does, as both are the
+  base less the head.
 
 **Paths are `String`s in the conveniences, bytes in `diff`.** Rules
 compare paths with literals (`contains("CHANGELOG.md")`), and findings,
