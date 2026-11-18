@@ -20,7 +20,9 @@ public protocol RepositoryFiles: Sendable {
     ///   - limit: The largest size, in bytes, that's read.
     /// - Returns: The bytes, or why there are none.
     /// - Throws: When the read itself fails, such as when the repository
-    ///   lacks the commit; never because of what's at the path.
+    ///   lacks the commit or the file's contents, as a partial clone can.
+    ///   What's at the path, whether nothing, a link, a directory, or a
+    ///   large file, is an answer, not an error.
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents
 
     /// The files at `paths` in `commit`, in the order of `paths`, each
