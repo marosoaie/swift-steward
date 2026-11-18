@@ -17,10 +17,9 @@ extension GitRepositoryFiles {
         ) { $0.append(contentsOf: $1) }
         try Git.requireSuccess(outcome, arguments)
         guard let parsed = Self.batch(outcome.output, of: objects) else {
-            throw ContextError.gitFailed(
+            throw ContextError.unexpectedGitOutput(
                 arguments: arguments,
-                status: outcome.status,
-                message: "printed something other than the \(objects.count) objects it was asked for"
+                reason: "it printed something other than the \(objects.count) objects it was asked for"
             )
         }
         return parsed

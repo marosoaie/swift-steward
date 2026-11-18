@@ -130,36 +130,57 @@ struct Git: Sendable {
             through: ["xargs", "-0"],
             into: [UInt8]()
         ) { $0.append(contentsOf: $1) }
+        let message = outcome.standardError.trimmingCharacters(in: .whitespacesAndNewlines)
         // `env` and `xargs` exit with 127 when what they'd run isn't on
         // `PATH`; git itself never does. Any other failure, xargs reports
         // as its own, 1 or 123, after git's message.
         guard outcome.status != 127 else {
             throw ContextError.gitUnavailable("""
                 it runs through xargs -0 to be given paths exactly, and one of the two isn't on PATH: \
-                \(outcome.standardError.trimmingCharacters(in: .whitespacesAndNewlines))
+                \(message)
                 """)
         }
-        try Self.requireSuccess(outcome, arguments)
+        guard outcome.status == 0 else {
+            throw ContextError.gitFailed(
+                arguments: arguments,
+                status: outcome.status,
+                message: "\(message) (the status is that of xargs -0, which ran git with the paths)"
+            )
+        }
         return outcome.output
     }
 
     /// A handle that reads `input` from a temporary file, which is gone
-    /// from the directory by the time it returns.
+    /// from `parent` by the time it returns, whether it returns or throws.
     ///
     /// A file, not a pipe: once git exits, as it does on an error before
     /// reading all of its input, a write to its pipe raises SIGPIPE, which
     /// ends this process on macOS and Linux alike.
-    private static func handle(reading input: [UInt8]) throws -> FileHandle {
-        let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("steward-git-input-\(UUID().uuidString)", isDirectory: false)
+    static func handle(
+        reading input: [UInt8],
+        in parent: URL = FileManager.default.temporaryDirectory
+    ) throws -> FileHandle {
+        let directory = parent.appendingPathComponent("steward-git-input-\(UUID().uuidString)", isDirectory: true)
+        // Before anything is written, so a write that fails partway, as on
+        // a full disk, leaves nothing either. An open file outlives its
+        // name, so nothing is left behind if this process ends early.
+        defer { try? FileManager.default.removeItem(at: directory) }
         do {
+            // A directory only this user may enter, so no one else can open
+            // the file, even in a shared /tmp, however the file's mode
+            // turns out: the paths are the repository's business.
+            try FileManager.default.createDirectory(
+                at: directory,
+                withIntermediateDirectories: false,
+                attributes: [.posixPermissions: 0o700]
+            )
+            let url = directory.appendingPathComponent("input", isDirectory: false)
             try Data(input).write(to: url, options: .withoutOverwriting)
-            // An open file outlives its name, so nothing is left behind if
-            // this process ends early.
-            defer { try? FileManager.default.removeItem(at: url) }
             return try FileHandle(forReadingFrom: url)
         } catch {
-            throw ContextError.gitUnavailable("couldn't write its input to \(url.path): \(error.localizedDescription)")
+            throw ContextError.gitUnavailable(
+                "couldn't write its input to \(directory.path): \(error.localizedDescription)"
+            )
         }
     }
 
