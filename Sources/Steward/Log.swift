@@ -3,20 +3,30 @@ import OutputEscaping
 /// A run's log, on standard error: GitHub Actions workflow commands in a CI
 /// run, plain lines in a dry run.
 ///
+/// A rule made with `Rule(_:check:)` gets the run's log beside the
+/// context, for what the summary has no room for: what it read, what it
+/// skipped and why. It can only `write(_:)` lines; the runner groups them
+/// under the run's rules.
+///
 /// Much of what it writes comes from the pull request (file names, commit
 /// subjects, the summary's findings), so in a CI run it never lets that
 /// text pass for a workflow command, which could mask values, end a group,
 /// or add annotations, and in a dry run it escapes the control characters
 /// that could rewrite the terminal.
-struct Log: Sendable {
+public struct Log: Sendable {
     var mode: Run.Mode
     var console: Console
     /// Makes the token that pauses workflow commands around untrusted text.
     var makeToken: @Sendable () -> String = RunnerOutput.newStopToken
 
-    /// Writes `text` as lines. In a CI run, text that could pass for a
-    /// workflow command is wrapped in `::stop-commands::`.
-    func write(_ text: String) {
+    /// Writes `text` as lines, ending it with a line break if it has none.
+    ///
+    /// Text may quote the pull request: in a CI run, text that could pass
+    /// for a workflow command is wrapped in `::stop-commands::`, so it
+    /// shows as it is, and a dry run escapes the control characters that
+    /// could rewrite the terminal. Start a rule's lines with its name, as
+    /// the run's own lines about a rule do.
+    public func write(_ text: String) {
         guard mode == .actions else {
             console.writeError(Self.terminated(Self.readable(text)))
             return
