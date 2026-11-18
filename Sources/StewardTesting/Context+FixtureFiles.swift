@@ -88,7 +88,9 @@ extension Context.FixtureError {
         }
         .first
         // A hunk that only deletes starts at the line before what it
-        // deletes, which the file must still have.
+        // deletes, which the file must still have, with the newline that
+        // ended it before the deleted lines: the diff would show it changed
+        // if it lost it.
         let kept = file.hunks.lazy
             .filter { hunk in !hunk.lines.contains { $0.info.kind != .deletion } }
             .map(\.header.newStart)
@@ -96,6 +98,12 @@ extension Context.FixtureError {
         if differing == nil, let kept, kept > lines.count {
             return (kept, """
                 the diff keeps a line \(kept) before what it deletes, and the file has \(count(lines.count))
+                """)
+        }
+        if differing == nil, let kept, kept >= 1, kept == lines.count, !endsWithNewline {
+            return (kept, """
+                the diff keeps this line before what it deletes, so with its newline, and the file ends here \
+                without one
                 """)
         }
         guard differing == nil, let end = knownEnd(of: file), lines.count > end.line else { return differing }
