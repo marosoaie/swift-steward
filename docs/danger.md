@@ -681,10 +681,12 @@ at the edge:
   commit and reads its line map through `context.files`, not by running
   git in `run.workspace`, so no rule runs git itself, and a fixture
   context tests the configuration: `FakeRepositoryFiles(_:lineMaps:)`
-  holds maps that `LineMap(diff:)` reads from the head-to-built diff. The
-  git reader resolves names with `git rev-parse` and reads a map as
-  `Run.lineMap` is read; a reader that gives neither knows no commit, so
-  such a source is the rule's failure.
+  holds maps that `LineMap(diff:)` reads from the head-to-built diff,
+  with context lines or without: a context line ends a run of changes, as
+  a `-U0` hunk does, so both map alike. The git reader resolves names
+  with `git rev-parse` and reads a map as `Run.lineMap` is read; a reader
+  that gives neither knows no commit, so such a source is the rule's
+  failure.
 
 Why not the others: B makes the summary disagree with the Files changed
 tab, and its links rot as soon as the merge ref moves. B is also what

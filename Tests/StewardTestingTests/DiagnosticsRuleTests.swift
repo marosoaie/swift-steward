@@ -101,6 +101,21 @@ struct DiagnosticsRuleTests {
         ])
     }
 
+    @Test("the rule asks the reader for the map to the head with the merge base's attributes, once per commit")
+    func builtAtRequest() async throws {
+        let workspace = try ReportWorkspace(reports: ["build.log": Self.builtLog, "other.log": Self.builtLog])
+        defer { workspace.remove() }
+        var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
+        let files = RecordingLineMaps(files: FakeRepositoryFiles([:], lineMaps: [Self.built: .identity]))
+        context.files = files
+        let rule = Rule.diagnosticsOnChangedLines(in: [
+            .xcodebuild("build.log", builtAt: Self.built),
+            .xcodebuild("other.log", builtAt: Self.built),
+        ])
+        _ = try await rule.evaluate(context)
+        #expect(await files.requests.all == [[Self.built, context.git.head, context.git.mergeBase]])
+    }
+
     @Test("a report built at the head itself needs no line map")
     func builtAtHead() async throws {
         let workspace = try ReportWorkspace(reports: ["build.log": Self.buildLog])

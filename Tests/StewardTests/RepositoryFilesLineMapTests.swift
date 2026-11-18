@@ -21,15 +21,23 @@ struct RepositoryFilesLineMapTests {
         #expect(try await files.commit(named: String(fixture.head.prefix(10))) == fixture.head)
         #expect(try await files.commit(named: "HEAD") == fixture.repository.git(["rev-parse", "HEAD"]))
         #expect(try await files.commit(named: "no-such-branch") == nil)
+        // A name is never an option: git reads it as a commit's.
+        #expect(try await files.commit(named: "--all") == nil)
 
         let map = try await files.lineMap(from: fixture.built, to: fixture.head, attributesFrom: fixture.forkPoint)
         #expect(map == context.run.lineMap)
         #expect(map != .identity)
         #expect(try await files.lineMap(from: fixture.head, to: fixture.head, attributesFrom: fixture.forkPoint)
             == .identity)
-        // What a test gives the fake: git's own diff, read by `LineMap(diff:)`.
-        let diff = try fixture.repository.git(["diff", "--unified=0", "-M", fixture.head, fixture.built])
-        #expect(LineMap(diff: diff + "\n") == map)
+        // The base renamed moved.swift, so the map reads renames.
+        #expect(map.headPath(ofFile: "relocated.swift") == "moved.swift")
+        // What a test gives the fake: git's own diff, with context lines or
+        // without, read by `LineMap(diff:)`; the other way round, it maps
+        // another way.
+        let diff = { (options: [String]) in try fixture.repository.git(["diff", "-M"] + options) + "\n" }
+        #expect(try LineMap(diff: diff(["--unified=0", fixture.head, fixture.built])) == map)
+        #expect(try LineMap(diff: diff([fixture.head, fixture.built])) == map)
+        #expect(try LineMap(diff: diff([fixture.built, fixture.head])) != map)
     }
 
     @Test("a reader that gives only reads knows no commit, and maps a commit only to itself")
