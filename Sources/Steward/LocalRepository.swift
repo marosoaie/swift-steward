@@ -2,7 +2,10 @@
 /// contents, and maps lines between commits, for rules that read build
 /// logs.
 ///
-/// `Context.localRepository` is one. A real run's reads through git from the
+/// `Context.localRepository` is one. Local means the clone the run happens
+/// in, on a CI runner or anywhere else, not the hosted repository: a
+/// commit a shallow clone hasn't fetched, or a file a partial clone
+/// hasn't, isn't there to read. A real run's reads through git from the
 /// repository at `run.workspace`, so what it returns is the commit's, not
 /// the checkout's, whose tree may be another commit's and whose symbolic
 /// links lead anywhere. A test passes a reader of its own. Through it, no
@@ -40,8 +43,8 @@ public protocol LocalRepository: Sendable {
     /// - Throws: As a single read throws, for any of the paths.
     func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents]
 
-    /// The SHA of the commit `name` names, or nil when the repository has
-    /// none by that name.
+    /// The SHA of the commit `name` names, or nil when the clone has none
+    /// by that name, as when a shallow clone hasn't fetched it.
     ///
     /// The git reader resolves names as `git rev-parse` does: a SHA or a
     /// prefix of one, a branch, a tag, `HEAD`. The diagnostics rule asks
