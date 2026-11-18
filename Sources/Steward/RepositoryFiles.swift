@@ -22,4 +22,16 @@ public protocol RepositoryFiles: Sendable {
     /// - Throws: When the read itself fails, such as when the repository
     ///   lacks the commit; never because of what's at the path.
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents
+
+    /// The files at `paths` in `commit`, in the order of `paths`, each
+    /// read as `contents(ofFileAt:in:limit:)` reads it.
+    ///
+    /// A reader that can read many files at once gives its own: the git
+    /// reader runs two git processes however many paths there are, where
+    /// each single read runs three. Every file read is held until the call
+    /// returns, so a caller bounds `paths.count × limit`. Without one, the
+    /// paths are read in turn.
+    ///
+    /// - Throws: As a single read throws, for any of the paths.
+    func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents]
 }
