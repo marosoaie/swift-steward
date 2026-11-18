@@ -52,3 +52,17 @@ struct PerFileLogging: Dangerfile {
         sizes
     }
 }
+
+/// `PerFileLogging`'s rule with a check that skips an empty file itself,
+/// in the words the rule uses for the files it skips, as a message.
+struct OwnSkips: Dangerfile {
+    static var rules: [Rule] {
+        Rule.changedFiles("Sizes", in: "**", limit: 10) { file, log in
+            guard !file.contents.isEmpty else {
+                log.write("Sizes: skipped \(file.path), an empty file")
+                return [.skipped(file.path, "an empty file", by: "Sizes", as: .message)]
+            }
+            return [.message("\(file.contents.count) bytes", at: Location(path: file.path))]
+        }
+    }
+}

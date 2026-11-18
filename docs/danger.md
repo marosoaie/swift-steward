@@ -148,6 +148,8 @@ public struct Finding: Sendable, Hashable, Codable {
     public static func warning(_ text: String, at location: Location? = nil) -> Finding
     public static func message(_ text: String, at location: Location? = nil) -> Finding
     public static func markdown(_ text: String, at location: Location? = nil) -> Finding
+    // Rule.changedFiles' sentence for a file it skips (step C10)
+    public static func skipped(_ path: String, _ reason: String, by rule: String, as kind: Kind = .warning) -> Finding
 }
 ```
 
@@ -373,7 +375,8 @@ Rule.changedFiles("Licence header", in: "Sources/**", limit: 64 << 10, reporting
 - **A file the check passes over itself is the check's to report,**
   with a finding too, as the overload with a log shows: a line in the
   log is one a reviewer never sees, and the pull request may write the
-  marker that skips it.
+  marker that skips it. `Finding.skipped` (step C10, below) says it in
+  the rule's words.
 - **No silent kind.** `.message` is the quietest. A file the rule
   should never check, such as a vendored folder, belongs in
   `excluding:`, which leaves it out on purpose: no finding, no line.
@@ -383,6 +386,34 @@ Rule.changedFiles("Licence header", in: "Sources/**", limit: 64 << 10, reporting
 - **The log keeps its line** for each skip, beside the finding.
 - **In diff order.** Skips and the check's findings come in the order
   of the diff's files, as the files are checked.
+
+**A check's own skips (step C10 of the steward-lang-swift plan,
+2026-11-18).** S4's `Rule.swiftSource` skips files of its own, those
+with syntax errors, and would otherwise copy C8's sentence, and the two
+would drift. `Finding.skipped` gives that sentence, at the file, of the
+kind asked for, a warning by default; `Rule.changedFiles` builds its own
+skips' text in the same place:
+
+```swift
+Rule.changedFiles("Licence header", in: "Sources/**/*.swift") { file, log in
+    guard !file.contents.starts(with: Array("// Generated".utf8)) else {
+        log.write("Licence header: skipped \(file.path), a generated file")
+        return [.skipped(file.path, "a generated file", by: "Licence header", as: .message)]
+    }
+    …
+}
+```
+
+- **The same finding.** For a link, a submodule, or a link the diff
+  renames, the factory's finding equals the rule's, for each kind. The
+  wording for a file over the limit and a name that isn't UTF-8, at no
+  location, stay the rule's alone.
+- **The reason is Markdown, as written,** after a comma, so an
+  appositive reads best: "a generated file", "with syntax errors". Text
+  from the pull request in it goes through `Markdown.escaped` first; the
+  rule's name is escaped and the path is a code span, as in C8.
+- **No log line.** A factory with a side effect would surprise; a check
+  that logs its skips, as the rule does, writes the line itself.
 
 **A rule's log (step C5 of the steward-lang-swift plan, 2026-11-18).**
 A rule says what it read and what it skipped in the run's log, which

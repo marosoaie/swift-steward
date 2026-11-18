@@ -72,14 +72,15 @@ extension Rule {
     /// returns what a run logged.
     ///
     /// A file the check passes over itself is the check's to report, as the
-    /// rule reports the files it skips: a line in the log is one a reviewer
+    /// rule reports the files it skips, and in the same words with
+    /// `Finding.skipped(_:_:by:as:)`: a line in the log is one a reviewer
     /// never sees, and the pull request may write the marker that skips it.
     ///
     /// ```swift
     /// Rule.changedFiles("Licence header", in: "Sources/**/*.swift") { file, log in
     ///     guard !file.contents.starts(with: Array("// Generated".utf8)) else {
     ///         log.write("Licence header: skipped \(file.path), a generated file")
-    ///         return [.message("Not checked: a generated file.", at: Location(path: file.path))]
+    ///         return [.skipped(file.path, "a generated file", by: "Licence header", as: .message)]
     ///     }
     ///     return file.contents.starts(with: Array("// SPDX-License-Identifier:".utf8))
     ///         ? [] : [.warning("Start with the licence header.", at: Location(path: file.path, line: 1))]
@@ -153,22 +154,13 @@ extension Rule {
         let log: Log
 
         /// The finding for the file `name` names, skipped for `reason`,
-        /// once the log says so; at `location`, which a name that isn't
-        /// UTF-8 has none of. The rule's name is escaped, as a thrown
-        /// rule's failure escapes it: it's a label, not Markdown. A file
-        /// over the limit is checked once the limit is raised, which is
-        /// what a source file usually needs, so its finding says that first.
+        /// once the log says so: `Finding.skipped`'s, but at `location`,
+        /// which a name that isn't UTF-8 has none of, and for a file over
+        /// the limit, saying that raising it has the file checked.
         func finding(_ name: String, _ reason: String, at location: Location?, isOverLimit: Bool = false) -> Finding {
             log.write("\(rule): skipped \(name), \(reason)")
-            let raising = isOverLimit ? "Raising the rule's `limit:` has it checked; a file" : "A file"
-            return Finding(
-                kind: kind,
-                text: """
-                    Rule “\(Markdown.escaped(rule))” skipped \(Markdown.codeSpan(name)), \(reason). \(raising) the \
-                    rule should never check belongs in its `excluding:` pattern.
-                    """,
-                location: location
-            )
+            let text = Finding.skippedText(name, reason, by: rule, isOverLimit: isOverLimit)
+            return Finding(kind: kind, text: text, location: location)
         }
     }
 
