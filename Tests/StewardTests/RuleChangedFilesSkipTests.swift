@@ -104,6 +104,19 @@ struct RuleChangedFilesSkipTests {
         ])
     }
 
+    @Test("a skip's text gives the rule's name as a label, not as Markdown that mentions or links")
+    func escapedName() async throws {
+        let name = "Licence @org/team for #12 *now*"
+        let rule = Rule.changedFiles(name, in: "**", limit: 4) { _ in [] }
+        let (findings, log) = try await Self.run(rule)
+        let texts = findings.filter { $0.kind == .warning }.map(\.text)
+        #expect(texts.count == 4)
+        #expect(texts.allSatisfy { $0.hasPrefix("Rule “\(Markdown.escaped(name))” skipped ") })
+        #expect(!texts.contains { $0.contains("@org") || $0.contains("#12") || $0.contains("*now*") })
+        // The log is plain text, and names the rule as it is.
+        #expect(log.first == .error("\(name): skipped Link.swift, a symbolic link\n"))
+    }
+
     @Test("a link whose name isn't UTF-8 is skipped by its name in git's quoting, at no location")
     func latin1Link() async throws {
         let diff = #"""

@@ -144,14 +144,15 @@ extension Rule {
 
         /// The finding for the file `name` names, skipped for `reason`,
         /// once the log says so; at `location`, which a name that isn't
-        /// UTF-8 has none of.
+        /// UTF-8 has none of. The rule's name is escaped, as a thrown
+        /// rule's failure escapes it: it's a label, not Markdown.
         func finding(_ name: String, _ reason: String, at location: Location?) -> Finding {
             log.write("\(rule): skipped \(name), \(reason)")
             return Finding(
                 kind: kind,
                 text: """
-                    Rule “\(rule)” skipped \(Markdown.codeSpan(name)), \(reason). A file the rule should never \
-                    check belongs in its `excluding:` pattern.
+                    Rule “\(Markdown.escaped(rule))” skipped \(Markdown.codeSpan(name)), \(reason). A file the rule \
+                    should never check belongs in its `excluding:` pattern.
                     """,
                 location: location
             )
