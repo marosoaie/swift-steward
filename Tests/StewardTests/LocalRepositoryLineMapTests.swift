@@ -23,6 +23,8 @@ struct LocalRepositoryLineMapTests {
         #expect(try await files.commit(named: "no-such-branch") == nil)
         // A name is never an option: git reads it as a commit's.
         #expect(try await files.commit(named: "--all") == nil)
+        // Nor a range's end: git verifies `^HEAD`, and prints `^<sha>`.
+        #expect(try await files.commit(named: "^HEAD") == nil)
 
         let map = try await files.lineMap(from: fixture.built, to: fixture.head, attributesFrom: fixture.forkPoint)
         #expect(map == context.run.lineMap)
