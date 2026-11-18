@@ -3,12 +3,12 @@ import Testing
 
 /// The in-memory repository a fixture reads: the git reader's answers for
 /// the paths it holds.
-@Suite("FakeRepositoryFiles")
-struct FakeRepositoryFilesTests {
+@Suite("FakeLocalRepository")
+struct FakeLocalRepositoryTests {
     static let head = String(repeating: "4e", count: 20)
     static let base = String(repeating: "ba", count: 20)
 
-    static let files = FakeRepositoryFiles([
+    static let files = FakeLocalRepository([
         head: [
             "Sources/App/Loader.swift": Array("struct Loader {}\n".utf8),
             "README.md": Array("# App\n".utf8),

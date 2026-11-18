@@ -6,7 +6,7 @@
 ///
 /// A path's own bytes never reach `cat-file`'s input, which is one object
 /// ID a line: a path may hold a line break, an ID can't.
-struct GitRepositoryFiles: RepositoryFiles {
+struct GitRepository: LocalRepository {
     let git: Git
 
     /// How many bytes of paths one `ls-tree` is given; more go to another.

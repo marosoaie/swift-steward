@@ -1,4 +1,4 @@
-extension GitRepositoryFiles {
+extension GitRepository {
     func commit(named name: String) async throws -> String? {
         try await git.commit(named: name)
     }

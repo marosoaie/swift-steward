@@ -325,7 +325,7 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
   a name that isn't UTF-8: `GitChanges`' lists decode it lossily, so
   `caf<E9>.swift` reads as `caf\u{FFFD}.swift`, which may be another
   file. Its failure names it in git's quoting, `caf\351.swift`.
-- **Read in batches.** `RepositoryFiles` has a batch read beside the
+- **Read in batches.** `LocalRepository` has a batch read beside the
   single one. A reader that doesn't give its own reads each path in
   turn; the git reader runs two git processes per batch where a single
   read runs three. A batch holds up to 64 MiB at `limit:` per file, 64
@@ -376,7 +376,7 @@ public struct Context: Sendable, Equatable {
     public var pullRequest: PullRequest   // PullRequestHosting's model
     public var git: GitChanges            // the pull request's changes, base...head
     public var run: Run                   // where Steward runs, and on which trees
-    public var files: any RepositoryFiles // the commits' files; == doesn't compare it
+    public var localRepository: any LocalRepository // the clone: files, line maps; == skips it
 
     public func contents(                 // a file at the head or the merge base
         ofFileAt path: String,
@@ -385,7 +385,7 @@ public struct Context: Sendable, Equatable {
     ) async throws -> FileContents
 }
 
-public protocol RepositoryFiles: Sendable {
+public protocol LocalRepository: Sendable {
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents
     func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents]
     // Step C7: the diagnostics rule's `builtAt:` commits, without running git itself.
@@ -476,7 +476,7 @@ Where each part comes from (step 4.2):
   from the user's or the system's attributes file: a pull request could
   mark its own files `-diff`, and git would show none of their lines. The
   log is read with NUL-separated `--format` fields, so any subject parses.
-- **`files`** from the local repository, through git (Phase 6, step C1).
+- **`localRepository`**, through git (Phase 6, step C1).
   `git ls-tree` gives each path's mode, object, and size at the commit.
   Paths reach it through `xargs -0`, on standard input, because macOS's
   `Process` rewrites its arguments to their canonical decomposition
@@ -678,15 +678,23 @@ at the edge:
   doesn't recognize gives no diagnostics (question 31).
 - **Line maps through the reader (step C7 of the steward-lang-swift
   plan, 2026-11-18, its D10 option B).** The rule resolves a `builtAt:`
-  commit and reads its line map through `context.files`, not by running
-  git in `run.workspace`, so no rule runs git itself, and a fixture
-  context tests the configuration: `FakeRepositoryFiles(_:lineMaps:)`
-  holds maps that `LineMap(diff:)` reads from the head-to-built diff,
-  with context lines or without: a context line ends a run of changes, as
-  a `-U0` hunk does, so both map alike. The git reader resolves names
-  with `git rev-parse` and reads a map as `Run.lineMap` is read; a reader
-  that gives neither knows no commit, so such a source is the rule's
-  failure.
+  commit and reads its line map through `context.localRepository`, not
+  by running git in `run.workspace`, so no rule runs git itself, and a
+  fixture context tests the configuration:
+  `FakeLocalRepository(_:lineMaps:)` holds maps that `LineMap(diff:)`
+  reads from the head-to-built diff, with context lines or without: a
+  context line ends a run of changes, as a `-U0` hunk does, so both map
+  alike. The git reader resolves names with `git rev-parse` and reads a
+  map as `Run.lineMap` is read; a reader that gives neither knows no
+  commit, so such a source is the rule's failure.
+
+  D10 asked for the seam "under a wider name": step C1's
+  `RepositoryFiles`, `Context.files` and `FakeRepositoryFiles`, never
+  released, are now `LocalRepository`, `Context.localRepository` and
+  `FakeLocalRepository`, and the git reader is `GitRepository`. Bare
+  "repository" already means the hosted `owner/name` in the public API
+  (`PullRequest.Branch.repository`, `Report.repository`), and "local"
+  says why `commit(named:)` can answer nil: this clone lacks the commit.
 
 Why not the others: B makes the summary disagree with the Files changed
 tab, and its links rot as soon as the merge ref moves. B is also what

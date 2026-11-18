@@ -58,7 +58,7 @@ extension Context {
                 Context.fixture(diff:files:) needs each file as the head commit has it, holding the \
                 diff's context and added lines at the numbers its hunk headers give; check these \
                 files against the diff, or give a test that needs them to disagree a reader of its \
-                own (context.files).
+                own (context.localRepository).
                 """,
             ] + mismatches.map(\.description)
             return (damaged + mismatched).joined(separator: "\n")

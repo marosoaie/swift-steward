@@ -1,5 +1,5 @@
 /// A repository in memory, for tests: the files of each commit, read as
-/// `Context.files` reads a real repository's.
+/// `Context.localRepository` reads a real repository's.
 ///
 /// It answers as the git reader does for the paths it holds: a path is
 /// matched byte for byte, so `./a.swift`, `a.swift/`, and a name's other
@@ -16,7 +16,7 @@
 ///
 /// ```swift
 /// var context = try Context.fixture(diff: SampleDiff.newLoader)
-/// context.files = FakeRepositoryFiles([
+/// context.localRepository = FakeLocalRepository([
 ///     context.git.head: ["Sources/App/Loader.swift": Array(SampleSource.loader.utf8)],
 ///     context.git.mergeBase: ["Sources/App/Loader.swift": Array(SampleSource.oldLoader.utf8)],
 /// ])
@@ -26,7 +26,7 @@
 /// files at, or one it holds a line map from. A line map maps the lines of
 /// the commit a build ran at to the head's, for the diagnostics rule's
 /// `builtAt:` sources; `LineMap(diff:)` reads one.
-public struct FakeRepositoryFiles: RepositoryFiles {
+public struct FakeLocalRepository: LocalRepository {
     /// The files by path's bytes, by commit.
     private let commits: [String: [[UInt8]: [UInt8]]]
     /// The maps to the head, by the commit they map from.

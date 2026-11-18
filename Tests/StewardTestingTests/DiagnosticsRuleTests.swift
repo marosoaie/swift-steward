@@ -93,7 +93,7 @@ struct DiagnosticsRuleTests {
         let workspace = try ReportWorkspace(reports: ["build.log": Self.builtLog])
         defer { workspace.remove() }
         var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
-        context.files = FakeRepositoryFiles([:], lineMaps: [Self.built: LineMap(diff: Self.headToBuilt)])
+        context.localRepository = FakeLocalRepository([:], lineMaps: [Self.built: LineMap(diff: Self.headToBuilt)])
         let rule = Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log", builtAt: Self.built)])
         #expect(try await rule.evaluate(context) == [
             .warning("imported module 'Logging' is never used", at: Location(path: "Sources/App.swift", line: 2)),
@@ -106,8 +106,8 @@ struct DiagnosticsRuleTests {
         let workspace = try ReportWorkspace(reports: ["build.log": Self.builtLog, "other.log": Self.builtLog])
         defer { workspace.remove() }
         var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
-        let files = RecordingLineMaps(files: FakeRepositoryFiles([:], lineMaps: [Self.built: .identity]))
-        context.files = files
+        let files = RecordingLineMaps(files: FakeLocalRepository([:], lineMaps: [Self.built: .identity]))
+        context.localRepository = files
         let rule = Rule.diagnosticsOnChangedLines(in: [
             .xcodebuild("build.log", builtAt: Self.built),
             .xcodebuild("other.log", builtAt: Self.built),

@@ -1,4 +1,4 @@
-extension GitRepositoryFiles {
+extension GitRepository {
     /// One record of `git ls-tree -z --long`:
     /// `<mode> SP <type> SP <object> SP <size> TAB <path> NUL`, the size
     /// padded with spaces, `-` for a directory or a submodule, or `BAD`
@@ -33,7 +33,7 @@ extension GitRepositoryFiles {
             mode = String(decoding: fields[0], as: UTF8.self)
             type = String(decoding: fields[1], as: UTF8.self)
             object = String(decoding: fields[2], as: UTF8.self)
-            size = GitRepositoryFiles.decimal(fields[3])
+            size = GitRepository.decimal(fields[3])
             path = Array(record[record.index(after: tab)...])
         }
 

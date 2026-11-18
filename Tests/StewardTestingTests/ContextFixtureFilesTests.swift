@@ -64,7 +64,9 @@ struct ContextFixtureFilesTests {
     @Test("a reader a test gives the context itself isn't checked")
     func ownReader() async throws {
         var context = try Context.fixture(diff: SampleDiff.mixed)
-        context.files = FakeRepositoryFiles([context.git.head: ["Sources/App.swift": Array("anything\n".utf8)]])
+        context.localRepository = FakeLocalRepository([
+            context.git.head: ["Sources/App.swift": Array("anything\n".utf8)],
+        ])
         #expect(try await context.contents(ofFileAt: "Sources/App.swift") == .bytes(Array("anything\n".utf8)))
     }
 

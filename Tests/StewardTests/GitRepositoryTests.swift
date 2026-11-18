@@ -6,7 +6,7 @@ import Testing
 /// `git show <commit>:<path>` prints, byte for byte, and what isn't a
 /// regular file within the limit is reported, not read.
 @Suite("Reading files from a commit through git")
-struct GitRepositoryFilesTests {
+struct GitRepositoryTests {
     @Test("every regular file of a commit reads as git show prints it, one by one and all in one call")
     func everyFile() async throws {
         let fixture = try FilesFixture()
@@ -180,7 +180,7 @@ struct GitRepositoryFilesTests {
         let commit = try repository.commit("Many files", at: PullRequestFixture.time)
         let paths = (0..<count).map { "many/file-\($0).swift" }.shuffled() + ["many/missing.swift", "many/file-7.swift"]
         // About 22 bytes a path: some twenty calls.
-        #expect(GitRepositoryFiles.calls(for: paths.map { Array($0.utf8) }, upTo: 128).count > 10)
+        #expect(GitRepository.calls(for: paths.map { Array($0.utf8) }, upTo: 128).count > 10)
 
         let read = try await Self.reader(of: repository).contents(
             ofFilesAt: paths,
@@ -221,8 +221,8 @@ struct GitRepositoryFilesTests {
         })
     }
 
-    static func reader(of repository: TestRepository) -> GitRepositoryFiles {
-        GitRepositoryFiles(git: Git(
+    static func reader(of repository: TestRepository) -> GitRepository {
+        GitRepository(git: Git(
             directory: repository.path,
             environment: TestRepository.runEnvironment(adding: [:])
         ))

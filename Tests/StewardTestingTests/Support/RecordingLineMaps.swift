@@ -3,10 +3,10 @@ import StewardTesting
 /// A reader that records each line map it's asked for, then answers
 /// through another.
 ///
-/// Here rather than in `FakeRepositoryFiles`: recording needs a reference
+/// Here rather than in `FakeLocalRepository`: recording needs a reference
 /// type the fake would carry as public API, for a check only Steward's
 /// own tests make.
-struct RecordingLineMaps: RepositoryFiles {
+struct RecordingLineMaps: LocalRepository {
     /// The maps asked for, each as its `built`, `head` and `mergeBase`.
     actor Requests {
         private(set) var all: [[String]] = []
@@ -17,7 +17,7 @@ struct RecordingLineMaps: RepositoryFiles {
     }
 
     let requests = Requests()
-    let files: FakeRepositoryFiles
+    let files: FakeLocalRepository
 
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
         try await files.contents(ofFileAt: path, in: commit, limit: limit)

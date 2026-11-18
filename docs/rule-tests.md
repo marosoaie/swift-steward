@@ -257,25 +257,25 @@ context a GitHub Actions run builds for a pull request with that diff:
   `Context.FixtureError`, naming the file and its first line that does.
 
 Every part of a `Context` is a `var`, so a test changes what it needs
-afterwards, such as `context.run.mode = .dryRun`, or `context.files`,
-for a rule that reads the merge base's files too, or one whose reads
-fail. `FakeRepositoryFiles` holds files by commit, and any
-`RepositoryFiles` of your own works; a reader you set isn't checked
+afterwards, such as `context.run.mode = .dryRun`, or
+`context.localRepository`, for a rule that reads the merge base's files
+too, or one whose reads fail. `FakeLocalRepository` holds files by commit, and any
+`LocalRepository` of your own works; a reader you set isn't checked
 against the diff:
 
 ```swift
 var context = try Context.fixture(diff: SampleDiff.toolsVersion)
-context.files = FakeRepositoryFiles([
+context.localRepository = FakeLocalRepository([
     context.git.head: ["Package.swift": Array(SampleSource.newPackage.utf8)],
     context.git.mergeBase: ["Package.swift": Array(SampleSource.oldPackage.utf8)],
 ])
 
-struct FailingFiles: RepositoryFiles {
+struct FailingFiles: LocalRepository {
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
         throw CancellationError()
     }
 }
-context.files = FailingFiles()
+context.localRepository = FailingFiles()
 ```
 
 ## The whole Dangerfile
@@ -412,7 +412,7 @@ head first; context lines change nothing, so `-U0` reads the same:
 
 ```swift
 var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
-context.files = FakeRepositoryFiles([:], lineMaps: [built: LineMap(diff: """
+context.localRepository = FakeLocalRepository([:], lineMaps: [built: LineMap(diff: """
     diff --git a/Sources/App.swift b/Sources/App.swift
     index 2222222..7777777 100644
     --- a/Sources/App.swift

@@ -1,4 +1,4 @@
-extension RepositoryFiles {
+extension LocalRepository {
     /// Nil for every name: a reader that doesn't give its own knows no
     /// commit by name.
     public func commit(named name: String) async throws -> String? {

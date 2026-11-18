@@ -1,10 +1,10 @@
 import StewardTesting
 import Testing
 
-/// `FakeRepositoryFiles`' commits and line maps, which the diagnostics
+/// `FakeLocalRepository`' commits and line maps, which the diagnostics
 /// rule reads for a source built at another commit.
-@Suite("FakeRepositoryFiles' commits and line maps")
-struct FakeRepositoryFilesLineMapTests {
+@Suite("FakeLocalRepository' commits and line maps")
+struct FakeLocalRepositoryLineMapTests {
     static let head = String(repeating: "ab", count: 20)
     static let base = String(repeating: "cd", count: 20)
     static let built = String(repeating: "ef", count: 20)
@@ -20,7 +20,7 @@ struct FakeRepositoryFilesLineMapTests {
 
         """)
 
-    static let files = FakeRepositoryFiles(
+    static let files = FakeLocalRepository(
         [head: ["a.swift": Array("let a = 1\n".utf8)], base: [:]],
         lineMaps: [built: map]
     )

@@ -2,11 +2,11 @@ import Foundation
 @testable import Steward
 import Testing
 
-/// `RepositoryFiles.commit(named:)` and `lineMap(from:to:attributesFrom:)`:
+/// `LocalRepository.commit(named:)` and `lineMap(from:to:attributesFrom:)`:
 /// the git reader's, as a run's line map reads, and the protocol's
 /// defaults.
 @Suite("The reader's commits and line maps")
-struct RepositoryFilesLineMapTests {
+struct LocalRepositoryLineMapTests {
     @Test("the git reader names commits as git does and reads the run's own line map, through the protocol")
     func gitReader() async throws {
         let fixture = try PullRequestFixture()
@@ -16,7 +16,7 @@ struct RepositoryFilesLineMapTests {
             head: fixture.head,
             built: fixture.built
         ))
-        let files: any RepositoryFiles = context.files
+        let files: any LocalRepository = context.localRepository
         #expect(try await files.commit(named: fixture.built) == fixture.built)
         #expect(try await files.commit(named: String(fixture.head.prefix(10))) == fixture.head)
         #expect(try await files.commit(named: "HEAD") == fixture.repository.git(["rev-parse", "HEAD"]))
@@ -42,7 +42,7 @@ struct RepositoryFilesLineMapTests {
 
     @Test("a reader that gives only reads knows no commit, and maps a commit only to itself")
     func defaults() async throws {
-        let files: any RepositoryFiles = NoRepositoryFiles()
+        let files: any LocalRepository = NoLocalRepository()
         #expect(try await files.commit(named: "HEAD") == nil)
         #expect(try await files.lineMap(from: "a", to: "a", attributesFrom: "b") == .identity)
         await #expect(throws: MissingLineMap.self) {

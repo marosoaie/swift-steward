@@ -59,12 +59,12 @@ Dangerfile imports only `Steward`; generated types stay out of its public
 API. `StewardTesting` is for a Dangerfile's tests
 ([docs/rule-tests.md](docs/rule-tests.md)): `Context.fixture(diff:files:)`
 parses a diff with the parser a run uses and holds the head's files,
-checked against it, in a `FakeRepositoryFiles`, which also holds the line
+checked against it, in a `FakeLocalRepository`, which also holds the line
 maps a test gives it for the diagnostics rule; `FakePullRequestHost`
 records what a run posts, and `Dangerfile.run(on:postingTo:)` runs every
 rule after the context exactly as `main()` does, through the `package`
 hook `FixtureRun`. It re-exports `Steward`. `FixtureContextOracleTests`,
-`FakeRepositoryFilesOracleTests`, and `FakeHostOracleTests` hold the
+`FakeLocalRepositoryOracleTests`, and `FakeHostOracleTests` hold the
 three to real runs: keep them passing when either side changes. `DangerfileFixture`, under `Tests/`, is a test-only
 executable target: a Dangerfile the end-to-end tests run as a process,
 whose rules `StewardTestingTests` test as a user's tests would, and which

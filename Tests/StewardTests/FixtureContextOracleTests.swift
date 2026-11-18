@@ -149,7 +149,7 @@ struct FixtureContextOracleTests {
     /// `fixture(diff:files:)`, read as the run reads them: the regular
     /// ones, with UTF-8 contents.
     private static func headFiles(of context: Context) async throws -> [String: String] {
-        let reader = try #require(context.files as? GitRepositoryFiles)
+        let reader = try #require(context.localRepository as? GitRepository)
         let paths = context.git.diff.files
             .filter { $0.header.change != .deleted }
             .compactMap { $0.header.newPath?.string }

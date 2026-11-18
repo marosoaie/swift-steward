@@ -168,9 +168,10 @@ enum ChangedLineDiagnostics {
 
     private static func lineMap(builtAt name: String, in context: Context) async -> Result<BuiltLineMap, LineMapError> {
         do {
-            guard let built = try await context.files.commit(named: name) else { return .failure(.missingCommit) }
+            let repository = context.localRepository
+            guard let built = try await repository.commit(named: name) else { return .failure(.missingCommit) }
             if built == context.run.builtCommit { return .success((built, context.run.lineMap)) }
-            let map = try await context.files.lineMap(
+            let map = try await repository.lineMap(
                 from: built,
                 to: context.git.head,
                 attributesFrom: context.git.mergeBase

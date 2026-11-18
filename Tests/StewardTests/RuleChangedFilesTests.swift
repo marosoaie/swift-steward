@@ -41,7 +41,7 @@ struct RuleChangedFilesTests {
     @Test("a file the diff lists at the head that the head doesn't have, or has as no regular file, fails")
     func unreadable() async throws {
         var context = try Context.fixture(diff: Self.diff)
-        context.files = FakeRepositoryFiles([context.git.head: [
+        context.localRepository = FakeLocalRepository([context.git.head: [
             "Sources/A.swift/inside": Array("a directory's file\n".utf8),
             "Sources/Moved.swift": Array("struct Moved {}\n".utf8),
         ]])
@@ -104,7 +104,7 @@ struct RuleChangedFilesTests {
         }.joined()
         var context = try Context.fixture(diff: diff)
         let reads = Reads()
-        context.files = CountingFiles(reads: reads, files: FakeRepositoryFiles([context.git.head: Dictionary(
+        context.localRepository = CountingFiles(reads: reads, files: FakeLocalRepository([context.git.head: Dictionary(
             uniqueKeysWithValues: (1...5).map { ("F\($0).swift", Array("let f = \($0)\n".utf8)) }
         )]))
         let findings = try await Rule.changedFiles("Any", in: "*.swift", limit: limit) { file in
@@ -121,7 +121,7 @@ struct RuleChangedFilesTests {
         defer { fixture.remove() }
         let trace = FileManager.default.temporaryDirectory.appendingPathComponent("trace-\(UUID().uuidString)")
         defer { try? FileManager.default.removeItem(at: trace) }
-        let reader: any RepositoryFiles = GitRepositoryFiles(git: Git(
+        let reader: any LocalRepository = GitRepository(git: Git(
             directory: fixture.repository.path,
             environment: TestRepository.runEnvironment(adding: ["GIT_TRACE": trace.path])
         ))
@@ -142,7 +142,7 @@ struct RuleChangedFilesTests {
         let git = Git(directory: fixture.repository.path, environment: TestRepository.runEnvironment(adding: [:]))
         var context = try Context.fixture(diff: "")
         context.git = try await GitChanges(base: fixture.base, head: fixture.head, git: git)
-        context.files = GitRepositoryFiles(git: git)
+        context.localRepository = GitRepository(git: git)
         let recording = RecordingConsole()
         let rule = Rule.changedFiles("Any", in: "**") { file in
             [.message(String(decoding: file.contents, as: UTF8.self), at: Location(path: file.path))]
@@ -188,7 +188,7 @@ struct RuleChangedFilesTests {
         let git = Git(directory: repository.path, environment: TestRepository.runEnvironment(adding: [:]))
         var context = try Context.fixture(diff: "")
         context.git = try await GitChanges(base: base, head: head, git: git)
-        context.files = GitRepositoryFiles(git: git)
+        context.localRepository = GitRepository(git: git)
         // What the case needs: three renames, none with a mode.
         let headers = context.git.diff.files.map(\.header)
         #expect(headers.count == 3)

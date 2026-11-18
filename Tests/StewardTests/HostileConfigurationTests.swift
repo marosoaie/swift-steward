@@ -108,8 +108,8 @@ struct HostileConfigurationTests {
         #expect(changes == (try await GitChanges(base: fixture.base, head: fixture.head, git: plain)))
         #expect(map == (try await LineMap(fixture, git: plain)))
         let paths = ["a.swift", "A.SWIFT", "*.swift", "gone.swift", "image.png"]
-        let read = try await GitRepositoryFiles(git: hostile).contents(ofFilesAt: paths, in: fixture.head, limit: .max)
-        #expect(read == (try await GitRepositoryFiles(git: plain).contents(
+        let read = try await GitRepository(git: hostile).contents(ofFilesAt: paths, in: fixture.head, limit: .max)
+        #expect(read == (try await GitRepository(git: plain).contents(
             ofFilesAt: paths,
             in: fixture.head,
             limit: .max

@@ -88,7 +88,7 @@ struct ContextFilesTests {
         let commit = try repository.commit("Big files", at: PullRequestFixture.time)
         var context = Context.stub()
         context.git = GitChanges(diff: Diff(diff: ""), commits: [], mergeBase: commit, head: commit)
-        context.files = GitRepositoryFiles(git: Git(directory: repository.path))
+        context.localRepository = GitRepository(git: Git(directory: repository.path))
 
         #expect(try await context.contents(ofFileAt: "exact.bin") == .bytes(exact))
         #expect(try await context.contents(ofFileAt: "over.bin") == .tooLarge(size: limit + 1))
@@ -99,12 +99,12 @@ struct ContextFilesTests {
     @Test("a context hands its reader the side's commit, the path, and the limit, and passes on its errors")
     func reader() async throws {
         var context = Context.stub()
-        context.files = EchoingFiles()
+        context.localRepository = EchoingFiles()
         #expect(try await context.contents(ofFileAt: "a b.swift")
             == .bytes(Array("a b.swift \(Context.stubHead) \(1 << 20)".utf8)))
         #expect(try await context.contents(ofFileAt: "a.swift", at: .mergeBase, limit: 5)
             == .bytes(Array("a.swift \(Context.stubBase) 5".utf8)))
-        context.files = FailingFiles()
+        context.localRepository = FailingFiles()
         await #expect(throws: FailingFiles.Failure.self) {
             try await context.contents(ofFileAt: "a.swift")
         }
@@ -113,7 +113,7 @@ struct ContextFilesTests {
     @Test("contexts that differ only in their reader are equal")
     func equality() {
         var echoing = Context.stub()
-        echoing.files = EchoingFiles()
+        echoing.localRepository = EchoingFiles()
         #expect(echoing == Context.stub())
         var other = echoing
         other.run.workspace = "/elsewhere"
@@ -122,14 +122,14 @@ struct ContextFilesTests {
 }
 
 /// Reads every file as the path, commit, and limit it was asked for.
-private struct EchoingFiles: RepositoryFiles {
+private struct EchoingFiles: LocalRepository {
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
         .bytes(Array("\(path) \(commit) \(limit)".utf8))
     }
 }
 
 /// Fails every read.
-private struct FailingFiles: RepositoryFiles {
+private struct FailingFiles: LocalRepository {
     struct Failure: Error {}
 
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {

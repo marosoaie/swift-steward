@@ -8,10 +8,10 @@ extension Context {
     /// lines that are only a space may lose it, as editors trim them.
     ///
     /// The run is in `.actions` mode, built on the head commit, with
-    /// GitHub's URLs. Its `files` reads `files` at the head, and nothing
-    /// at the merge base. Every part is a `var`, so a test changes what
-    /// it needs afterwards, such as `run.mode`, `run.builtCommit`, or
-    /// `files`, to a `RepositoryFiles` of its own, which isn't checked.
+    /// GitHub's URLs. Its `localRepository` reads `files` at the head, and
+    /// nothing at the merge base. Every part is a `var`, so a test changes
+    /// what it needs afterwards, such as `run.mode`, `run.builtCommit`, or
+    /// `localRepository`, to one of its own, which isn't checked.
     ///
     /// - Parameters:
     ///   - diff: The pull request's diff, from the merge base to the head.
@@ -77,7 +77,7 @@ extension Context {
                 apiURL: FixtureDefaults.apiURL,
                 serverURL: FixtureDefaults.serverURL
             ),
-            files: FakeRepositoryFiles([request.head.commit: contents])
+            localRepository: FakeLocalRepository([request.head.commit: contents])
         )
     }
 }

@@ -55,7 +55,7 @@ extension Context {
                 apiURL: apiURL,
                 serverURL: serverURL
             ),
-            files: GitRepositoryFiles(git: git)
+            localRepository: GitRepository(git: git)
         )
     }
 

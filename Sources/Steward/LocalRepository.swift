@@ -2,7 +2,7 @@
 /// contents, and maps lines between commits, for rules that read build
 /// logs.
 ///
-/// `Context.files` is one. A real run's reads through git from the
+/// `Context.localRepository` is one. A real run's reads through git from the
 /// repository at `run.workspace`, so what it returns is the commit's, not
 /// the checkout's, whose tree may be another commit's and whose symbolic
 /// links lead anywhere. A test passes a reader of its own. Through it, no
@@ -10,7 +10,7 @@
 ///
 /// A rule reads through `Context.contents(ofFileAt:at:limit:)`, which
 /// names the commit for it.
-public protocol RepositoryFiles: Sendable {
+public protocol LocalRepository: Sendable {
     /// The file at `path` in `commit`, read only when it's a regular file
     /// of at most `limit` bytes.
     ///
