@@ -50,6 +50,36 @@ extension Rule {
         limit: Int = FileContents.defaultLimit,
         _ check: @escaping @Sendable (ChangedFile) async throws -> [Finding]
     ) -> Rule {
+        changedFiles(name, in: pattern, excluding: excluded, limit: limit) { file, _ in try await check(file) }
+    }
+
+    /// A rule that checks each changed file as
+    /// `changedFiles(_:in:excluding:limit:_:)` does, with a check that also
+    /// writes to the run's log.
+    ///
+    /// The check's lines are the rule's, as `Rule(_:check:)`'s are, beside
+    /// the ones naming the files the rule skipped: what it didn't check in
+    /// a file, and why. Calling `evaluate`, as a test does, gives the check
+    /// a log that writes nothing; StewardTesting's `Dangerfile.run(on:)`
+    /// returns what a run logged.
+    ///
+    /// ```swift
+    /// Rule.changedFiles("Licence header", in: "Sources/**/*.swift") { file, log in
+    ///     guard !file.contents.starts(with: Array("// Generated".utf8)) else {
+    ///         log.write("Licence header: skipped \(file.path), a generated file")
+    ///         return []
+    ///     }
+    ///     return file.contents.starts(with: Array("// SPDX-License-Identifier:".utf8))
+    ///         ? [] : [.warning("Start with the licence header.", at: Location(path: file.path, line: 1))]
+    /// }
+    /// ```
+    public static func changedFiles(
+        _ name: String,
+        in pattern: PathPattern,
+        excluding excluded: PathPattern? = nil,
+        limit: Int = FileContents.defaultLimit,
+        _ check: @escaping @Sendable (ChangedFile, Log) async throws -> [Finding]
+    ) -> Rule {
         Rule(name) { context, log in
             let matcher = try PathMatcher(pattern)
             let exclusion = try excluded.map { pattern throws(PathPatternError) in try PathMatcher(pattern) }
@@ -81,7 +111,8 @@ extension Rule {
                         continue
                     }
                     let lines = GitChanges.addedLines(of: entry.file, into: LineRangeSet())
-                    findings += try await check(ChangedFile(path: entry.path, contents: bytes, changedLines: lines))
+                    let file = ChangedFile(path: entry.path, contents: bytes, changedLines: lines)
+                    findings += try await check(file, log)
                 }
             }
             return findings
