@@ -102,8 +102,8 @@ struct FixtureProcessTests {
     /// The warning the "Images" rule gives for the fixture's 8-byte
     /// `image.png`, which it skips.
     static let imageSkip = """
-        Rule “Images” skipped `image.png`, 8 bytes, over the limit of 4. A file the rule should never check \
-        belongs in its `excluding:` pattern.
+        Rule “Images” skipped `image.png`, 8 bytes, over the limit of 4. Raising the rule's `limit:` has it \
+        checked; a file the rule should never check belongs in its `excluding:` pattern.
         """
 
     /// Ways a run can fail before it has a context.

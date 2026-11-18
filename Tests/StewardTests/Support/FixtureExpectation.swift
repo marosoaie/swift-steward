@@ -110,6 +110,7 @@ struct FixtureExpectation {
     private static func imageSkip(_ entry: GitOracle.RawEntry, at head: String, oracle: GitOracle) throws -> Finding? {
         let path = entry.paths[entry.paths.count - 1]
         let reason: String
+        var remedy = "A file"
         if ["120000", "160000"].contains(entry.newMode), entry.status == "R", entry.isUnchanged {
             reason = "not a regular file at the head"
         } else if entry.newMode == "120000" {
@@ -120,9 +121,10 @@ struct FixtureExpectation {
             let size = try oracle.text(["cat-file", "-s", "\(head):\(path)"])
             guard let bytes = Int(size), bytes > 4 else { return nil }
             reason = "\(bytes) bytes, over the limit of 4"
+            remedy = "Raising the rule's `limit:` has it checked; a file"
         }
         return .warning("""
-            Rule “Images” skipped \(Markdown.codeSpan(path)), \(reason). A file the rule should never check \
+            Rule “Images” skipped \(Markdown.codeSpan(path)), \(reason). \(remedy) the rule should never check \
             belongs in its `excluding:` pattern.
             """, at: Location(path: path))
     }

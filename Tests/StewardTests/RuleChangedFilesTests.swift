@@ -21,15 +21,18 @@ struct RuleChangedFilesTests {
         "\(String(decoding: file.contents, as: UTF8.self).debugDescription) \(file.changedLines.ranges)"
     }
 
-    /// The finding `rule` gives for a file it skips at `path` for `reason`.
+    /// The finding `rule` gives for a file it skips at `path` for `reason`,
+    /// which for a file over the limit says that raising it has it checked.
     static func skipped(
         _ path: String,
         _ reason: String,
         by rule: String = "Described",
         as kind: Finding.Kind = .warning
     ) -> Finding {
-        Finding(kind: kind, text: """
-            Rule “\(rule)” skipped `\(path)`, \(reason). A file the rule should never check belongs in its \
+        let raising = reason.contains(", over the limit of ")
+            ? "Raising the rule's `limit:` has it checked; a file" : "A file"
+        return Finding(kind: kind, text: """
+            Rule “\(rule)” skipped `\(path)`, \(reason). \(raising) the rule should never check belongs in its \
             `excluding:` pattern.
             """, location: Location(path: path))
     }
@@ -134,6 +137,38 @@ struct RuleChangedFilesTests {
         #expect(await reads.singles == 0)
         // At a limit of 0 bytes, every file is skipped.
         #expect(findings.map(\.kind) == Array(repeating: limit == 0 ? .warning : .message, count: 5))
+    }
+
+    @Test("a batch with nothing to read asks the reader for nothing, and the files beside it keep their answers")
+    func unreadableBatch() async throws {
+        let file = { (name: String, mode: String) in
+            """
+            diff --git a/\(name) b/\(name)
+            new file mode \(mode)
+            index 0000000..1111111
+            --- /dev/null
+            +++ b/\(name)
+            @@ -0,0 +1 @@
+            +let f = 1
+
+            """
+        }
+        let diff = file("F1.swift", "100644") + file("Link.swift", "120000") + file("F3.swift", "100644")
+        var context = try Context.fixture(diff: diff)
+        let reads = Reads()
+        context.localRepository = CountingFiles(reads: reads, files: FakeLocalRepository([context.git.head: [
+            "F1.swift": Array("let f = 1\n".utf8), "F3.swift": Array("let f = 3\n".utf8),
+        ]]))
+        // 64 MiB a file: each file is a batch of its own.
+        let findings = try await Rule.changedFiles("Any", in: "*.swift", limit: 64 << 20) { file in
+            [.message(String(decoding: file.contents, as: UTF8.self), at: Location(path: file.path))]
+        }.evaluate(context)
+        #expect(await reads.batches == [1, 1])
+        #expect(findings == [
+            .message("let f = 1\n", at: Location(path: "F1.swift")),
+            Self.skipped("Link.swift", "a symbolic link", by: "Any"),
+            .message("let f = 3\n", at: Location(path: "F3.swift")),
+        ])
     }
 
     @Test("the git reader's batch read is the protocol's: two git processes for any number of paths")
