@@ -2,18 +2,25 @@ extension Context.FixtureError {
     /// A file given to the fixture: its path as given, and its contents.
     private typealias Given = (path: String, contents: [UInt8])
 
-    /// The first place each of `files` disagrees with `diff`, in diff
+    /// Each of `files` at a path no file in git can have, by path; then
+    /// the first place each of the others disagrees with `diff`, in diff
     /// order: a file the diff deletes or renames away, one it makes a link
     /// or a submodule, or one that doesn't hold the diff's context and
     /// added lines where its hunk headers say.
     static func mismatches(between diff: Diff, and files: [String: [UInt8]]) -> [Mismatch] {
+        let unreadable = files.keys.filter { !Context.isValidPath($0) }.sorted().map { path in
+            Mismatch(path: path, line: nil, reason: """
+                no file in git has this path, so a run reads it as .noSuchFile; name it from the \
+                repository's root, without an empty, `.` or `..` part
+                """)
+        }
         // By bytes, as the reader matches paths: Swift's `==` takes a
         // name's precomposed and decomposed spellings for one.
         let given = Dictionary(files.map { (Array($0.key.utf8), Given($0.key, $0.value)) }) { $1 }
         // A path one entry deletes, another may create, as git writes a
         // file that becomes a symbolic link.
         let atHead = Set(diff.files.filter { $0.header.change != .deleted }.compactMap { $0.header.newPath?.bytes })
-        return diff.files.flatMap { file in
+        return unreadable + diff.files.flatMap { file in
             [leftBehind(by: file, in: given, atHead: atHead), disagreement(with: file, in: given)].compactMap(\.self)
         }
     }
@@ -135,8 +142,11 @@ extension Context.FixtureError {
     /// `bytes` as a Swift string literal, escapes and all, so whitespace
     /// shows; a long line is cut.
     private static func quoted(_ bytes: [UInt8]) -> String {
-        let shown = String(decoding: bytes.prefix(100), as: UTF8.self).debugDescription
-        return bytes.count > 100 ? shown + "…" : shown
+        guard bytes.count > 100 else { return String(decoding: bytes, as: UTF8.self).debugDescription }
+        // Cut before a character's first byte, not among its others, which
+        // would end the excerpt in U+FFFD.
+        let cut: Int = (97...100).reversed().first { bytes[$0] & 0xC0 != 0x80 } ?? 100
+        return String(decoding: bytes.prefix(cut), as: UTF8.self).debugDescription + "…"
     }
 
     /// Why two lines that look alike differ, when it's only their

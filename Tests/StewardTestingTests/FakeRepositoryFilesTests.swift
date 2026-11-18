@@ -45,6 +45,13 @@ struct FakeRepositoryFilesTests {
         }
     }
 
+    @Test("a file given at a path no file in git has isn't there, as in a run",
+          arguments: ["./a.swift", "/a.swift", "a//b.swift", "a/../b.swift", "a.swift/", ""])
+    func invalidPaths(path: String) async throws {
+        let files = FakeRepositoryFiles([Self.head: [path: Array("given\n".utf8)]])
+        #expect(try await files.contents(ofFileAt: path, in: Self.head, limit: .max) == .noSuchFile)
+    }
+
     @Test("a file over the limit is reported by its size, and one at the limit is read", arguments: [
         (17, true), (18, true), (16, false), (0, false), (-1, false),
     ])
