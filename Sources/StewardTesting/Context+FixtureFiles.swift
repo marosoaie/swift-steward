@@ -51,8 +51,8 @@ extension Context.FixtureError {
     }
 
     /// The first of `file`'s context and added lines that `contents`
-    /// doesn't hold at its number, or whose end of file disagrees; for a
-    /// file the diff creates, a line past the diff's last.
+    /// doesn't hold at its number, or whose end of file disagrees; where
+    /// the diff shows the file's end, a line past it.
     private static func firstDifference(
         between file: DiffFile,
         and contents: [UInt8]
@@ -86,12 +86,25 @@ extension Context.FixtureError {
             return nil
         }
         .first
-        // A created file is all in the diff, so it ends where the diff does:
-        // one created empty has no lines.
-        guard differing == nil, file.header.change == .added, !file.header.isBinary else { return differing }
-        let created = file.lines.count { $0.info.kind != .deletion }
-        guard lines.count > created else { return nil }
-        return (created + 1, "the diff creates the file with \(count(created)), and the file has \(lines.count)")
+        guard differing == nil, let end = knownEnd(of: file), lines.count > end.line else { return differing }
+        return (end.line + 1, "the diff \(end.how) with \(count(end.line)), and the file has \(lines.count)")
+    }
+
+    /// The head's last line of `file`, when the diff shows where the file
+    /// ends without saying it ends there, and how it shows it.
+    private static func knownEnd(of file: DiffFile) -> (line: Int, how: String)? {
+        // A created file is all in the diff: one created empty has no lines.
+        if file.header.change == .added, !file.header.isBinary {
+            return (file.lines.count { $0.info.kind != .deletion }, "creates the file")
+        }
+        // Git marks an old last line that has no newline; once the diff
+        // deletes it, nothing of the old file follows its hunk. A hunk that
+        // leaves no lines starts at the line before it, as git writes it.
+        guard let hunk = file.hunks.last(where: { hunk in
+            hunk.lines.contains { $0.info.kind == .deletion && $0.hasNoNewlineAtEnd }
+        }) else { return nil }
+        let end = hunk.lines.last { $0.info.kind != .deletion }?.info.newNumber ?? hunk.header.newStart
+        return (end, "deletes the file's old last line, leaving it")
     }
 
     /// `number` lines, in words.

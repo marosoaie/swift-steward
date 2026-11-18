@@ -19,7 +19,9 @@ extension Context {
     ///     `contents(ofFileAt:at:limit:)`. Each one the diff changes must
     ///     hold the diff's context and added lines at the numbers its hunk
     ///     headers give, and end in a line break unless the diff says it
-    ///     doesn't; one the diff creates holds its lines and nothing more.
+    ///     doesn't. One the diff creates holds its lines and nothing more,
+    ///     as does one whose last line, without a newline, the diff deletes:
+    ///     the file ends with that hunk.
     ///     None may be a file the diff deletes, renames away, or makes a
     ///     symbolic link or a submodule. Files the diff doesn't touch
     ///     aren't checked.
