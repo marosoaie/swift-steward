@@ -388,7 +388,10 @@ public struct Context: Sendable, Equatable {
 public protocol RepositoryFiles: Sendable {
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents
     func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents]
-}                                         // the batch read defaults to single reads in turn
+    // Step C7: the diagnostics rule's `builtAt:` commits, without running git itself.
+    func commit(named name: String) async throws -> String?
+    func lineMap(from built: String, to head: String, attributesFrom mergeBase: String) async throws -> LineMap
+}                                         // defaults: single reads in turn; no commits; only the identity map
 
 public enum FileContents: Sendable, Hashable {
     case bytes([UInt8])                   // what `git show <commit>:<path>` prints
@@ -673,6 +676,15 @@ at the edge:
   be read, or whose `builtAt:` commit the checkout lacks, is one failure
   of the rule, and the other reports are still read; content the parser
   doesn't recognize gives no diagnostics (question 31).
+- **Line maps through the reader (step C7 of the steward-lang-swift
+  plan, 2026-11-18, its D10 option B).** The rule resolves a `builtAt:`
+  commit and reads its line map through `context.files`, not by running
+  git in `run.workspace`, so no rule runs git itself, and a fixture
+  context tests the configuration: `FakeRepositoryFiles(_:lineMaps:)`
+  holds maps that `LineMap(diff:)` reads from the head-to-built diff. The
+  git reader resolves names with `git rev-parse` and reads a map as
+  `Run.lineMap` is read; a reader that gives neither knows no commit, so
+  such a source is the rule's failure.
 
 Why not the others: B makes the summary disagree with the Files changed
 tab, and its links rot as soon as the merge ref moves. B is also what

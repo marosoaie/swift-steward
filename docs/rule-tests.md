@@ -403,8 +403,29 @@ macOS and Linux word differently.
 A report's paths resolve as in a run: a path to a file under the
 workspace is that file, and any other matches the pull request's path it
 ends with, so a CI runner's absolute paths work as they are. A fixture's
-line map is the identity, so the report's line numbers are the head's.
-Leave out `builtAt:`: it maps a report through git in the checkout, which
-a fixture doesn't have, so the rule reports a failure. `evaluate(_:)`
-drops what the rule logs; a whole run's log says how many
-diagnostics each report held, matched, and dropped.
+line map is the identity, so the report's line numbers are the head's,
+and a source built at the head itself (`builtAt: context.git.head`)
+reads the same. A source built at another commit maps through the
+context's reader, so give the reader the map from that commit to the
+head, read from the diff `git diff -U0 -M <head> <built>` would print:
+
+```swift
+var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
+context.files = FakeRepositoryFiles([:], lineMaps: [built: LineMap(diff: """
+    diff --git a/Sources/App.swift b/Sources/App.swift
+    index 2222222..7777777 100644
+    --- a/Sources/App.swift
+    +++ b/Sources/App.swift
+    @@ -0,0 +1,2 @@
+    +// A header
+    +// the base added
+
+    """)])
+let rule = Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log", builtAt: built)])
+```
+
+There, the report's `App.swift:4` is the head's line 2, and its lines 1
+and 2 have no head line, so they're dropped. A commit the reader
+doesn't know is one failure of the rule, as in a run whose checkout
+lacks it. `evaluate(_:)` drops what the rule logs; a whole run's log
+says how many diagnostics each report held, matched, and dropped.

@@ -21,19 +21,31 @@
 ///     context.git.mergeBase: ["Sources/App/Loader.swift": Array(SampleSource.oldLoader.utf8)],
 /// ])
 /// ```
+///
+/// It knows a commit by its name exactly as a test gives it: one it holds
+/// files at, or one it holds a line map from. A line map maps the lines of
+/// the commit a build ran at to the head's, for the diagnostics rule's
+/// `builtAt:` sources; `LineMap(diff:)` reads one.
 public struct FakeRepositoryFiles: RepositoryFiles {
     /// The files by path's bytes, by commit.
     private let commits: [String: [[UInt8]: [UInt8]]]
+    /// The maps to the head, by the commit they map from.
+    private let lineMaps: [String: LineMap]
 
-    /// Creates a repository holding `commits`' files.
+    /// Creates a repository holding `commits`' files, and `lineMaps`.
     ///
-    /// - Parameter commits: For each commit's SHA, its regular files'
-    ///   contents by path, from the repository's root and `/`-separated,
-    ///   as `GitChanges` lists them.
-    public init(_ commits: [String: [String: [UInt8]]]) {
+    /// - Parameters:
+    ///   - commits: For each commit's SHA, its regular files' contents by
+    ///     path, from the repository's root and `/`-separated, as
+    ///     `GitChanges` lists them.
+    ///   - lineMaps: For each commit a build ran at, the map from its lines
+    ///     to the head's. Asked for a map to any other commit, the
+    ///     repository gives this one.
+    public init(_ commits: [String: [String: [UInt8]]], lineMaps: [String: LineMap] = [:]) {
         self.commits = commits.mapValues { files in
             Dictionary(files.map { (Array($0.key.utf8), $0.value) }) { first, _ in first }
         }
+        self.lineMaps = lineMaps
     }
 
     /// The file at `path` in `commit`, read only when it's a regular file
@@ -46,5 +58,21 @@ public struct FakeRepositoryFiles: RepositoryFiles {
         }
         let directory = name + [UInt8(ascii: "/")]
         return !name.isEmpty && files.keys.contains { $0.starts(with: directory) } ? .notRegularFile : .noSuchFile
+    }
+
+    /// `name` when the repository holds files at a commit by that name, or
+    /// a line map from it; otherwise nil.
+    public func commit(named name: String) async throws -> String? {
+        commits[name] != nil || lineMaps[name] != nil ? name : nil
+    }
+
+    /// `.identity` when `built` is `head`, or else the map the repository
+    /// holds from `built`.
+    ///
+    /// - Throws: When it holds none.
+    public func lineMap(from built: String, to head: String, attributesFrom mergeBase: String) async throws -> LineMap {
+        guard built != head else { return .identity }
+        guard let map = lineMaps[built] else { throw MissingLineMap(built: built, head: head) }
+        return map
     }
 }

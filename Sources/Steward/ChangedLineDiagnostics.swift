@@ -152,33 +152,28 @@ enum ChangedLineDiagnostics {
     private typealias BuiltLineMap = (commit: String, lineMap: LineMap)
 
     /// The line maps from the commits the sources name with `builtAt:` to
-    /// the head, by the names they give, each read once.
+    /// the head, by the names they give, each read once through the
+    /// context's reader.
     private static func lineMaps(
         for sources: [DiagnosticSource],
         in context: Context
     ) async -> [String: Result<BuiltLineMap, LineMapError>] {
-        let git = Git(directory: context.run.workspace)
         var maps: [String: Result<BuiltLineMap, LineMapError>] = [:]
-        // Imperative: each map awaits git, which `reduce` can't.
+        // Imperative: each map awaits the reader, which `reduce` can't.
         for name in Set(sources.compactMap(\.builtCommit)).sorted() {
-            maps[name] = await lineMap(builtAt: name, in: context, git: git)
+            maps[name] = await lineMap(builtAt: name, in: context)
         }
         return maps
     }
 
-    private static func lineMap(
-        builtAt name: String,
-        in context: Context,
-        git: Git
-    ) async -> Result<BuiltLineMap, LineMapError> {
+    private static func lineMap(builtAt name: String, in context: Context) async -> Result<BuiltLineMap, LineMapError> {
         do {
-            guard let built = try await git.commit(named: name) else { return .failure(.missingCommit) }
+            guard let built = try await context.files.commit(named: name) else { return .failure(.missingCommit) }
             if built == context.run.builtCommit { return .success((built, context.run.lineMap)) }
-            let map = try await LineMap(
-                built: built,
-                head: context.git.head,
-                attributesFrom: context.git.mergeBase,
-                git: git
+            let map = try await context.files.lineMap(
+                from: built,
+                to: context.git.head,
+                attributesFrom: context.git.mergeBase
             )
             return .success((built, map))
         } catch {
