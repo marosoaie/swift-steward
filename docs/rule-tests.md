@@ -410,8 +410,10 @@ line map is the identity, so the report's line numbers are the head's,
 and a source built at the head itself (`builtAt: context.git.head`)
 reads the same. A source built at another commit maps through the
 context's reader, so give the reader the map from that commit to the
-head, read from the diff `git diff -M <head> <built>` would print, the
-head first; context lines change nothing, so `-U0` reads the same:
+head, read from the diff `git diff -U0 -M <head> <built>` prints, the
+head first, as a run reads it. With context lines, git can align a
+repeated line, such as a blank one, elsewhere, so a line would map to
+another or to none:
 
 ```swift
 var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
