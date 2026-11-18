@@ -408,8 +408,12 @@ Where each part comes from (step 4.2):
   submodule, or a directory is reported by its mode and never followed,
   and a file over the limit by its size, before anything is read.
   `git cat-file --batch`, fed object IDs only, then reads the rest: two
-  git processes for any number of files (another `ls-tree` per 64 KiB of
-  paths), with no textconv, filters, or line-ending conversion. The head is the
+  git processes for most reads, however many files (another `ls-tree`
+  per 64 KiB of paths, and on macOS per 5,000 paths, as many as its
+  `xargs` gives a command), with no textconv, filters, or line-ending
+  conversion. A blob the repository lacks, as a partial clone can, or a
+  tree that names one path twice, fails the read rather than answer
+  wrongly. The head is the
   pull request's head, not the merge commit the run checked out (section
   3), and the merge base is `git.mergeBase`, not the base branch's tip.
   A name that isn't UTF-8 can't be spelled as a `String`, so it's out of

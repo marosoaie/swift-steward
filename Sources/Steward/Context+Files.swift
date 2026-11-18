@@ -23,8 +23,11 @@ extension Context {
     ///   - limit: The largest size, in bytes, that's read; a larger file
     ///     is `.tooLarge`. 1 MiB by default.
     /// - Returns: The bytes, or why there are none.
-    /// - Throws: When the read itself fails, such as when git can't run;
-    ///   never because of what's at the path.
+    /// - Throws: When the read itself fails: git can't run, the repository
+    ///   lacks the file's contents, as a partial clone can, or the path is
+    ///   longer than the system lets a command's argument be (on Linux,
+    ///   128 KiB). What's at the path, whether nothing, a link, a
+    ///   directory, or a large file, is an answer, not an error.
     public func contents(
         ofFileAt path: String,
         at side: Side = .head,

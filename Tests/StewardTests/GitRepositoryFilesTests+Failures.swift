@@ -10,9 +10,11 @@ extension GitRepositoryFilesTests {
     func badCommit(commit: String) async throws {
         let fixture = try FilesFixture()
         defer { fixture.remove() }
-        await #expect(throws: ContextError.self) {
+        let error = await #expect(throws: ContextError.self) {
             try await Self.reader(of: fixture.repository).contents(ofFileAt: "Changed.swift", in: commit, limit: .max)
         }
+        // git's own status is lost: xargs reports any failure as its own.
+        #expect(error?.description.contains("the status is that of xargs -0") == true)
     }
 
     @Test("a tree isn't a commit, so reading from one fails")
@@ -79,9 +81,56 @@ extension GitRepositoryFilesTests {
             try await reader.contents(ofFilesAt: ["Changed.swift", "ab.swift"], in: fixture.head, limit: .max)
         }
         #expect(error?.description.contains(object) == true)
+        #expect(error?.description.hasPrefix("git ls-tree --long succeeded, but") == true)
         // A read that doesn't need its size is untouched.
         #expect(try await reader.contents(ofFileAt: "Changed.swift", in: fixture.head, limit: .max)
             == .bytes(Array("after\n".utf8)))
+    }
+
+    @Test("a tree naming one path twice, as different entries, fails reading that path, and only that one")
+    func duplicateEntries() async throws {
+        let repository = try TestRepository()
+        defer { repository.remove() }
+        let first = try repository.blob(Array("first\n".utf8))
+        let second = try repository.blob(Array("second\n".utf8))
+        // `git mktree` writes what it's given; `git fsck` would call the
+        // tree damaged.
+        let tree = String(decoding: try Subprocess.output(
+            of: ["git", "-C", repository.path, "mktree"],
+            environment: TestRepository.environment,
+            input: Data("""
+                100644 blob \(first)\tdup.swift
+                100644 blob \(second)\tdup.swift
+                100644 blob \(first)\tsame.swift
+                100644 blob \(first)\tsame.swift
+
+                """.utf8)
+        ), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        let commit = try repository.git(["commit-tree", tree, "-m", "Damaged"])
+        let listing = try repository.git(["ls-tree", commit])
+        #expect(listing.components(separatedBy: "\tdup.swift").count == 3)
+
+        let reader = Self.reader(of: repository)
+        let error = await #expect(throws: ContextError.self) {
+            try await reader.contents(ofFilesAt: ["same.swift", "dup.swift"], in: commit, limit: .max)
+        }
+        #expect(error?.description.contains("dup.swift twice") == true)
+        // The same entry twice names one file.
+        #expect(try await reader.contents(ofFileAt: "same.swift", in: commit, limit: .max)
+            == .bytes(Array("first\n".utf8)))
+    }
+
+    @Test("a directory listed again for a path inside it, in another call, is no duplicate")
+    func directoryInTwoCalls() async throws {
+        let fixture = try FilesFixture()
+        defer { fixture.remove() }
+        let read = try await Self.reader(of: fixture.repository).contents(
+            ofFilesAt: ["Sources/App", "Sources/App/Loader.swift"],
+            in: fixture.head,
+            limit: .max,
+            pathBytesPerCall: 1
+        )
+        #expect(read == [.notRegularFile, .bytes(FilesFixture.defaultContents(of: "Sources/App/Loader.swift"))])
     }
 
     @Test("a read fails, naming the tool, when xargs or git isn't on PATH", arguments: ["xargs", "git"])
