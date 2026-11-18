@@ -62,8 +62,14 @@ extension GitRepository {
     /// answers `./a` with `a` and `dir/` with what's in it, and Swift's
     /// `==` takes a name's precomposed and decomposed spellings for one.
     ///
-    /// Each call is well within any `xargs`'s command line, so that it runs
-    /// git once, and a path too long for one fails only its own call.
+    /// Each call stays far within any `xargs`'s command line, and a path
+    /// too long for one has a call of its own, whose failure fails the
+    /// read. `xargs` may still split a call by count, as macOS's does past
+    /// 5,000 paths: harmless, since entries are matched by path.
+    ///
+    /// A tree that names one path twice, with different entries, fails the
+    /// read: it's damaged (`git fsck` reports `duplicateEntries`), and
+    /// which one a checkout would hold is anyone's guess.
     func entries(
         named names: Set<[UInt8]>,
         in commit: String,
@@ -79,9 +85,22 @@ extension GitRepository {
                 ],
                 appending: paths
             )
-            TreeEntry.entries(in: output)
+            try TreeEntry.entries(in: output)
                 .filter { names.contains($0.path) }
-                .forEach { entries[$0.path] = $0 }
+                .forEach { entry in
+                    // The same entry twice is only `-t` listing a directory
+                    // again, for a path inside it in a later call.
+                    if let earlier = entries[entry.path], earlier != entry {
+                        throw ContextError.unexpectedGitOutput(
+                            arguments: ["ls-tree"],
+                            reason: """
+                                it listed \(String(decoding: entry.path, as: UTF8.self)) twice, as different \
+                                entries: the tree is damaged (git fsck reports duplicateEntries)
+                                """
+                        )
+                    }
+                    entries[entry.path] = entry
+                }
         }
         return entries
     }

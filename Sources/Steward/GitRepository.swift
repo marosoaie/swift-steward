@@ -1,8 +1,8 @@
-/// Reads files from a local repository's commits through git, in two git
-/// processes however many files a call reads: `ls-tree` for each path's
-/// mode, object and size, then `cat-file --batch`, fed only the objects of
-/// regular files within the limit. Past 64 KiB of paths, `ls-tree` runs
-/// again for the rest.
+/// Reads files from a local repository's commits through git: `ls-tree`
+/// for each path's mode, object and size, then `cat-file --batch`, fed
+/// only the objects of regular files within the limit. `ls-tree` runs once
+/// for each 64 KiB of paths, and on macOS, whose `xargs` gives a command
+/// at most 5,000 arguments, once for each 5,000 paths too.
 ///
 /// A path's own bytes never reach `cat-file`'s input, which is one object
 /// ID a line: a path may hold a line break, an ID can't.
@@ -45,21 +45,19 @@ struct GitRepository: LocalRepository {
             // `ls-tree` says `BAD` for a blob it can't find, and succeeds:
             // a file to report, not to take for something other than one.
             guard let size = entry.size else {
-                throw ContextError.gitFailed(
+                throw ContextError.unexpectedGitOutput(
                     arguments: ["ls-tree", "--long"],
-                    status: 0,
-                    message: """
-                        gave no size for \(String(decoding: name, as: UTF8.self)): the repository lacks its \
-                        object \(entry.object), as a partial clone can
+                    reason: """
+                        it gave no size for \(String(decoding: name, as: UTF8.self)): the repository lacks \
+                        its object \(entry.object), as a partial clone can
                         """
                 )
             }
             guard size <= limit else { return .tooLarge(size: size) }
             guard let object = objects[entry.object] else {
-                throw ContextError.gitFailed(
+                throw ContextError.unexpectedGitOutput(
                     arguments: ["cat-file", "--batch"],
-                    status: 0,
-                    message: "printed no \(entry.object)"
+                    reason: "it printed no \(entry.object)"
                 )
             }
             // `ls-tree` and `cat-file` disagree only when the repository

@@ -24,6 +24,9 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
     /// are the base's.
     case truncatedHistory(base: String, head: String, boundary: String)
     case gitFailed(arguments: [String], status: Int32, message: String)
+    /// Git succeeded, but what it printed can't be used: the repository
+    /// is damaged or lacks objects, or changed as git read it.
+    case unexpectedGitOutput(arguments: [String], reason: String)
     case gitUnavailable(String)
     /// A dry run's directory isn't in a git working tree.
     case notACheckout(directory: String, message: String)
@@ -114,6 +117,8 @@ enum ContextError: Error, Equatable, CustomStringConvertible {
             """
         case .gitFailed(let arguments, let status, let message):
             "git \(arguments.joined(separator: " ")) exited with status \(status): \(message)"
+        case .unexpectedGitOutput(let arguments, let reason):
+            "git \(arguments.joined(separator: " ")) succeeded, but \(reason)"
         case .gitUnavailable(let reason):
             "Couldn't run git: \(reason)"
         case .notACheckout(let directory, let message):
