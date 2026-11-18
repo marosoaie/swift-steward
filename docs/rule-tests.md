@@ -253,7 +253,9 @@ context a GitHub Actions run builds for a pull request with that diff:
   line. A hunk that only deletes, as `-U0` writes one, keeps the line
   before what it deletes, so the file has that line, with its newline.
   A file the diff deletes, renames away, or makes a symbolic link or a
-  submodule can't be given. Where one disagrees, the fixture throws
+  submodule can't be given, and neither can one at a path no file in git
+  has, such as `./Package.swift`, `a//b` or `dir/`, which a run reads as
+  `.noSuchFile`. Where one disagrees, the fixture throws
   `Context.FixtureError`, naming the file and its first line that does.
 
 Every part of a `Context` is a `var`, so a test changes what it needs
