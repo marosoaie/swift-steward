@@ -8,8 +8,10 @@ struct RuleChangedFilesQuotingTests {
     @Test("each kind of byte is quoted as git ls-files quotes it")
     func gitQuoting() {
         // `git ls-files` prints this name as "a\"b\\c\td\033e\177f\351.swift".
-        let name = Array(#"a"b\c"#.utf8) + [0x09] + Array("d".utf8) + [0x1B] + Array("e".utf8) + [0x7F]
-            + Array("f".utf8) + [0xE9] + Array(".swift".utf8)
+        // One `+` chain of these parts takes Linux's type checker past its
+        // time limit.
+        let parts: [[UInt8]] = [Array("a\"b\\c\td\u{1B}e\u{7F}f".utf8), [0xE9], Array(".swift".utf8)]
+        let name = parts.flatMap(\.self)
         #expect(Rule.quoted(name) == #"a\"b\\c\td\033e\177f\351.swift"#)
     }
 
