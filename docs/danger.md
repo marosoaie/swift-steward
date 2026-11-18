@@ -697,9 +697,11 @@ at the edge:
   by running git in `run.workspace`, so no rule runs git itself, and a
   fixture context tests the configuration:
   `FakeLocalRepository(_:lineMaps:)` holds maps that `LineMap(diff:)`
-  reads from the head-to-built diff, with context lines or without: a
-  context line ends a run of changes, as a `-U0` hunk does, so both map
-  alike. The git reader resolves names with `git rev-parse` and reads a
+  reads from the head-to-built diff at `-U0`, as the git reader's are.
+  A diff with context reads too, a context line ending a run of changes
+  as a `-U0` hunk's edge does, but git trims the end two files share
+  only without context, so with it git can align a repeated line, such
+  as a blank one, elsewhere (Codex, 2026-11-18). The git reader resolves names with `git rev-parse` and reads a
   map as `Run.lineMap` is read; a reader that gives neither knows no
   commit, so such a source is the rule's failure.
 

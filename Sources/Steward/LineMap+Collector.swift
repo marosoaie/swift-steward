@@ -6,8 +6,9 @@ extension LineMap {
     ///
     /// Keeps each file's runs of changed lines, not the lines, so memory
     /// doesn't grow with the lines the base changed, however far it moved.
-    /// A context line ends a run, so a diff with context maps as its `-U0`
-    /// twin does, whose hunks are the runs.
+    /// A context line ends a run, as a hunk's edge does in a diff without
+    /// context that makes the same edits; git doesn't always make the same
+    /// ones (see `init(diff:)`).
     struct Collector: DiffEventConsumer, Sendable {
         private(set) var map = LineMap(files: [:])
         private var header: FileHeader?

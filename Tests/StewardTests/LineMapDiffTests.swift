@@ -50,7 +50,7 @@ struct LineMapDiffTests {
 
         """
 
-    @Test("context lines change nothing: a diff with them maps as its -U0 twin does")
+    @Test("a context line ends a run: a diff with context maps as the same edits without it do")
     func contextLines() {
         let map = LineMap(diff: Self.withContext)
         #expect(map == LineMap(diff: Self.withoutContext))
