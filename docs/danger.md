@@ -336,6 +336,12 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
 - **Errors.** What the check throws is the rule's failure, as for any
   rule, and the files after it aren't checked; so is a malformed
   pattern.
+- **A log of its own.** A check that takes `{ file, log in }` also
+  writes to the run's log, as `Rule(_:check:)`'s does: what it didn't
+  check in a file, and why. The closure's parameters pick the overload,
+  so `{ file in }` and `{ $0 }` work as before. It came on top of C7,
+  from Fable's review of C5, so that S4's `Rule.swiftSource` can write
+  "skipped, it doesn't parse" (2026-11-18).
 
 The repository's own `Dangerfile/` checks that its JSON files parse
 this way.
@@ -366,7 +372,8 @@ Rule("Snapshots") { context, log in
   nothing; `Dangerfile.run(on:)` in StewardTesting returns the run's
   log.
 - `Rule.changedFiles` and the built-in diagnostics rule write their
-  lines this way.
+  lines this way, and a per-file check can too, through `changedFiles`'
+  overload whose check gets `(ChangedFile, Log)`.
 
 ## 2. The context (S2)
 

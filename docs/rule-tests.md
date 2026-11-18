@@ -322,7 +322,8 @@ pull request. A pull request whose head is in another repository
 rules run, and nothing is posted, as in CI. A dry run (`context.run.mode = .dryRun`) puts the printed
 summary in `outcome.summary` and sends the host nothing.
 
-A rule made with `Rule(_:check:)` writes lines to the run's log, which
+A rule made with `Rule(_:check:)`, or with `Rule.changedFiles` and a
+check that takes `{ file, log in }`, writes lines to the run's log, which
 `evaluate` drops. To test them, run the Dangerfile and look in
 `outcome.log`, where each rule's lines come before the line counting its
 findings:
