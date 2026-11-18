@@ -2,7 +2,8 @@ import Steward
 
 /// The Dangerfile the end-to-end tests run on real pull requests: every
 /// kind of finding, with a location and without, a failure past a size,
-/// a rule that throws when the title asks it to, two groups, and the
+/// a file a per-file rule skips, a rule that throws when the title asks it
+/// to, two groups, and the
 /// built-in diagnostics rule when the environment names reports for it.
 ///
 /// Each of its own rules is a static property, as docs/rule-tests.md
@@ -21,6 +22,7 @@ struct FixtureChecks: Dangerfile {
         firstEdits
         largePullRequest
         commits
+        images
         renames
         unmatched
         fixtureMarker
@@ -62,6 +64,10 @@ struct FixtureChecks: Dangerfile {
             "- `\(commit.sha.prefix(7))` \(commit.subject)"
         }.joined(separator: "\n"))]
     }
+
+    /// Reads no image over 4 bytes, so the end-to-end tests' 8-byte
+    /// `image.png` is skipped: a warning in the summary, at the file.
+    static let images = Rule.changedFiles("Images", in: "**/*.png", limit: 4) { _ in [] }
 
     /// Runs where the pull request changes `old.swift`, which the
     /// end-to-end tests' own pull request renames: it matches by the old

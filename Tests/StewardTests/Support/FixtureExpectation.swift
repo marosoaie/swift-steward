@@ -63,6 +63,8 @@ struct FixtureExpectation {
                 Finding.message("First added line", at: Location(path: entry.paths[entry.paths.count - 1], line: line))
             }
         }
+        let images = try entries.filter { $0.status != "D" && $0.paths[$0.paths.count - 1].hasSuffix(".png") }
+            .compactMap { try Self.imageSkip($0, at: head, oracle: oracle) }
         let subjects = try commits.map { "- `\($0.prefix(7))` \(try oracle.rawCommit($0).subject)" }
         let size = """
             Changes \(counts.changedFiles) files (+\(counts.additions) −\(counts.deletions)) \
@@ -75,6 +77,7 @@ struct FixtureExpectation {
             ("First edits", firstEdits),
             ("Large pull request", counts.additions > 1000 ? [.failure("Adds more than 1000 lines")] : []),
             ("Commits", subjects.isEmpty ? [] : [.markdown(subjects.joined(separator: "\n"))]),
+            ("Images", images),
             ("Fixture marker", asksToThrow ? [.failure(Self.thrownRule)] : []),
         ]
         findings = ruleFindings.flatMap { rule, findings in
@@ -98,6 +101,32 @@ struct FixtureExpectation {
             findings: findings,
             generator: "Steward \(Release.version)"
         )
+    }
+
+    /// The warning the "Images" rule gives for the PNG `entry` leaves at
+    /// `head`, which it skips when it's over 4 bytes or no regular file;
+    /// nil when it reads it. Git writes no mode for a link or a submodule
+    /// it only renames, so the rule finds no regular file there.
+    private static func imageSkip(_ entry: GitOracle.RawEntry, at head: String, oracle: GitOracle) throws -> Finding? {
+        let path = entry.paths[entry.paths.count - 1]
+        let reason: String
+        var remedy = "A file"
+        if ["120000", "160000"].contains(entry.newMode), entry.status == "R", entry.isUnchanged {
+            reason = "not a regular file at the head"
+        } else if entry.newMode == "120000" {
+            reason = "a symbolic link"
+        } else if entry.newMode == "160000" {
+            reason = "a submodule"
+        } else {
+            let size = try oracle.text(["cat-file", "-s", "\(head):\(path)"])
+            guard let bytes = Int(size), bytes > 4 else { return nil }
+            reason = "\(bytes) bytes, over the limit of 4"
+            remedy = "Raising the rule's `limit:` has it checked; a file"
+        }
+        return .warning("""
+            Rule “Images” skipped \(Markdown.codeSpan(path)), \(reason). \(remedy) the rule should never check \
+            belongs in its `excluding:` pattern.
+            """, at: Location(path: path))
     }
 
     /// The first line `git diff --unified=0` adds to the file at `paths`

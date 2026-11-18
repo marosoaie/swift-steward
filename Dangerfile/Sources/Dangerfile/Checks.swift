@@ -55,7 +55,9 @@ struct Checks: Dangerfile {
     /// Each JSON file the pull request creates or changes parses, as
     /// Foundation parses it: the event payloads and API responses the tests
     /// decode, which an edit can break without a test noticing until one
-    /// reads that file. Foundation lets a trailing comma pass.
+    /// reads that file. Foundation lets a trailing comma pass. A link or a
+    /// submodule named `.json`, or a file over 1 MiB, isn't read: the rule
+    /// warns at it, as every `changedFiles` rule does.
     static let json = Rule.changedFiles("JSON", in: "**/*.json") { file in
         guard (try? JSONSerialization.jsonObject(with: Data(file.contents), options: .fragmentsAllowed)) == nil
         else { return [] }

@@ -41,9 +41,23 @@ struct RuleChangedFilesLogTests {
             Sizes: skipped Sources/New.swift, 14 bytes, over the limit of 10
             Sizes: read Empty.swift
             Sizes: read Two.txt
-            Sizes: 2 findings
+            Sizes: 3 findings
 
             """), "\(outcome.log)")
-        #expect(outcome.report?.findings.map(\.location?.path) == ["Empty.swift", "Two.txt"])
+        #expect(outcome.report?.findings.map(\.location?.path) == ["Sources/New.swift", "Empty.swift", "Two.txt"])
+    }
+
+    @Test("the file the rule skips is a warning in the comment a run posts, beside its log line")
+    func comment() async throws {
+        let context = try Context.fixture(diff: SampleDiff.created, files: Self.files)
+        let host = FakePullRequestHost(pullRequest: context.pullRequest)
+        let outcome = await PerFileLogging.run(on: context, postingTo: host)
+        #expect(outcome.exitStatus == 0)
+        #expect(await host.comments.map(\.body) == [outcome.summary])
+        #expect(outcome.summary.contains("""
+            | :warning: | Rule “Sizes” skipped `Sources/New.swift`, 14 bytes, over the limit of 10. Raising the \
+            rule's `limit:` has it checked; a file the rule should never check belongs in its `excluding:` pattern.<br>
+            """), "\(outcome.summary)")
+        #expect(outcome.log.contains("Sizes: skipped Sources/New.swift, 14 bytes, over the limit of 10\n"))
     }
 }

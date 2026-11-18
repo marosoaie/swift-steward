@@ -45,6 +45,26 @@ struct JSONTests {
         #expect(findings.map(\.location) == [Location(path: "Fixtures/response.json")])
     }
 
+    @Test("a JSON file that's a symbolic link isn't read: the rule warns at it")
+    func link() async throws {
+        let diff = """
+            diff --git a/Fixtures/linked.json b/Fixtures/linked.json
+            new file mode 120000
+            index 0000000..1111111
+            --- /dev/null
+            +++ b/Fixtures/linked.json
+            @@ -0,0 +1 @@
+            +event.json
+            \\ No newline at end of file
+
+            """
+        let findings = try await Checks.json.evaluate(Context.fixture(diff: diff))
+        #expect(findings == [.warning("""
+            Rule “JSON” skipped `Fixtures/linked.json`, a symbolic link. A file the rule should never check \
+            belongs in its `excluding:` pattern.
+            """, at: Location(path: "Fixtures/linked.json"))])
+    }
+
     @Test("a pull request whose JSON files all parse passes")
     func allParse() async throws {
         let fixed = Self.diff.replacing(#"+  "number": one"#, with: #"+  "number": 2"#)

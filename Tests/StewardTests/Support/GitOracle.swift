@@ -57,6 +57,9 @@ struct GitOracle {
         let newMode: String
         /// One path, or the old and new for a rename or copy.
         let paths: [String]
+        /// Whether the mode and the blob are the same at both ends, as for
+        /// a rename alone, which `git diff` writes with no mode.
+        let isUnchanged: Bool
     }
 
     /// `git diff --raw -z -M`: both modes, both blobs, and a status letter,
@@ -75,7 +78,12 @@ struct GitOracle {
             guard words.count == 5, let status = words[4].first else { break }
             let pathCount = "RC".contains(status) ? 2 : 1
             let paths = Array(fields[index + 1...index + pathCount])
-            entries.append(RawEntry(status: status, newMode: String(words[1]), paths: paths))
+            entries.append(RawEntry(
+                status: status,
+                newMode: String(words[1]),
+                paths: paths,
+                isUnchanged: words[0].dropFirst() == words[1] && words[2] == words[3]
+            ))
             index += 1 + pathCount
         }
         return entries
