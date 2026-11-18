@@ -79,7 +79,8 @@ enum SampleDiff {
         """
 
     /// Deletes A.txt's last line, which has no newline, and adds one after
-    /// it to B.txt's; C.txt keeps one line of two, D.txt none of one.
+    /// it to B.txt's; C.txt keeps one line of two, D.txt none of one, and
+    /// E.txt, without context, the first of two.
     static let endTrimmed = """
         diff --git a/A.txt b/A.txt
         index 1111111..2222222 100644
@@ -112,6 +113,13 @@ enum SampleDiff {
         --- a/D.txt
         +++ b/D.txt
         @@ -1 +0,0 @@
+        -old
+        \\ No newline at end of file
+        diff --git a/E.txt b/E.txt
+        index 1111111..2222222 100644
+        --- a/E.txt
+        +++ b/E.txt
+        @@ -2 +1,0 @@
         -old
         \\ No newline at end of file
 
