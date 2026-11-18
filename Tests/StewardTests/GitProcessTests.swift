@@ -36,6 +36,25 @@ struct GitProcessTests {
         #expect(after - before < Self.rounds * Self.width / 4)
     }
 
+    @Test("git's input is read from a file that's gone by the time git starts, or that's never left behind")
+    func inputFile() throws {
+        let parent = FileManager.default.temporaryDirectory
+            .appendingPathComponent("steward-input-test-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: parent, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: parent) }
+        let input = (0..<70_000).map { UInt8(truncatingIfNeeded: $0 &* 7) }
+        let handle = try Git.handle(reading: input, in: parent)
+        defer { try? handle.close() }
+        #expect(try FileManager.default.contentsOfDirectory(atPath: parent.path).isEmpty)
+        #expect(try handle.readToEnd() == Data(input))
+
+        let missing = parent.appendingPathComponent("missing", isDirectory: true)
+        #expect(throws: ContextError.self) {
+            try Git.handle(reading: input, in: missing)
+        }
+        #expect(try FileManager.default.contentsOfDirectory(atPath: parent.path).isEmpty)
+    }
+
     /// The descriptors the test process has open, as the kernel lists them.
     static func openDescriptors() throws -> Int {
         #if os(Linux)
