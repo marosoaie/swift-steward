@@ -1,9 +1,10 @@
 /// A repository in memory, for tests: the files of each commit, read as
 /// `Context.localRepository` reads a real repository's.
 ///
-/// It answers as the git reader does for the paths it holds: a path is
-/// matched byte for byte, so `./a.swift`, `a.swift/`, and a name's other
-/// Unicode spelling name nothing; a path with files under it is a
+/// It answers as the git reader does: a path is matched byte for byte, so
+/// a name's other Unicode spelling names nothing, and so do `./a.swift`,
+/// `a.swift/`, and every other path no file in git can have, even one it
+/// was given a file at; a path with files under it is a
 /// directory, `.notRegularFile`; a file larger than the limit is
 /// `.tooLarge`. It holds no symbolic links or submodules. A commit it
 /// doesn't hold has no files, so every read there is `.noSuchFile`.
@@ -52,12 +53,13 @@ public struct FakeLocalRepository: LocalRepository {
     /// of at most `limit` bytes.
     public func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
         let files = commits[commit] ?? [:]
+        guard Context.isValidPath(path) else { return .noSuchFile }
         let name = Array(path.utf8)
         if let bytes = files[name] {
             return bytes.count <= limit ? .bytes(bytes) : .tooLarge(size: bytes.count)
         }
         let directory = name + [UInt8(ascii: "/")]
-        return !name.isEmpty && files.keys.contains { $0.starts(with: directory) } ? .notRegularFile : .noSuchFile
+        return files.keys.contains { $0.starts(with: directory) } ? .notRegularFile : .noSuchFile
     }
 
     /// `name` when the repository holds files at a commit by that name, or

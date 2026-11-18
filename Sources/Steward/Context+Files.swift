@@ -32,4 +32,12 @@ extension Context {
     ) async throws -> FileContents {
         try await localRepository.contents(ofFileAt: path, in: commit(at: side), limit: limit)
     }
+
+    /// Whether a file in git can have `path` as its path: one from the
+    /// repository's root, without an empty, `.` or `..` part, or a NUL.
+    /// A run reads any other as `.noSuchFile`; StewardTesting's fake does
+    /// too, and a fixture refuses a file given at one.
+    package static func isValidPath(_ path: String) -> Bool {
+        GitRepository.treePath(path) != nil
+    }
 }

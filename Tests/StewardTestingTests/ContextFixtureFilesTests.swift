@@ -48,6 +48,20 @@ struct ContextFixtureFilesTests {
         #expect(error?.description.contains(mismatch.description) == true)
     }
 
+    @Test("a file given at a path no file in git has is refused, before any file that disagrees",
+          arguments: ["./Sources/App.swift", "/a.swift", "a//b.swift", "a/../b.swift", "a.swift/", ""])
+    func invalidPath(path: String) {
+        let error = #expect(throws: Context.FixtureError.self) {
+            try Context.fixture(diff: SampleDiff.mixed, files: [
+                path: "anything\n",
+                "Sources/App.swift": "import Foundation\nimport Logger\n\nstruct App {}\n",
+            ])
+        }
+        #expect(error?.mismatches.map(\.path) == [path, "Sources/App.swift"])
+        #expect(error?.mismatches.first?.line == nil)
+        #expect(error?.mismatches.first?.reason.contains("so a run reads it as .noSuchFile") == true)
+    }
+
     @Test("each file that disagrees is named once, at its first line that does, in the diff's order")
     func severalFiles() {
         let error = #expect(throws: Context.FixtureError.self) {
@@ -168,10 +182,12 @@ struct ContextFixtureFilesTests {
         case keptMissing = "no line where a hunk that only deletes keeps one"
         case pastKeptEnd = "a line past the one a hunk keeps as it deletes the file's unterminated last line"
         case keptUnterminated = "no newline after the line a hunk that only deletes keeps"
+        case longLine = "a long line, its excerpt cut before a character rather than within it"
 
         var diff: String {
             switch self {
-            case .otherLine, .tooShort, .trailingSpace, .deleted, .renamedAway, .unterminated: SampleDiff.mixed
+            case .otherLine, .tooShort, .trailingSpace, .deleted, .renamedAway, .unterminated, .longLine:
+                SampleDiff.mixed
             case .terminated: SampleDiff.noNewline
             case .lineFeeds: SampleDiff.crlf
             case .link: SampleDiff.typeChange
@@ -200,6 +216,13 @@ struct ContextFixtureFilesTests {
             case .keptMissing: ["E.txt": ""]
             case .pastKeptEnd: ["E.txt": "first\nsecond\n"]
             case .keptUnterminated: ["E.txt": "first"]
+            case .longLine: ["Sources/App.swift": """
+                import Foundation
+                \(String(repeating: "x", count: 99))\u{E9}
+
+                struct App {}
+
+                """]
             }
         }
 
@@ -209,7 +232,7 @@ struct ContextFixtureFilesTests {
 
         var line: Int? {
             switch self {
-            case .otherLine: 2
+            case .otherLine, .longLine: 2
             case .tooShort: 3
             case .trailingSpace: 4
             case .deleted, .renamedAway, .link: nil
@@ -234,6 +257,7 @@ struct ContextFixtureFilesTests {
             case .keptMissing: "the diff keeps a line 1 before what it deletes, and the file has 0 lines"
             case .pastKeptEnd: "leaving it with 1 line, and the file has 2"
             case .keptUnterminated: "so with its newline, and the file ends here without one"
+            case .longLine: "and the file has \"\(String(repeating: "x", count: 99))\"…"
             case .trailingSpace: "they differ only in trailing whitespace"
             case .deleted: "the diff deletes it, so the head has no such file"
             case .renamedAway: "renames it to Sources/After.swift"

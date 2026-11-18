@@ -327,10 +327,11 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
   file. Its failure names it in git's quoting, `caf\351.swift`.
 - **Read in batches.** `LocalRepository` has a batch read beside the
   single one. A reader that doesn't give its own reads each path in
-  turn; the git reader runs two git processes per batch where a single
-  read runs three. A batch holds up to 64 MiB at `limit:` per file, 64
-  files at the default, so memory stays bounded however many files
-  match.
+  turn; the git reader runs the same two git processes for a batch as
+  for one file, and one more `ls-tree` for each further 64 KiB of paths.
+  A batch holds up to 64 MiB of files at `limit:` per file, 64 files at
+  the default, which the git reader holds twice while it parses them, so
+  memory stays bounded, at about twice that, however many files match.
 - **Errors.** What the check throws is the rule's failure, as for any
   rule, and the files after it aren't checked; so is a malformed
   pattern.
@@ -519,8 +520,17 @@ of lines, such as a declaration's, shares a line with them:
 
 ```swift
 let header = 1...3
-let touched = context.git.modifiedFiles.filter { context.git.changedLines(in: $0).overlaps(header) }
+let touchesHeader = context.git.changedLines(in: "Package.swift").overlaps(header)
+
+let changed = context.git.changedLines
+let touched = context.git.modifiedFiles.filter { changed.files[$0]?.overlaps(header) ?? false }
 ```
+
+Both are computed on each call: `changedLines` from every line of the
+diff, and `changedLines(in:)` by decoding every file's path to find
+one. For a few paths, ask `changedLines(in:)`; for each file in turn,
+read `changedLines` once, as the second example does, since asking
+`changedLines(in:)` for each is quadratic in the diff's files.
 
 `overlaps(_:)` extends GitDiffKit's type from `Steward`; were GitDiffKit
 to gain the method, `Steward`'s would go in the same release. **Added
