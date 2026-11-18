@@ -25,7 +25,8 @@ extension Rule {
     /// Each file the rule skips is a finding of `skipKind` at the file, a
     /// warning by default, and a line in the run's log: a symbolic link or
     /// a submodule, which has no contents to check, and a file over
-    /// `limit` bytes. Git gives no mode for a link or a submodule it only
+    /// `limit` bytes, whose finding says that raising `limit` has it
+    /// checked. Git gives no mode for a link or a submodule it only
     /// renames, so a rename without one is skipped too when the head has
     /// no regular file there. No kind is silent, `.message` being the
     /// quietest: a file the rule should never check belongs in `excluded`.
@@ -70,11 +71,15 @@ extension Rule {
     /// a log that writes nothing; StewardTesting's `Dangerfile.run(on:)`
     /// returns what a run logged.
     ///
+    /// A file the check passes over itself is the check's to report, as the
+    /// rule reports the files it skips: a line in the log is one a reviewer
+    /// never sees, and the pull request may write the marker that skips it.
+    ///
     /// ```swift
     /// Rule.changedFiles("Licence header", in: "Sources/**/*.swift") { file, log in
     ///     guard !file.contents.starts(with: Array("// Generated".utf8)) else {
     ///         log.write("Licence header: skipped \(file.path), a generated file")
-    ///         return []
+    ///         return [.message("Not checked: a generated file.", at: Location(path: file.path))]
     ///     }
     ///     return file.contents.starts(with: Array("// SPDX-License-Identifier:".utf8))
     ///         ? [] : [.warning("Start with the licence header.", at: Location(path: file.path, line: 1))]
@@ -104,7 +109,8 @@ extension Rule {
                 let batch = selected[start..<min(start + perBatch, selected.count)]
                 let readable = batch.compactMap { file in path(toRead: file).map { (file: file, path: $0) } }
                 let paths = readable.map(\.path)
-                let read = try await context.localRepository.contents(
+                // A batch of links and submodules asks the reader for nothing.
+                let read = paths.isEmpty ? [] : try await context.localRepository.contents(
                     ofFilesAt: paths,
                     in: context.git.head,
                     limit: limit
@@ -145,14 +151,17 @@ extension Rule {
         /// The finding for the file `name` names, skipped for `reason`,
         /// once the log says so; at `location`, which a name that isn't
         /// UTF-8 has none of. The rule's name is escaped, as a thrown
-        /// rule's failure escapes it: it's a label, not Markdown.
-        func finding(_ name: String, _ reason: String, at location: Location?) -> Finding {
+        /// rule's failure escapes it: it's a label, not Markdown. A file
+        /// over the limit is checked once the limit is raised, which is
+        /// what a source file usually needs, so its finding says that first.
+        func finding(_ name: String, _ reason: String, at location: Location?, isOverLimit: Bool = false) -> Finding {
             log.write("\(rule): skipped \(name), \(reason)")
+            let raising = isOverLimit ? "Raising the rule's `limit:` has it checked; a file" : "A file"
             return Finding(
                 kind: kind,
                 text: """
-                    Rule “\(Markdown.escaped(rule))” skipped \(Markdown.codeSpan(name)), \(reason). A file the rule \
-                    should never check belongs in its `excluding:` pattern.
+                    Rule “\(Markdown.escaped(rule))” skipped \(Markdown.codeSpan(name)), \(reason). \(raising) the \
+                    rule should never check belongs in its `excluding:` pattern.
                     """,
                 location: location
             )
@@ -173,7 +182,12 @@ extension Rule {
         switch contents {
         case .bytes: return nil
         case .tooLarge(let size):
-            return skips.finding(path, "\(size) bytes, over the limit of \(limit)", at: Location(path: path))
+            return skips.finding(
+                path,
+                "\(size) bytes, over the limit of \(limit)",
+                at: Location(path: path),
+                isOverLimit: true
+            )
         case .notRegularFile where entry.file.header.newMode == nil:
             // A link or a submodule git only renames: it writes no mode.
             return skips.finding(path, "not a regular file at the head", at: Location(path: path))

@@ -363,10 +363,16 @@ Rule.changedFiles("Licence header", in: "Sources/**", limit: 64 << 10, reporting
 
 - **A warning by default,** at the file, as
   "Rule “JSON” skipped `Fixtures/big.json`, 2097152 bytes, over the
-  limit of 1048576. A file the rule should never check belongs in its
-  `excluding:` pattern." The text names the rule, which the summary's
-  table doesn't, the file and the reason. A name that isn't UTF-8 is
-  given in git's quoting, at no location.
+  limit of 1048576. Raising the rule's `limit:` has it checked; a file
+  the rule should never check belongs in its `excluding:` pattern." The
+  text names the rule, escaped, which the summary's table doesn't, the
+  file and the reason. Only a file over the limit gets the first half of
+  that last sentence: no setting reads a link or a submodule. A name
+  that isn't UTF-8 is given in git's quoting, at no location.
+- **A file the check passes over itself is the check's to report,**
+  with a finding too, as the overload with a log shows: a line in the
+  log is one a reviewer never sees, and the pull request may write the
+  marker that skips it.
 - **No silent kind.** `.message` is the quietest. A file the rule
   should never check, such as a vendored folder, belongs in
   `excluding:`, which leaves it out on purpose: no finding, no line.
