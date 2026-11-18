@@ -51,8 +51,9 @@ extension Context.FixtureError {
     }
 
     /// The first of `file`'s context and added lines that `contents`
-    /// doesn't hold at its number, or whose end of file disagrees; where
-    /// the diff shows the file's end, a line past it.
+    /// doesn't hold at its number, or whose end of file disagrees; a line
+    /// a deletion follows that it doesn't have; and where the diff shows
+    /// the file's end, a line past it.
     private static func firstDifference(
         between file: DiffFile,
         and contents: [UInt8]
@@ -86,6 +87,17 @@ extension Context.FixtureError {
             return nil
         }
         .first
+        // A hunk that only deletes starts at the line before what it
+        // deletes, which the file must still have.
+        let kept = file.hunks.lazy
+            .filter { hunk in !hunk.lines.contains { $0.info.kind != .deletion } }
+            .map(\.header.newStart)
+            .max()
+        if differing == nil, let kept, kept > lines.count {
+            return (kept, """
+                the diff keeps a line \(kept) before what it deletes, and the file has \(count(lines.count))
+                """)
+        }
         guard differing == nil, let end = knownEnd(of: file), lines.count > end.line else { return differing }
         return (end.line + 1, "the diff \(end.how) with \(count(end.line)), and the file has \(lines.count)")
     }

@@ -141,7 +141,8 @@ struct ContextFixtureFilesTests {
             case .untouched: ["Docs/New.md": "# New\n", "Package.swift": ""]
             case .createdEmpty: ["Empty.swift": ""]
             case .createdUnterminated: ["Two.txt": "one\ntwo"]
-            case .endTrimmed: ["A.txt": "keep\n", "B.txt": "keep\nnew\n", "C.txt": "kept\n", "D.txt": ""]
+            case .endTrimmed:
+                ["A.txt": "keep\n", "B.txt": "keep\nnew\n", "C.txt": "kept\n", "D.txt": "", "E.txt": "first\n"]
             }
         }
     }
@@ -162,6 +163,8 @@ struct ContextFixtureFilesTests {
         case pastTrimmedEnd = "a line past a hunk that deletes the file's unterminated last line"
         case pastAddedEnd = "a line past one added after the file's unterminated last line, deleted"
         case trimmedNotEmpty = "a line in a file the diff empties of its unterminated line"
+        case keptMissing = "no line where a hunk that only deletes keeps one"
+        case pastKeptEnd = "a line past the one a hunk keeps as it deletes the file's unterminated last line"
 
         var diff: String {
             switch self {
@@ -170,7 +173,7 @@ struct ContextFixtureFilesTests {
             case .lineFeeds: SampleDiff.crlf
             case .link: SampleDiff.typeChange
             case .createdLonger, .createdNotEmpty: SampleDiff.created
-            case .pastTrimmedEnd, .pastAddedEnd, .trimmedNotEmpty: SampleDiff.endTrimmed
+            case .pastTrimmedEnd, .pastAddedEnd, .trimmedNotEmpty, .keptMissing, .pastKeptEnd: SampleDiff.endTrimmed
             }
         }
 
@@ -190,6 +193,8 @@ struct ContextFixtureFilesTests {
             case .pastTrimmedEnd: ["A.txt": "keep\nextra\n"]
             case .pastAddedEnd: ["B.txt": "keep\nnew\nold"]
             case .trimmedNotEmpty: ["D.txt": "old\n"]
+            case .keptMissing: ["E.txt": ""]
+            case .pastKeptEnd: ["E.txt": "first\nsecond\n"]
             }
         }
 
@@ -203,8 +208,8 @@ struct ContextFixtureFilesTests {
             case .tooShort: 3
             case .trailingSpace: 4
             case .deleted, .renamedAway, .link: nil
-            case .unterminated, .terminated, .lineFeeds, .createdNotEmpty, .trimmedNotEmpty: 1
-            case .createdLonger, .pastTrimmedEnd: 2
+            case .unterminated, .terminated, .lineFeeds, .createdNotEmpty, .trimmedNotEmpty, .keptMissing: 1
+            case .createdLonger, .pastTrimmedEnd, .pastKeptEnd: 2
             case .pastAddedEnd: 3
             }
         }
@@ -219,6 +224,8 @@ struct ContextFixtureFilesTests {
             case .pastTrimmedEnd: "deletes the file's old last line, leaving it with 1 line, and the file has 2"
             case .pastAddedEnd: "leaving it with 2 lines, and the file has 3"
             case .trimmedNotEmpty: "leaving it with 0 lines, and the file has 1"
+            case .keptMissing: "the diff keeps a line 1 before what it deletes, and the file has 0 lines"
+            case .pastKeptEnd: "leaving it with 1 line, and the file has 2"
             case .trailingSpace: "they differ only in trailing whitespace"
             case .deleted: "the diff deletes it, so the head has no such file"
             case .renamedAway: "renames it to Sources/After.swift"
