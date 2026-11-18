@@ -21,7 +21,20 @@ struct RuleChangedFilesTests {
         "\(String(decoding: file.contents, as: UTF8.self).debugDescription) \(file.changedLines.ranges)"
     }
 
-    @Test("each file at the head that the pattern matches and the exclusion doesn't is checked, in diff order")
+    /// The finding `rule` gives for a file it skips at `path` for `reason`.
+    static func skipped(
+        _ path: String,
+        _ reason: String,
+        by rule: String = "Described",
+        as kind: Finding.Kind = .warning
+    ) -> Finding {
+        Finding(kind: kind, text: """
+            Rule “\(rule)” skipped `\(path)`, \(reason). A file the rule should never check belongs in its \
+            `excluding:` pattern.
+            """, location: Location(path: path))
+    }
+
+    @Test("each head file the pattern matches and the exclusion doesn't is checked or skipped, in diff order")
     func selection() async throws {
         let context = try Context.fixture(diff: Self.diff, files: Self.files)
         let recording = RecordingConsole()
@@ -30,6 +43,12 @@ struct RuleChangedFilesTests {
             .message(#""import Steward\nlet a = 2\n" [ClosedRange(2...2)]"#, at: Location(path: "Sources/A.swift")),
             .message(#""struct New {}\n" [ClosedRange(1...1)]"#, at: Location(path: "Sources/New.swift")),
             .message(#""struct Moved {}\n" []"#, at: Location(path: "Sources/Moved.swift")),
+            .warning("""
+                Rule “Described” skipped `Sources/Link.swift`, a symbolic link. A file the rule should never check \
+                belongs in its `excluding:` pattern.
+                """, at: Location(path: "Sources/Link.swift")),
+            Self.skipped("Sources/Vendor", "a submodule"),
+            Self.skipped("Sources/Big.swift", "43 bytes, over the limit of 40"),
         ])
         #expect(await recording.finish() == [
             .error("Described: skipped Sources/Link.swift, a symbolic link\n"),
@@ -46,9 +65,10 @@ struct RuleChangedFilesTests {
             "Sources/Moved.swift": Array("struct Moved {}\n".utf8),
         ]])
         let findings = try await Self.described.evaluate(context)
-        #expect(findings.map(\.kind) == [.failure, .failure, .message, .failure])
+        #expect(findings.map(\.kind) == [.failure, .failure, .message, .warning, .warning, .failure])
         #expect(findings.map(\.location?.path) == [
-            "Sources/A.swift", "Sources/New.swift", "Sources/Moved.swift", "Sources/Big.swift",
+            "Sources/A.swift", "Sources/New.swift", "Sources/Moved.swift", "Sources/Link.swift", "Sources/Vendor",
+            "Sources/Big.swift",
         ])
         #expect(findings[0].text.hasSuffix("the head has something else there."))
         #expect(findings[1].text.hasSuffix("the head has no such file."))
@@ -112,7 +132,8 @@ struct RuleChangedFilesTests {
         }.evaluate(context)
         #expect(await reads.batches == batches)
         #expect(await reads.singles == 0)
-        #expect(findings.count == (limit == 0 ? 0 : 5))
+        // At a limit of 0 bytes, every file is skipped.
+        #expect(findings.map(\.kind) == Array(repeating: limit == 0 ? .warning : .message, count: 5))
     }
 
     @Test("the git reader's batch read is the protocol's: two git processes for any number of paths")
@@ -148,7 +169,7 @@ struct RuleChangedFilesTests {
             [.message(String(decoding: file.contents, as: UTF8.self), at: Location(path: file.path))]
         }
         let findings = try await rule.check(context, Log(mode: .dryRun, console: recording.console))
-        let read = Dictionary(findings.compactMap { finding in
+        let read = Dictionary(findings.filter { $0.kind == .message }.compactMap { finding in
             finding.location.map { ($0.path.unicodeScalars.map(\.value), finding.text) }
         }) { first, _ in first }
         let expected = FilesFixture.names.map { ($0, FilesFixture.defaultContents(of: $0)) }
@@ -162,6 +183,7 @@ struct RuleChangedFilesTests {
             Couldn't check `caf\351.swift`: its name isn't UTF-8, so no `String` names it, and read by its name \#
             decoded, it could be another file.
             """#])
+        #expect(findings.filter { $0.kind == .warning }.count == FilesFixture.links.count + 1)
         let logged = await recording.finish()
         #expect(logged.count == FilesFixture.links.count + 1)
         #expect(logged.contains(.error("Any: skipped \(FilesFixture.submodule), a submodule\n")))
@@ -198,7 +220,11 @@ struct RuleChangedFilesTests {
             [.message(String(decoding: file.contents, as: UTF8.self), at: Location(path: file.path))]
         }
         let findings = try await rule.check(context, Log(mode: .dryRun, console: recording.console))
-        #expect(findings == [.message("struct Moved {}\n", at: Location(path: "Sources/Renamed.swift"))])
+        #expect(findings == [
+            Self.skipped("Sources/Linked.swift", "not a regular file at the head", by: "Renamed"),
+            .message("struct Moved {}\n", at: Location(path: "Sources/Renamed.swift")),
+            Self.skipped("Sources/Vendored", "not a regular file at the head", by: "Renamed"),
+        ])
         #expect(await recording.finish() == [
             .error("Renamed: skipped Sources/Linked.swift, not a regular file at the head\n"),
             .error("Renamed: skipped Sources/Vendored, not a regular file at the head\n"),

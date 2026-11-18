@@ -313,12 +313,14 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
 - **What the check gets.** A `ChangedFile`: the path, the bytes at the
   head, and the lines the pull request adds or rewrites, as
   `changedLines(in:)` gives them.
-- **Skipped, in the log.** A symbolic link or a submodule, which has no
-  contents to check, and a file over `limit:` (1 MiB by default), as
+- **Skipped, in the report and the log.** A symbolic link or a
+  submodule, which has no contents to check, and a file over `limit:`
+  (1 MiB by default). Git gives no mode for a link or a submodule it
+  only renames, so a rename without one is skipped too when the head
+  has no regular file there. Each skip is a finding at the file, a
+  warning unless `reportingSkipsAs:` names another kind (step C8, below),
+  and a line in the log, as
   `JSON: skipped big.json, 2097152 bytes, over the limit of 1048576`.
-  Git gives no mode for a link or a submodule it only renames, so a
-  rename without one is skipped too when the head has no regular file
-  there.
 - **Failed, never skipped.** A file the diff lists at the head that the
   head doesn't have, or has as something other than the regular file
   the diff says it is. Also
@@ -345,6 +347,35 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
 
 The repository's own `Dangerfile/` checks that its JSON files parse
 this way.
+
+**Skips as findings (step C8 of the steward-lang-swift plan,
+2026-11-18).** A file `Rule.changedFiles` doesn't check was a line in
+the log alone, which a reviewer reading the comment never sees: a
+licence rule that skipped a 2 MiB file passed it without a word. Each
+skip is now a finding too, of the kind the rule asks for after
+`limit:`:
+
+```swift
+Rule.changedFiles("Licence header", in: "Sources/**", limit: 64 << 10, reportingSkipsAs: .message) { file in
+    …
+}
+```
+
+- **A warning by default,** at the file, as
+  "Rule “JSON” skipped `Fixtures/big.json`, 2097152 bytes, over the
+  limit of 1048576. A file the rule should never check belongs in its
+  `excluding:` pattern." The text names the rule, which the summary's
+  table doesn't, the file and the reason. A name that isn't UTF-8 is
+  given in git's quoting, at no location.
+- **No silent kind.** `.message` is the quietest. A file the rule
+  should never check, such as a vendored folder, belongs in
+  `excluding:`, which leaves it out on purpose: no finding, no line.
+- **Failures stay failures.** A file the head doesn't have as the diff
+  says, and a name that isn't UTF-8 on a regular file, fail whatever
+  the skips' kind.
+- **The log keeps its line** for each skip, beside the finding.
+- **In diff order.** Skips and the check's findings come in the order
+  of the diff's files, as the files are checked.
 
 **A rule's log (step C5 of the steward-lang-swift plan, 2026-11-18).**
 A rule says what it read and what it skipped in the run's log, which

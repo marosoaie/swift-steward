@@ -201,12 +201,13 @@ test would then pass on a pull request no run could see. The fixture
 checks them against each other, and throws when they disagree; see the
 files under [The context](#the-context).
 
-A rule from `Rule.changedFiles(_:in:excluding:limit:_:)` reads each
-changed file the same way, so its test gives the files the same way.
-The repository's own JSON rule, in `Dangerfile/`, is tested so: a file
-that doesn't parse fails at its path, and the rest pass. A file the
-diff lists at the head that `files:` leaves out is a failure of such a
-rule, as a missing file is in a run.
+A rule from `Rule.changedFiles(_:in:excluding:limit:reportingSkipsAs:_:)`
+reads each changed file the same way, so its test gives the files the
+same way. The repository's own JSON rule, in `Dangerfile/`, is tested
+so: a file that doesn't parse fails at its path, the rest pass, and a
+JSON link is skipped with a warning at its path. A file the diff lists
+at the head that `files:` leaves out is a failure of such a rule, as a
+missing file is in a run.
 
 ## The context
 

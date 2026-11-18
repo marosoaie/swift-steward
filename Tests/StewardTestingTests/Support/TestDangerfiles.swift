@@ -40,7 +40,8 @@ struct Logging: Dangerfile {
 }
 
 /// A Dangerfile whose per-file rule writes a line for each file it reads,
-/// with a limit that has it skip Sources/New.swift in `SampleDiff.created`.
+/// with a limit that has it skip Sources/New.swift in `SampleDiff.created`,
+/// a warning.
 struct PerFileLogging: Dangerfile {
     static let sizes = Rule.changedFiles("Sizes", in: "**", limit: 10) { file, log in
         log.write("Sizes: read \(file.path)")

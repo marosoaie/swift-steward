@@ -32,8 +32,9 @@ struct FixtureProcessTests {
         let short = fixture.head.prefix(7)
         #expect(outcome.status == (asksToThrow ? 1 : 0))
         #expect(outcome.output.isEmpty)
-        #expect(summary.hasPrefix("**\(asksToThrow ? "1 failure, " : "")1 warning, 6 messages, 1 note** on \(short)"))
+        #expect(summary.hasPrefix("**\(asksToThrow ? "1 failure, " : "")2 warnings, 6 messages, 1 note** on \(short)"))
         #expect(summary.contains("Rule “Fixture marker” failed") == asksToThrow)
+        #expect(summary.contains("| :warning: | \(Self.imageSkip)<br>[`image.png`](https://github.com/"))
         #expect(summary.hasSuffix("""
             <sub>Steward \(Release.version) · [workflow run](https://github.com/marosoaie/swift-steward/actions/runs/42) · \(short)</sub>
 
@@ -60,6 +61,7 @@ struct FixtureProcessTests {
             ::warning file=gone.swift,title=Steward::Deleted
             ::notice file=a.swift,line=10,title=Steward::First added line
             ::notice file=moved.swift,line=5,title=Steward::First added line
+            ::warning file=image.png,title=Steward::\(Self.imageSkip)
             ::notice file=new.swift,title=Steward::Renamed from `old.swift`
 
             """))
@@ -67,6 +69,8 @@ struct FixtureProcessTests {
         // matches nothing.
         #expect(outcome.log.contains("""
             Commits: 1 finding
+            Images: skipped image.png, 8 bytes, over the limit of 4
+            Images: 1 finding
             Renames: 1 finding
             Unmatched: skipped, no changed file matches steward-fixture/unmatched/**
 
@@ -85,12 +89,22 @@ struct FixtureProcessTests {
         #expect(outcome.status == 0)
         #expect(outcome.output.contains("| :book: | Renamed from `old.swift`<br>`new.swift` |"))
         #expect(!outcome.output.contains("Unmatched"))
+        #expect(outcome.output.contains("| :warning: | \(Self.imageSkip)<br>`image.png` |"))
         #expect(outcome.log.contains("""
+            Images: skipped image.png, 8 bytes, over the limit of 4
+            Images: 1 finding
             Renames: 1 finding
             Unmatched: skipped, no changed file matches steward-fixture/unmatched/**
 
             """))
     }
+
+    /// The warning the "Images" rule gives for the fixture's 8-byte
+    /// `image.png`, which it skips.
+    static let imageSkip = """
+        Rule “Images” skipped `image.png`, 8 bytes, over the limit of 4. A file the rule should never check \
+        belongs in its `excluding:` pattern.
+        """
 
     /// Ways a run can fail before it has a context.
     enum Breakage: String, CaseIterable {

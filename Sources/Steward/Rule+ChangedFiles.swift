@@ -20,13 +20,17 @@ extension Rule {
     /// too: a created, copied, modified or renamed file, never a deleted
     /// one. That includes a file the pull request only renames or changes
     /// the mode of, whose `changedLines` are empty. Each is checked once,
-    /// in diff order.
+    /// in diff order, and the findings come in that order.
     ///
-    /// The run's log names each file that's skipped: a symbolic link or a
-    /// submodule, which has no contents to check, and a file over `limit`
-    /// bytes. Git gives no mode for a link or a submodule it only renames,
-    /// so a rename without one is skipped too when the head has no regular
-    /// file there. One that can't be read is a failure, and isn't checked:
+    /// Each file the rule skips is a finding of `skipKind` at the file, a
+    /// warning by default, and a line in the run's log: a symbolic link or
+    /// a submodule, which has no contents to check, and a file over
+    /// `limit` bytes. Git gives no mode for a link or a submodule it only
+    /// renames, so a rename without one is skipped too when the head has
+    /// no regular file there. No kind is silent, `.message` being the
+    /// quietest: a file the rule should never check belongs in `excluded`.
+    /// One that can't be read is a failure, whatever `skipKind` is, and
+    /// isn't checked:
     ///
     /// - one the head doesn't have, or has as something other than the
     ///   regular file the diff says it is;
@@ -48,14 +52,17 @@ extension Rule {
         in pattern: PathPattern,
         excluding excluded: PathPattern? = nil,
         limit: Int = FileContents.defaultLimit,
+        reportingSkipsAs skipKind: Finding.Kind = .warning,
         _ check: @escaping @Sendable (ChangedFile) async throws -> [Finding]
     ) -> Rule {
-        changedFiles(name, in: pattern, excluding: excluded, limit: limit) { file, _ in try await check(file) }
+        changedFiles(name, in: pattern, excluding: excluded, limit: limit, reportingSkipsAs: skipKind) { file, _ in
+            try await check(file)
+        }
     }
 
     /// A rule that checks each changed file as
-    /// `changedFiles(_:in:excluding:limit:_:)` does, with a check that also
-    /// writes to the run's log.
+    /// `changedFiles(_:in:excluding:limit:reportingSkipsAs:_:)` does, with
+    /// a check that also writes to the run's log.
     ///
     /// The check's lines are the rule's, as `Rule(_:check:)`'s are, beside
     /// the ones naming the files the rule skipped: what it didn't check in
@@ -78,6 +85,7 @@ extension Rule {
         in pattern: PathPattern,
         excluding excluded: PathPattern? = nil,
         limit: Int = FileContents.defaultLimit,
+        reportingSkipsAs skipKind: Finding.Kind = .warning,
         _ check: @escaping @Sendable (ChangedFile, Log) async throws -> [Finding]
     ) -> Rule {
         Rule(name) { context, log in
@@ -87,13 +95,15 @@ extension Rule {
                 guard file.header.change != .deleted, let path = file.header.newPath else { return false }
                 return matcher.matches(path) && exclusion?.matches(path) != true
             }
-            var findings = selected.compactMap { unreadFinding(for: $0, name: name, log: log) }
-            let readable = selected.compactMap { file in path(toRead: file).map { (file: file, path: $0) } }
+            let skips = Skips(rule: name, kind: skipKind, log: log)
             let perBatch = max(1, changedFilesBatchBytes / max(1, limit))
-            // Imperative: each batch awaits its read, and each file its check.
-            for start in stride(from: 0, to: readable.count, by: perBatch) {
-                let batch = readable[start..<min(start + perBatch, readable.count)]
-                let paths = batch.map(\.path)
+            var findings: [Finding] = []
+            // Imperative: each batch awaits its read, and each file its
+            // check, in diff order.
+            for start in stride(from: 0, to: selected.count, by: perBatch) {
+                let batch = selected[start..<min(start + perBatch, selected.count)]
+                let readable = batch.compactMap { file in path(toRead: file).map { (file: file, path: $0) } }
+                let paths = readable.map(\.path)
                 let read = try await context.localRepository.contents(
                     ofFilesAt: paths,
                     in: context.git.head,
@@ -103,43 +113,69 @@ extension Rule {
                 guard read.count == paths.count else {
                     return findings + [.failure("The reader gave \(read.count) answers for \(paths.count) paths.")]
                 }
-                for (entry, contents) in zip(batch, read) {
+                var answers = zip(readable, read).makeIterator()
+                for file in batch {
                     try Task.checkCancellation()
+                    guard path(toRead: file) != nil, let answer = answers.next() else {
+                        findings += [unreadFinding(for: file, skips: skips)].compactMap(\.self)
+                        continue
+                    }
+                    let (entry, contents) = answer
                     guard case .bytes(let bytes) = contents else {
-                        findings += [unreadFinding(for: contents, of: entry, name: name, limit: limit, log: log)]
+                        findings += [unreadFinding(for: contents, of: entry, limit: limit, skips: skips)]
                             .compactMap(\.self)
                         continue
                     }
                     let lines = GitChanges.addedLines(of: entry.file, into: LineRangeSet())
-                    let file = ChangedFile(path: entry.path, contents: bytes, changedLines: lines)
-                    findings += try await check(file, log)
+                    let changed = ChangedFile(path: entry.path, contents: bytes, changedLines: lines)
+                    findings += try await check(changed, log)
                 }
             }
             return findings
         }
     }
 
-    /// For a file read without its bytes: nil once the log says it was
-    /// skipped, or the failure for a file the head doesn't have as the
-    /// regular file the diff says it is.
+    /// How a `changedFiles` rule reports a file it skips: a line in the
+    /// run's log, and a finding of `kind`.
+    private struct Skips {
+        let rule: String
+        let kind: Finding.Kind
+        let log: Log
+
+        /// The finding for the file `name` names, skipped for `reason`,
+        /// once the log says so; at `location`, which a name that isn't
+        /// UTF-8 has none of.
+        func finding(_ name: String, _ reason: String, at location: Location?) -> Finding {
+            log.write("\(rule): skipped \(name), \(reason)")
+            return Finding(
+                kind: kind,
+                text: """
+                    Rule “\(rule)” skipped \(Markdown.codeSpan(name)), \(reason). A file the rule should never \
+                    check belongs in its `excluding:` pattern.
+                    """,
+                location: location
+            )
+        }
+    }
+
+    /// For a file read without its bytes: the skip of one over `limit`, or
+    /// of a link or a submodule git only renames, or the failure for a
+    /// file the head doesn't have as the regular file the diff says it is.
     private static func unreadFinding(
         for contents: FileContents,
         of entry: (file: DiffFile, path: String),
-        name: String,
         limit: Int,
-        log: Log
+        skips: Skips
     ) -> Finding? {
         let path = entry.path
         let reason: String
         switch contents {
         case .bytes: return nil
         case .tooLarge(let size):
-            log.write("\(name): skipped \(path), \(size) bytes, over the limit of \(limit)")
-            return nil
+            return skips.finding(path, "\(size) bytes, over the limit of \(limit)", at: Location(path: path))
         case .notRegularFile where entry.file.header.newMode == nil:
             // A link or a submodule git only renames: it writes no mode.
-            log.write("\(name): skipped \(path), not a regular file at the head")
-            return nil
+            return skips.finding(path, "not a regular file at the head", at: Location(path: path))
         case .noSuchFile: reason = "the diff lists it at the head, and the head has no such file"
         case .notRegularFile:
             reason = "the diff lists it at the head as a regular file, and the head has something else there"
@@ -156,19 +192,18 @@ extension Rule {
         return String(validating: path.bytes, as: UTF8.self)
     }
 
-    /// For a file that isn't read at all: nil once the log says a link or
-    /// a submodule was skipped, or the failure for a name that isn't
-    /// UTF-8.
-    private static func unreadFinding(for file: DiffFile, name: String, log: Log) -> Finding? {
+    /// For a file that isn't read at all: the skip of a link or a
+    /// submodule, or the failure for a name that isn't UTF-8.
+    private static func unreadFinding(for file: DiffFile, skips: Skips) -> Finding? {
         guard path(toRead: file) == nil, let path = file.header.newPath else { return nil }
         let kind: String? = switch file.header.newMode {
         case .symlink?: "a symbolic link"
         case .gitlink?: "a submodule"
         default: nil
         }
+        let name = String(validating: path.bytes, as: UTF8.self)
         if let kind {
-            log.write("\(name): skipped \(path.string), \(kind)")
-            return nil
+            return skips.finding(name ?? quoted(path.bytes), kind, at: name.map { Location(path: $0) })
         }
         return .failure("""
             Couldn't check \(Markdown.codeSpan(quoted(path.bytes))): its name isn't UTF-8, so no `String` names \
