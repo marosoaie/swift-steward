@@ -323,10 +323,11 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
   file. Its failure names it in git's quoting, `caf\351.swift`.
 - **Read in batches.** `RepositoryFiles` has a batch read beside the
   single one. A reader that doesn't give its own reads each path in
-  turn; the git reader runs two git processes per batch where a single
-  read runs three. A batch holds up to 64 MiB at `limit:` per file, 64
-  files at the default, so memory stays bounded however many files
-  match.
+  turn; the git reader runs the same two git processes for a batch as
+  for one file, and one more `ls-tree` for each further 64 KiB of paths.
+  A batch holds up to 64 MiB of files at `limit:` per file, 64 files at
+  the default, which the git reader holds twice while it parses them, so
+  memory stays bounded, at about twice that, however many files match.
 - **Errors.** What the check throws is the rule's failure, as for any
   rule, and the files after it aren't checked; so is a malformed
   pattern.

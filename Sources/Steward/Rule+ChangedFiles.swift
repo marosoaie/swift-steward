@@ -34,9 +34,11 @@ extension Rule {
     ///   name decoded could be another file's.
     ///
     /// Files are read a batch at a time, through the context's reader:
-    /// for the git reader, two processes per batch rather than three per
-    /// file. A batch holds up to 64 MiB, at `limit` bytes per file, so 64
-    /// files at the default limit of 1 MiB.
+    /// the git reader runs the same two git processes for a batch as for
+    /// one file, and one more `ls-tree` for each further 64 KiB of paths.
+    /// A batch holds up to 64 MiB of files, at `limit` bytes per file, so
+    /// 64 files at the default limit of 1 MiB; the git reader holds them
+    /// twice while it parses them, so its peak is about twice that.
     ///
     /// What `check` throws is the rule's failure, as for any rule, and no
     /// file after it is checked; so is a malformed pattern.
@@ -138,13 +140,23 @@ extension Rule {
             """)
     }
 
-    /// `bytes` as git quotes a name: printable ASCII as it is, and any
-    /// other byte, and a backslash, as a backslash and three octal digits.
-    private static func quoted(_ bytes: [UInt8]) -> String {
+    /// `bytes` as git quotes a name, without the quotes around it:
+    /// printable ASCII as it is but for `"` and `\`, which a backslash
+    /// escapes; `\a` through `\r` for the control characters C names; and
+    /// any other byte as a backslash and three octal digits.
+    static func quoted(_ bytes: [UInt8]) -> String {
         bytes.map { byte in
-            guard byte < 0x20 || byte >= 0x7F || byte == UInt8(ascii: "\\") else { return String(UnicodeScalar(byte)) }
-            let octal = String(byte, radix: 8)
-            return "\\" + String(repeating: "0", count: 3 - octal.count) + octal
+            switch byte {
+            case UInt8(ascii: "\""), UInt8(ascii: "\\"):
+                return "\\" + String(UnicodeScalar(byte))
+            case 0x07...0x0D:
+                return "\\" + String(Array("abtnvfr")[Int(byte) - 0x07])
+            case 0x20..<0x7F:
+                return String(UnicodeScalar(byte))
+            default:
+                let octal = String(byte, radix: 8)
+                return "\\" + String(repeating: "0", count: 3 - octal.count) + octal
+            }
         }
         .joined()
     }
