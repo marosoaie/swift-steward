@@ -1,3 +1,4 @@
+import Foundation
 import Steward
 
 /// The rules Steward checks this repository's pull requests with, in the
@@ -12,6 +13,7 @@ struct Checks: Dangerfile {
         diagnostics
         releaseVersion
         thirdPartyNotices
+        json
     }
 
     /// The build's and SwiftLint's diagnostics on the lines the pull request
@@ -48,6 +50,16 @@ struct Checks: Dangerfile {
         return git.createdFiles.filter(isLicence).map { path in
             .warning("Add an entry to THIRD_PARTY_NOTICES.md for the material this covers.", at: Location(path: path))
         }
+    }
+
+    /// Each JSON file the pull request creates or changes parses, as
+    /// Foundation parses it: the event payloads and API responses the tests
+    /// decode, which an edit can break without a test noticing until one
+    /// reads that file. Foundation lets a trailing comma pass.
+    static let json = Rule.changedFiles("JSON", in: "**/*.json") { file in
+        guard (try? JSONSerialization.jsonObject(with: Data(file.contents), options: .fragmentsAllowed)) == nil
+        else { return [] }
+        return [.failure("It doesn't parse as JSON.", at: Location(path: file.path))]
     }
 
     /// Whether the file at `path` is a licence or a notice, by the names

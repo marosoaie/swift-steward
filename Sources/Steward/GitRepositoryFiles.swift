@@ -18,13 +18,18 @@ struct GitRepositoryFiles: RepositoryFiles {
         try await contents(ofFilesAt: [path], in: commit, limit: limit).first ?? .noSuchFile
     }
 
+    func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents] {
+        try await contents(ofFilesAt: paths, in: commit, limit: limit, pathBytesPerCall: Self.pathBytesPerCall)
+    }
+
     /// The files at `paths` in `commit`, in the order of `paths`, each read
-    /// only when it's a regular file of at most `limit` bytes.
+    /// only when it's a regular file of at most `limit` bytes, with
+    /// `pathBytesPerCall` of paths for each `ls-tree`.
     func contents(
         ofFilesAt paths: [String],
         in commit: String,
         limit: Int,
-        pathBytesPerCall: Int = Self.pathBytesPerCall
+        pathBytesPerCall: Int
     ) async throws -> [FileContents] {
         let names = paths.map(Self.treePath)
         let entries = try await entries(

@@ -24,4 +24,17 @@ public protocol RepositoryFiles: Sendable {
     ///   What's at the path, whether nothing, a link, a directory, or a
     ///   large file, is an answer, not an error.
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents
+
+    /// The files at `paths` in `commit`, in the order of `paths`, each
+    /// read as `contents(ofFileAt:in:limit:)` reads it.
+    ///
+    /// A reader that can read many files at once gives its own: the git
+    /// reader runs the same two git processes for many paths as for one,
+    /// and one more `ls-tree` for each further 64 KiB of paths, and on
+    /// macOS for each further 5,000 paths. Every file read is held until
+    /// the call returns, so a caller bounds `paths.count × limit`. Without
+    /// one, the paths are read in turn.
+    ///
+    /// - Throws: As a single read throws, for any of the paths.
+    func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents]
 }

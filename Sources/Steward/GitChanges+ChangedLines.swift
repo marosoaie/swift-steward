@@ -45,7 +45,7 @@ extension GitChanges {
     }
 
     /// `lines` with `file`'s added lines inserted.
-    private static func addedLines(of file: DiffFile, into lines: LineRangeSet) -> LineRangeSet {
+    static func addedLines(of file: DiffFile, into lines: LineRangeSet) -> LineRangeSet {
         file.lines.reduce(into: lines) { added, line in
             guard line.info.kind == .addition, let number = line.info.newNumber else { return }
             added.insert(number)

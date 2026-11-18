@@ -291,6 +291,51 @@ The condition is named because SwiftLint's
 closure before the trailing group (question 95). An inline condition
 works the same.
 
+**Rules over changed files (step C4 of the steward-lang-swift plan,
+2026-11-18).** A rule that checks each changed file's contents, such as
+a licence header or a file that must parse, is one call:
+
+```swift
+Rule.changedFiles("JSON", in: "**/*.json") { file in
+    (try? JSONSerialization.jsonObject(with: Data(file.contents), options: .fragmentsAllowed)) == nil
+        ? [.failure("It doesn't parse as JSON.", at: Location(path: file.path))] : []
+}
+```
+
+- **Which files.** Each file whose head path matches the pattern and not
+  `excluding:`: a created, copied, modified or renamed file, never a
+  deleted one. A pure rename or a mode change counts, with no changed
+  lines. Each file is checked once, in diff order.
+- **What the check gets.** A `ChangedFile`: the path, the bytes at the
+  head, and the lines the pull request adds or rewrites, as
+  `changedLines(in:)` gives them.
+- **Skipped, in the log.** A symbolic link or a submodule, which has no
+  contents to check, and a file over `limit:` (1 MiB by default), as
+  `JSON: skipped big.json, 2097152 bytes, over the limit of 1048576`.
+  Git gives no mode for a link or a submodule it only renames, so a
+  rename without one is skipped too when the head has no regular file
+  there.
+- **Failed, never skipped.** A file the diff lists at the head that the
+  head doesn't have, or has as something other than the regular file
+  the diff says it is. Also
+  a name that isn't UTF-8: `GitChanges`' lists decode it lossily, so
+  `caf<E9>.swift` reads as `caf\u{FFFD}.swift`, which may be another
+  file. Its failure names it in git's quoting, `caf\351.swift`.
+- **Read in batches.** `RepositoryFiles` has a batch read beside the
+  single one. A reader that doesn't give its own reads each path in
+  turn; the git reader runs the same two git processes for a batch as
+  for one file, and one more `ls-tree` for each further 64 KiB of paths,
+  and on macOS for each further 5,000 paths.
+  A batch holds up to 64 MiB of files at `limit:` per file, 64 files at
+  the default, which the git reader holds twice while it parses them, so
+  memory stays bounded, at about twice that, however many files match.
+- **Errors.** What the check throws is the rule's failure, as for any
+  rule, and the files after it aren't checked; so is a malformed
+  pattern.
+
+The repository's own `Dangerfile/` checks that its JSON files parse
+this way.
+
 ## 2. The context (S2)
 
 `Context` is everything a rule may look at, gathered once before the
@@ -312,7 +357,8 @@ public struct Context: Sendable, Equatable {
 
 public protocol RepositoryFiles: Sendable {
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents
-}
+    func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents]
+}                                         // the batch read defaults to single reads in turn
 
 public enum FileContents: Sendable, Hashable {
     case bytes([UInt8])                   // what `git show <commit>:<path>` prints
