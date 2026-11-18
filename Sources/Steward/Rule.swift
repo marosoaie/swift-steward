@@ -37,8 +37,8 @@ public struct Rule: Sendable {
         set { check = { context, _ in try await newValue(context) } }
     }
 
-    /// The check, given the run's log, where a built-in rule says what it
-    /// read and skipped, which the summary has no room for.
+    /// The check, given the run's log, where a rule says what it read and
+    /// skipped, which the summary has no room for.
     var check: @Sendable (Context, Log) async throws -> [Finding]
 
     /// The conditions of the groups around the rule, outermost first, kept
@@ -51,8 +51,22 @@ public struct Rule: Sendable {
         check = { context, _ in try await evaluate(context) }
     }
 
-    /// Creates a rule whose check writes to the run's log.
-    init(_ name: String, check: @escaping @Sendable (Context, Log) async throws -> [Finding]) {
+    /// Creates a rule from its name and a check that also writes to the
+    /// run's log.
+    ///
+    /// The log is for what the summary has no room for: what the rule
+    /// read, what it skipped and why. Calling `evaluate`, as a test does,
+    /// gives the check a log that writes nothing; StewardTesting's
+    /// `Dangerfile.run(on:)` returns what a run logged.
+    ///
+    /// ```swift
+    /// Rule("Snapshots") { context, log in
+    ///     let images = context.git.modifiedFiles.filter { $0.hasSuffix(".png") }
+    ///     images.forEach { log.write("Snapshots: not comparing \($0)") }
+    ///     return images.isEmpty ? [] : [.message("Check the \(images.count) changed snapshots.")]
+    /// }
+    /// ```
+    public init(_ name: String, check: @escaping @Sendable (Context, Log) async throws -> [Finding]) {
         self.name = name
         self.check = check
     }

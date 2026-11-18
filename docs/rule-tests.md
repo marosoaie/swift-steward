@@ -322,6 +322,20 @@ pull request. A pull request whose head is in another repository
 rules run, and nothing is posted, as in CI. A dry run (`context.run.mode = .dryRun`) puts the printed
 summary in `outcome.summary` and sends the host nothing.
 
+A rule made with `Rule(_:check:)` writes lines to the run's log, which
+`evaluate` drops. To test them, run the Dangerfile and look in
+`outcome.log`, where each rule's lines come before the line counting its
+findings:
+
+```swift
+#expect(outcome.log.contains("Snapshots: not comparing Tests/Snapshots/home.png\n"))
+```
+
+In CI mode, the fixture's default, the log holds GitHub Actions'
+workflow commands: the rules' `::group::`, and a line that could pass
+for a command between `::stop-commands::steward-fixture` and
+`::steward-fixture::`. A dry run escapes it instead.
+
 The fixture run has no command-line options and no environment of its
 own: it writes no report file, its summary links to no workflow run, and
 its token goes nowhere but the host. The fake host doesn't simulate

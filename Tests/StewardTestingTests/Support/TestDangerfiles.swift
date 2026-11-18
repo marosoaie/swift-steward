@@ -23,3 +23,18 @@ struct BuildChecks: Dangerfile {
         Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log")])
     }
 }
+
+/// A Dangerfile whose rule writes to the run's log: a line for each file
+/// the pull request creates, and one that could pass for a workflow
+/// command.
+struct Logging: Dangerfile {
+    static let created = Rule("Created") { context, log in
+        context.git.createdFiles.forEach { log.write("Created: read \($0)") }
+        log.write("::error::forged")
+        return context.git.createdFiles.map { .message("A new file.", at: Location(path: $0)) }
+    }
+
+    static var rules: [Rule] {
+        created
+    }
+}

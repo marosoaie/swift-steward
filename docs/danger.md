@@ -131,6 +131,8 @@ public struct Rule: Sendable {
     public var evaluate: @Sendable (Context) async throws -> [Finding]
 
     public init(_ name: String, evaluate: @escaping @Sendable (Context) async throws -> [Finding])
+    // Step C5 of the steward-lang-swift plan: a check that also writes to the run's log.
+    public init(_ name: String, check: @escaping @Sendable (Context, Log) async throws -> [Finding])
 }
 
 /// One thing a rule wants the pull request's author to see.
@@ -210,6 +212,8 @@ The details:
   and parse files. A pure rule just doesn't use either.
 - **No exit codes or I/O in rules.** The runner owns the exit status,
   posting, and the log; a rule only answers questions about the context.
+  The one exception is the log's lines: a rule made with
+  `Rule(_:check:)` may write some, below.
 
 *Trade-off:* a rule with several independent checks either returns an
 array it builds up (`var findings: [Finding] = []`) or becomes several
@@ -335,6 +339,34 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
 
 The repository's own `Dangerfile/` checks that its JSON files parse
 this way.
+
+**A rule's log (step C5 of the steward-lang-swift plan, 2026-11-18).**
+A rule says what it read and what it skipped in the run's log, which
+the summary has no room for, through a second initializer whose check
+gets the log beside the context (the plan's D9, option A):
+
+```swift
+Rule("Snapshots") { context, log in
+    let images = context.git.modifiedFiles.filter { $0.hasSuffix(".png") }
+    images.forEach { log.write("Snapshots: not comparing \($0)") }
+    return images.isEmpty ? [] : [.message("Check the \(images.count) changed snapshots.")]
+}
+```
+
+- **Only lines.** `Log` is public with one method, `write(_:)`. The
+  run's annotations, its groups and its own lines stay the runner's: a
+  rule's lines land inside the run's "Rules" group, before the line
+  counting the rule's findings, and GitHub doesn't nest groups.
+- **Escaped as the run's own lines are.** A line may quote the pull
+  request: in CI, text that could pass for a workflow command is
+  wrapped in `::stop-commands::`, and a dry run escapes control
+  characters.
+- **`Context` is untouched,** so `==` still compares everything a rule
+  sees. `evaluate`, which tests call, gives the check a log that writes
+  nothing; `Dangerfile.run(on:)` in StewardTesting returns the run's
+  log.
+- `Rule.changedFiles` and the built-in diagnostics rule write their
+  lines this way.
 
 ## 2. The context (S2)
 
