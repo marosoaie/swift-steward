@@ -35,7 +35,8 @@ extension Rule {
     ///
     /// Files are read a batch at a time, through the context's reader:
     /// the git reader runs the same two git processes for a batch as for
-    /// one file, and one more `ls-tree` for each further 64 KiB of paths.
+    /// one file, and one more `ls-tree` for each further 64 KiB of paths,
+    /// and on macOS for each further 5,000 paths.
     /// A batch holds up to 64 MiB of files, at `limit` bytes per file, so
     /// 64 files at the default limit of 1 MiB; the git reader holds them
     /// twice while it parses them, so its peak is about twice that.

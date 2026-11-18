@@ -32,9 +32,10 @@ public protocol LocalRepository: Sendable {
     ///
     /// A reader that can read many files at once gives its own: the git
     /// reader runs the same two git processes for many paths as for one,
-    /// and one more `ls-tree` for each further 64 KiB of paths. Every file
-    /// read is held until the call returns, so a caller bounds
-    /// `paths.count × limit`. Without one, the paths are read in turn.
+    /// and one more `ls-tree` for each further 64 KiB of paths, and on
+    /// macOS for each further 5,000 paths. Every file read is held until
+    /// the call returns, so a caller bounds `paths.count × limit`. Without
+    /// one, the paths are read in turn.
     ///
     /// - Throws: As a single read throws, for any of the paths.
     func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents]
