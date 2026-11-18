@@ -60,4 +60,28 @@ struct RuleChangedFilesLogTests {
             """), "\(outcome.summary)")
         #expect(outcome.log.contains("Sizes: skipped Sources/New.swift, 14 bytes, over the limit of 10\n"))
     }
+
+    @Test("a file the check skips itself with Finding.skipped reads in the comment as one the rule skips")
+    func ownSkip() async throws {
+        let context = try Context.fixture(diff: SampleDiff.created, files: Self.files)
+        let host = FakePullRequestHost(pullRequest: context.pullRequest)
+        let outcome = await OwnSkips.run(on: context, postingTo: host)
+        #expect(outcome.exitStatus == 0)
+        #expect(await host.comments.map(\.body) == [outcome.summary])
+        #expect(outcome.report?.findings.map(\.kind) == [.warning, .message, .message])
+        #expect(outcome.summary.contains("""
+            | :warning: | Rule “Sizes” skipped `Sources/New.swift`, 14 bytes, over the limit of 10. Raising the \
+            rule's `limit:` has it checked; a file the rule should never check belongs in its `excluding:` pattern.<br>
+            """), "\(outcome.summary)")
+        #expect(outcome.summary.contains("""
+            | :book: | Rule “Sizes” skipped `Empty.swift`, an empty file. A file the rule should never check belongs \
+            in its `excluding:` pattern.<br>
+            """), "\(outcome.summary)")
+        #expect(outcome.log.contains("""
+            Sizes: skipped Sources/New.swift, 14 bytes, over the limit of 10
+            Sizes: skipped Empty.swift, an empty file
+            Sizes: 3 findings
+
+            """), "\(outcome.log)")
+    }
 }
