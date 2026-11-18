@@ -117,7 +117,7 @@ struct ContextFixtureTests {
         #expect(error?.description.contains("(A.swift)") == true)
     }
 
-    @Test("a fixture holds no files, and a test can give it a reader of its own")
+    @Test("a fixture given no files holds none, and a test can give it a reader of its own")
     func files() async throws {
         var context = try Context.fixture(diff: SampleDiff.mixed)
         #expect(try await context.contents(ofFileAt: "Sources/App.swift") == .noSuchFile)

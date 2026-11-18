@@ -64,6 +64,104 @@ enum SampleDiff {
 
         """
 
+    /// Rewrites A.txt's one line, after which the file ends without a
+    /// newline.
+    static let noNewline = """
+        diff --git a/A.txt b/A.txt
+        index 1111111..2222222 100644
+        --- a/A.txt
+        +++ b/A.txt
+        @@ -1 +1 @@
+        -old
+        +new
+        \\ No newline at end of file
+
+        """
+
+    /// Deletes A.txt's last line, which has no newline, and adds one after
+    /// it to B.txt's; C.txt keeps one line of two, D.txt none of one, and
+    /// E.txt, without context, the first of two.
+    static let endTrimmed = """
+        diff --git a/A.txt b/A.txt
+        index 1111111..2222222 100644
+        --- a/A.txt
+        +++ b/A.txt
+        @@ -1,2 +1 @@
+         keep
+        -old
+        \\ No newline at end of file
+        diff --git a/B.txt b/B.txt
+        index 1111111..2222222 100644
+        --- a/B.txt
+        +++ b/B.txt
+        @@ -1,2 +1,2 @@
+         keep
+        -old
+        \\ No newline at end of file
+        +new
+        diff --git a/C.txt b/C.txt
+        index 1111111..2222222 100644
+        --- a/C.txt
+        +++ b/C.txt
+        @@ -1,2 +1 @@
+        -gone
+        -old
+        \\ No newline at end of file
+        +kept
+        diff --git a/D.txt b/D.txt
+        index 1111111..2222222 100644
+        --- a/D.txt
+        +++ b/D.txt
+        @@ -1 +0,0 @@
+        -old
+        \\ No newline at end of file
+        diff --git a/E.txt b/E.txt
+        index 1111111..2222222 100644
+        --- a/E.txt
+        +++ b/E.txt
+        @@ -2 +1,0 @@
+        -old
+        \\ No newline at end of file
+
+        """
+
+    /// Creates Sources/New.swift with one line, Empty.swift with none, and
+    /// Two.txt with two, the second without a final newline.
+    static let created = """
+        diff --git a/Sources/New.swift b/Sources/New.swift
+        new file mode 100644
+        index 0000000..4444444
+        --- /dev/null
+        +++ b/Sources/New.swift
+        @@ -0,0 +1 @@
+        +struct New {}
+        diff --git a/Empty.swift b/Empty.swift
+        new file mode 100644
+        index 0000000..e69de29
+        diff --git a/Two.txt b/Two.txt
+        new file mode 100644
+        index 0000000..5555555
+        --- /dev/null
+        +++ b/Two.txt
+        @@ -0,0 +1,2 @@
+        +one
+        +two
+        \\ No newline at end of file
+
+        """
+
+    /// Adds a line to A.txt, whose lines end in CRLF.
+    static let crlf = """
+        diff --git a/A.txt b/A.txt
+        index 1111111..2222222 100644
+        --- a/A.txt
+        +++ b/A.txt
+        @@ -1 +1,2 @@
+         a\r
+        +b\r
+
+        """
+
     /// A hunk that claims three lines on each side and has one.
     static let cutShort = """
         diff --git a/A.swift b/A.swift

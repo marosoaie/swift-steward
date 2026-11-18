@@ -145,10 +145,66 @@ findings, as the run would; `applies(to:)` tells that from a pass. Both
 throw what a group's condition throws, such as the error for a malformed
 pattern. Setting `evaluate` replaces the check and keeps the groups.
 
+## A rule that reads files
+
+A rule reads a file as the head commit has it through
+`context.contents(ofFileAt:)`. Its test gives the fixture that file in
+`files:`, beside the diff:
+
+```swift
+static let toolsVersion = Rule("Tools version") { context in
+    guard context.git.modifiedFiles.contains("Package.swift"),
+          case .bytes(let bytes) = try await context.contents(ofFileAt: "Package.swift")
+    else { return [] }
+    let firstLine = String(decoding: bytes.prefix { $0 != UInt8(ascii: "\n") }, as: UTF8.self)
+    return firstLine == "// swift-tools-version: 6.2"
+        ? [] : [.warning("Build with Swift 6.2.", at: Location(path: "Package.swift", line: 1))]
+}
+```
+
+```swift
+@Test("an edited package that doesn't build with Swift 6.2 gets a warning at its first line")
+func oldToolsVersion() async throws {
+    let context = try Context.fixture(
+        diff: """
+            diff --git a/Package.swift b/Package.swift
+            index 1111111..2222222 100644
+            --- a/Package.swift
+            +++ b/Package.swift
+            @@ -2,5 +2,6 @@
+             import PackageDescription
+
+             let package = Package(
+            -    name: "App"
+            +    name: "App",
+            +    platforms: [.macOS(.v14)]
+             )
+            """,
+        files: ["Package.swift": """
+            // swift-tools-version: 6.0
+            import PackageDescription
+
+            let package = Package(
+                name: "App",
+                platforms: [.macOS(.v14)]
+            )
+
+            """]
+    )
+    let findings = try await Checks.toolsVersion.evaluate(context)
+    #expect(findings == [.warning("Build with Swift 6.2.", at: Location(path: "Package.swift", line: 1))])
+}
+```
+
+The diff and the files are given apart, so they could disagree, and a
+test would then pass on a pull request no run could see. The fixture
+checks them against each other, and throws when they disagree; see the
+files under [The context](#the-context).
+
 ## The context
 
-`Context.fixture(diff:pullRequest:commits:workspace:)` builds the context
-a GitHub Actions run builds for a pull request with that diff:
+`Context.fixture(diff:files:pullRequest:commits:workspace:)` builds the
+context a GitHub Actions run builds for a pull request with that diff:
 
 - **The diff** goes through the parser a real run uses, with the same
   options, so `context.git.diff`, the file lists, and `file(at:)` are what
@@ -176,23 +232,45 @@ a GitHub Actions run builds for a pull request with that diff:
   file, such as a build log, reads it under `context.run.workspace`).
   `context.git.mergeBase` and `context.git.head` are the pull request's
   base and head commits.
-- **The files** are none: `context.contents(ofFileAt:at:limit:)` is
-  `.noSuchFile` for every path.
+- **The files** are those you give in `files`, by path, as the head
+  commit has them; none when you give none. `context.contents(ofFileAt:)`
+  reads them as a run reads the head's: a path is matched byte for byte,
+  a path with files under it is `.notRegularFile`, a file over the limit
+  is `.tooLarge`, and any other path is `.noSuchFile`, as is every path
+  at the merge base. Give the files the rule reads; the diff's other
+  files can stay out. Each file you give must agree with the diff: hold
+  its context and added lines at the numbers its hunk headers give, and
+  end in a line break unless the diff says `\ No newline at end of
+  file`. A file the diff creates holds its lines and nothing more, and
+  so does one ending with a hunk that deletes its unterminated last
+  line. A hunk that only deletes, as `-U0` writes one, keeps the line
+  before what it deletes, so the file has that line, with its newline.
+  A file the diff deletes, renames away, or makes a symbolic link or a
+  submodule can't be given, and neither can one at a path no file in git
+  has, such as `./Package.swift`, `a//b` or `dir/`, which a run reads as
+  `.noSuchFile`. Where one disagrees, the fixture throws
+  `Context.FixtureError`, naming the file and its first line that does.
 
 Every part of a `Context` is a `var`, so a test changes what it needs
 afterwards, such as `context.run.mode = .dryRun`, or `context.files`,
-to any `RepositoryFiles` of its own for a rule that reads files:
+for a rule that reads the merge base's files too, or one whose reads
+fail. `FakeRepositoryFiles` holds files by commit, and any
+`RepositoryFiles` of your own works; a reader you set isn't checked
+against the diff:
 
 ```swift
-struct Files: RepositoryFiles {
-    var head: [String: String]
+var context = try Context.fixture(diff: SampleDiff.toolsVersion)
+context.files = FakeRepositoryFiles([
+    context.git.head: ["Package.swift": Array(SampleSource.newPackage.utf8)],
+    context.git.mergeBase: ["Package.swift": Array(SampleSource.oldPackage.utf8)],
+])
 
+struct FailingFiles: RepositoryFiles {
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
-        head[path].map { .bytes(Array($0.utf8)) } ?? .noSuchFile
+        throw CancellationError()
     }
 }
-
-context.files = Files(head: ["Package.swift": "// swift-tools-version: 6.2\n"])
+context.files = FailingFiles()
 ```
 
 ## The whole Dangerfile
