@@ -17,8 +17,8 @@ From your repository's root, copy the template and check that it builds
 and its tests pass:
 
 ```sh
-curl -fsSL https://github.com/marosoaie/swift-steward/archive/refs/tags/v0.2.0.tar.gz \
-  | tar -xz --strip-components=2 swift-steward-0.2.0/Templates/Dangerfile
+curl -fsSL https://github.com/marosoaie/swift-steward/archive/refs/tags/v0.3.0.tar.gz \
+  | tar -xz --strip-components=2 swift-steward-0.3.0/Templates/Dangerfile
 swift build --package-path Dangerfile
 swift test --package-path Dangerfile
 ```
@@ -48,9 +48,9 @@ sources in your repository, though, so scripts, linters and rules that
 pick files by path see it now; exclude `Dangerfile/` where they should
 skip it.
 
-**Steward's version.** The template depends on swift-steward 0.2.x, at
+**Steward's version.** The template depends on swift-steward 0.3.x, at
 the release `Package.resolved` pins, and
-`swift package update --package-path Dangerfile` takes 0.2.x's fixes.
+`swift package update --package-path Dangerfile` takes 0.3.x's fixes.
 Under 0.x a minor release may break, so moving to the next one is an
 edit of the requirement in `Dangerfile/Package.swift`.
 
