@@ -64,7 +64,11 @@ extension Rule {
             for start in stride(from: 0, to: readable.count, by: perBatch) {
                 let batch = readable[start..<min(start + perBatch, readable.count)]
                 let paths = batch.map(\.path)
-                let read = try await context.files.contents(ofFilesAt: paths, in: context.git.head, limit: limit)
+                let read = try await context.localRepository.contents(
+                    ofFilesAt: paths,
+                    in: context.git.head,
+                    limit: limit
+                )
                 // A reader of a test's own may answer for fewer paths, or more.
                 guard read.count == paths.count else {
                     return findings + [.failure("The reader gave \(read.count) answers for \(paths.count) paths.")]

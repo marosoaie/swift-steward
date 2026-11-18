@@ -97,9 +97,9 @@ extension RuleChangedFilesTests {
 
     /// A reader that counts its reads, then reads through another, whose
     /// batch read is the protocol's default.
-    struct CountingFiles: RepositoryFiles {
+    struct CountingFiles: LocalRepository {
         let reads: Reads
-        let files: FakeRepositoryFiles
+        let files: FakeLocalRepository
 
         func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
             await reads.recordSingle()

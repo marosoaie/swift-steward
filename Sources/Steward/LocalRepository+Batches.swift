@@ -1,4 +1,4 @@
-extension RepositoryFiles {
+extension LocalRepository {
     /// The files at `paths` in `commit`, read one at a time through
     /// `contents(ofFileAt:in:limit:)`: a reader's batch read, when it
     /// gives none of its own.

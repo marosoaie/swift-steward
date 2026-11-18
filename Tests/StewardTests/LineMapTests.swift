@@ -1,16 +1,8 @@
-import GitDiffKit
 @testable import Steward
 import Testing
 
 @Suite("The line map from the built commit to the head")
 struct LineMapTests {
-    /// The map read from `diff`, a `git diff -U0 -M <head> <built>`.
-    private func map(_ diff: String) -> LineMap {
-        var parser = DiffEventParser(consumer: LineMap.Collector())
-        parser.consume(diff)
-        return parser.finalize().map
-    }
-
     /// The head line of each built line from 1 through `lines` in `path`.
     private func headLines(through lines: Int, of path: String, in map: LineMap) -> [Int?] {
         (1...lines).map { map.headLocation(ofLine: $0, inFile: path)?.line }
@@ -30,7 +22,7 @@ struct LineMapTests {
 
     @Test("lines the base inserted have no head line, and the lines below shift up")
     func insertion() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/a.swift b/a.swift
             index 1111111..2222222 100644
             --- a/a.swift
@@ -46,7 +38,7 @@ struct LineMapTests {
 
     @Test("lines the base removed shift the lines below down")
     func removal() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/a.swift b/a.swift
             index 1111111..2222222 100644
             --- a/a.swift
@@ -61,7 +53,7 @@ struct LineMapTests {
 
     @Test("removing lines at the top of a file shifts every line")
     func removalAtTop() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/a.swift b/a.swift
             index 1111111..2222222 100644
             --- a/a.swift
@@ -76,7 +68,7 @@ struct LineMapTests {
 
     @Test("a replaced line has no head line, and the hunks' shifts add up")
     func severalHunks() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/a.swift b/a.swift
             index 1111111..2222222 100644
             --- a/a.swift
@@ -99,7 +91,7 @@ struct LineMapTests {
 
     @Test("a file the base renamed maps back to its head path")
     func rename() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/Old.swift b/New.swift
             similarity index 90%
             rename from Old.swift
@@ -118,7 +110,7 @@ struct LineMapTests {
 
     @Test("a pure rename maps every line to the same line of the head path")
     func pureRename() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/Old.swift b/New.swift
             similarity index 100%
             rename from Old.swift
@@ -130,7 +122,7 @@ struct LineMapTests {
 
     @Test("a file the base added has no head counterpart")
     func addedFile() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/New.swift b/New.swift
             new file mode 100644
             index 0000000..2222222
@@ -147,7 +139,7 @@ struct LineMapTests {
 
     @Test("a binary file keeps its path, but none of its lines map")
     func binaryFile() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/image.png b/image.png
             index 1111111..2222222 100644
             Binary files a/image.png and b/image.png differ
@@ -159,7 +151,7 @@ struct LineMapTests {
 
     @Test("a mode change alone maps every line to itself")
     func modeChange() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/run.sh b/run.sh
             old mode 100644
             new mode 100755
@@ -171,7 +163,7 @@ struct LineMapTests {
     @Test("a file whose diff is too damaged to read maps nowhere, rather than to itself")
     func damagedFile() {
         // A header over the parser's 64 lines: the file is abandoned.
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/a.swift b/a.swift
             \(String(repeating: "old mode 100644\n", count: 70))\
             --- a/a.swift
@@ -194,7 +186,7 @@ struct LineMapTests {
 
     @Test("a line number so large the shift would overflow maps nowhere instead of trapping")
     func overflow() {
-        let map = map("""
+        let map = LineMap(diff: """
             diff --git a/a.swift b/a.swift
             index 1111111..2222222 100644
             --- a/a.swift

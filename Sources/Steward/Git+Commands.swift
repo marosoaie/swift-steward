@@ -28,7 +28,8 @@ extension Git {
     ]
 
     /// The SHA of the commit `revision` names, such as a SHA or `HEAD`, or
-    /// nil when the repository has no such commit.
+    /// nil when the repository has no such commit, or `revision` names no
+    /// one commit.
     func commit(named revision: String) async throws -> String? {
         let arguments = ["rev-parse", "--verify", "--quiet", "--end-of-options", "\(revision)^{commit}"]
         let outcome = try await run(arguments, into: [UInt8]()) { $0.append(contentsOf: $1) }
@@ -37,7 +38,11 @@ extension Git {
         // a repository.
         if outcome.status == 1 { return nil }
         try Self.requireSuccess(outcome, arguments)
-        return String(decoding: outcome.output, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        let sha = String(decoding: outcome.output, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        // `^HEAD` passes `--verify` as a commit to leave out, and comes back
+        // as `^<sha>`, which `git diff` reads as the other end of a range:
+        // a line map from it would run the wrong way.
+        return !sha.isEmpty && sha.allSatisfy(\.isHexDigit) ? sha : nil
     }
 
     /// Whether the repository is a shallow clone, whose history stops

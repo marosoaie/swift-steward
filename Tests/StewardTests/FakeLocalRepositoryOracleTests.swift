@@ -6,13 +6,13 @@ import Testing
 /// StewardTesting's in-memory repository against the git reader: given a
 /// commit's regular files, it answers every path of that commit as the
 /// git reader does, at every limit, and paths the commit doesn't have too.
-@Suite("FakeRepositoryFiles against the git reader")
-struct FakeRepositoryFilesOracleTests {
+@Suite("FakeLocalRepository against the git reader")
+struct FakeLocalRepositoryOracleTests {
     @Test("on a repository of every kind of entry and hostile names, it answers as the git reader")
     func filesFixture() async throws {
         let fixture = try FilesFixture()
         defer { fixture.remove() }
-        let reader = GitRepositoryFilesTests.reader(of: fixture.repository)
+        let reader = GitRepositoryTests.reader(of: fixture.repository)
         try await Self.expectSameAnswers(of: reader, in: fixture.oracle, at: fixture.base)
         try await Self.expectSameAnswers(of: reader, in: fixture.oracle, at: fixture.head)
     }
@@ -24,11 +24,11 @@ struct FakeRepositoryFilesOracleTests {
     func realRepository() async throws {
         let head = try EventPayload.pullRequest("git-diff-parser-8").sha(of: "head")
         let mirror = try RepositoryMirror.local("git-diff-parser", having: [head])
-        let reader = GitRepositoryFiles(git: Git(directory: mirror.path))
+        let reader = GitRepository(git: Git(directory: mirror.path))
         try await Self.expectSameAnswers(of: reader, in: GitOracle(directory: mirror.path), at: head)
     }
 
-    /// Expects a `FakeRepositoryFiles` of `commit`'s regular files to
+    /// Expects a `FakeLocalRepository` of `commit`'s regular files to
     /// answer as `reader` for each regular file and each directory with
     /// one under it, and for paths that name nothing, at three limits.
     ///
@@ -36,7 +36,7 @@ struct FakeRepositoryFilesOracleTests {
     /// documentation: for those, and for a directory holding only those,
     /// it answers `.noSuchFile` where git says `.notRegularFile`.
     private static func expectSameAnswers(
-        of reader: GitRepositoryFiles,
+        of reader: GitRepository,
         in oracle: GitOracle,
         at commit: String
     ) async throws {
@@ -48,7 +48,7 @@ struct FakeRepositoryFilesOracleTests {
             return (pair.0, bytes)
         })
         #expect(files.count == regular.count, "every regular file reads")
-        let fake = FakeRepositoryFiles([commit: files])
+        let fake = FakeLocalRepository([commit: files])
 
         let directories = modes.filter { $0.value == "040000" }.keys.sorted().filter { directory in
             regular.contains { $0.utf8.starts(with: Array(directory.utf8) + [UInt8(ascii: "/")]) }

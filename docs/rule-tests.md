@@ -259,25 +259,25 @@ context a GitHub Actions run builds for a pull request with that diff:
   `Context.FixtureError`, naming the file and its first line that does.
 
 Every part of a `Context` is a `var`, so a test changes what it needs
-afterwards, such as `context.run.mode = .dryRun`, or `context.files`,
-for a rule that reads the merge base's files too, or one whose reads
-fail. `FakeRepositoryFiles` holds files by commit, and any
-`RepositoryFiles` of your own works; a reader you set isn't checked
+afterwards, such as `context.run.mode = .dryRun`, or
+`context.localRepository`, for a rule that reads the merge base's files
+too, or one whose reads fail. `FakeLocalRepository` holds files by commit, and any
+`LocalRepository` of your own works; a reader you set isn't checked
 against the diff:
 
 ```swift
 var context = try Context.fixture(diff: SampleDiff.toolsVersion)
-context.files = FakeRepositoryFiles([
+context.localRepository = FakeLocalRepository([
     context.git.head: ["Package.swift": Array(SampleSource.newPackage.utf8)],
     context.git.mergeBase: ["Package.swift": Array(SampleSource.oldPackage.utf8)],
 ])
 
-struct FailingFiles: RepositoryFiles {
+struct FailingFiles: LocalRepository {
     func contents(ofFileAt path: String, in commit: String, limit: Int) async throws -> FileContents {
         throw CancellationError()
     }
 }
-context.files = FailingFiles()
+context.localRepository = FailingFiles()
 ```
 
 ## The whole Dangerfile
@@ -405,8 +405,32 @@ macOS and Linux word differently.
 A report's paths resolve as in a run: a path to a file under the
 workspace is that file, and any other matches the pull request's path it
 ends with, so a CI runner's absolute paths work as they are. A fixture's
-line map is the identity, so the report's line numbers are the head's.
-Leave out `builtAt:`: it maps a report through git in the checkout, which
-a fixture doesn't have, so the rule reports a failure. `evaluate(_:)`
-drops what the rule logs; a whole run's log says how many
-diagnostics each report held, matched, and dropped.
+line map is the identity, so the report's line numbers are the head's,
+and a source built at the head itself (`builtAt: context.git.head`)
+reads the same. A source built at another commit maps through the
+context's reader, so give the reader the map from that commit to the
+head, read from the diff `git diff -U0 -M <head> <built>` prints, the
+head first, as a run reads it. With context lines, git can align a
+repeated line, such as a blank one, elsewhere, so a line would map to
+another or to none:
+
+```swift
+var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
+context.localRepository = FakeLocalRepository([:], lineMaps: [built: LineMap(diff: """
+    diff --git a/Sources/App.swift b/Sources/App.swift
+    index 2222222..7777777 100644
+    --- a/Sources/App.swift
+    +++ b/Sources/App.swift
+    @@ -0,0 +1,2 @@
+    +// A header
+    +// the base added
+
+    """)])
+let rule = Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log", builtAt: built)])
+```
+
+There, the report's `App.swift:4` is the head's line 2, and its lines 1
+and 2 have no head line, so they're dropped. A commit the reader
+doesn't know is one failure of the rule, as in a run whose checkout
+lacks it. `evaluate(_:)` drops what the rule logs; a whole run's log
+says how many diagnostics each report held, matched, and dropped.

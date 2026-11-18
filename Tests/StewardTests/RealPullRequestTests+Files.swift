@@ -24,14 +24,14 @@ extension RealPullRequestTests {
             "GITHUB_WORKSPACE": mirror.path,
             "GITHUB_SHA": merge,
         ])
-        #expect(context.files is GitRepositoryFiles)
+        #expect(context.localRepository is GitRepository)
         let oracle = GitOracle(directory: mirror.path)
         let git = context.git
         let paths = Array(Set(
             git.createdFiles + git.modifiedFiles + git.deletedFiles + git.renamedFiles.flatMap { [$0.from, $0.to] }
         )).sorted()
         #expect(!paths.isEmpty)
-        let reader = GitRepositoryFiles(git: Git(directory: mirror.path))
+        let reader = GitRepository(git: Git(directory: mirror.path))
 
         try await [(Context.Side.head, git.head), (.mergeBase, git.mergeBase)].asyncForEach { side, commit in
             let modes = try oracle.modes(at: commit)

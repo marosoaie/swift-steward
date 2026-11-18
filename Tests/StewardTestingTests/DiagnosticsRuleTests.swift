@@ -50,16 +50,81 @@ struct DiagnosticsRuleTests {
         #expect(findings.first?.text.hasPrefix("Couldn't read the xcodebuild log `build.log`") == true)
     }
 
-    @Test("a report built at another commit is a failure: a fixture has no checkout to map it through")
-    func builtAtAnotherCommit() async throws {
+    @Test("a report built at a commit the reader doesn't know is a failure naming it")
+    func builtAtUnknownCommit() async throws {
         let workspace = try ReportWorkspace(reports: ["build.log": Self.buildLog])
         defer { workspace.remove() }
         let context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
         let rule = Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log", builtAt: "abc1234")])
         let findings = try await rule.evaluate(context)
-        #expect(findings.map(\.kind) == [.failure])
-        let text = findings.first?.text ?? ""
-        #expect(text.hasPrefix("The xcodebuild log `build.log`, built at `abc1234`, can't be read"))
+        #expect(findings == [.failure("""
+            The xcodebuild log `build.log`, built at `abc1234`, can't be read: the checkout has no such commit.
+            """)])
+    }
+
+    /// The commit `builtLog` was built at, which put two lines above
+    /// App.swift's.
+    static let built = String(repeating: "b", count: 40)
+
+    /// `SampleDiff.mixed`'s head to `built`, as `git diff -U0 -M` writes
+    /// it.
+    static let headToBuilt = """
+        diff --git a/Sources/App.swift b/Sources/App.swift
+        index 2222222..7777777 100644
+        --- a/Sources/App.swift
+        +++ b/Sources/App.swift
+        @@ -0,0 +1,2 @@
+        +// A header
+        +// the base added
+
+        """
+
+    /// An xcodebuild log of `built`: on App.swift's added line, now line 4;
+    /// on the base's header, which the head doesn't have; and on
+    /// New.swift's added line, which the base left alone.
+    static let builtLog = """
+        /ci/checkout/Sources/App.swift:4:8: warning: imported module 'Logging' is never used
+        /ci/checkout/Sources/App.swift:1:1: warning: the base's own
+        /ci/checkout/Sources/New.swift:1:8: error: invalid redeclaration of 'New'
+        """
+
+    @Test("a report built at another commit maps to the head through the line map a test gives the reader")
+    func builtAtMappedCommit() async throws {
+        let workspace = try ReportWorkspace(reports: ["build.log": Self.builtLog])
+        defer { workspace.remove() }
+        var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
+        context.localRepository = FakeLocalRepository([:], lineMaps: [Self.built: LineMap(diff: Self.headToBuilt)])
+        let rule = Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log", builtAt: Self.built)])
+        #expect(try await rule.evaluate(context) == [
+            .warning("imported module 'Logging' is never used", at: Location(path: "Sources/App.swift", line: 2)),
+            .failure("invalid redeclaration of 'New'", at: Location(path: "Sources/New.swift", line: 1)),
+        ])
+    }
+
+    @Test("the rule asks the reader for the map to the head with the merge base's attributes, once per commit")
+    func builtAtRequest() async throws {
+        let workspace = try ReportWorkspace(reports: ["build.log": Self.builtLog, "other.log": Self.builtLog])
+        defer { workspace.remove() }
+        var context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
+        let files = RecordingLineMaps(files: FakeLocalRepository([:], lineMaps: [Self.built: .identity]))
+        context.localRepository = files
+        let rule = Rule.diagnosticsOnChangedLines(in: [
+            .xcodebuild("build.log", builtAt: Self.built),
+            .xcodebuild("other.log", builtAt: Self.built),
+        ])
+        _ = try await rule.evaluate(context)
+        #expect(await files.requests.all == [[Self.built, context.git.head, context.git.mergeBase]])
+    }
+
+    @Test("a report built at the head itself needs no line map")
+    func builtAtHead() async throws {
+        let workspace = try ReportWorkspace(reports: ["build.log": Self.buildLog])
+        defer { workspace.remove() }
+        let context = try Context.fixture(diff: SampleDiff.mixed, workspace: workspace.path)
+        let builtAtHead = Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log", builtAt: context.git.head)])
+        let unnamed = Rule.diagnosticsOnChangedLines(in: [.xcodebuild("build.log")])
+        #expect(try await builtAtHead.evaluate(context) == unnamed.evaluate(context))
+        #expect(try await builtAtHead.evaluate(context).count == 3)
     }
 
     @Test("a whole run fails on the error, and its log says what the report held")

@@ -1,14 +1,19 @@
 /// Reads files as a commit holds them, for rules that look at a file's
-/// contents.
+/// contents, and maps lines between commits, for rules that read build
+/// logs.
 ///
-/// `Context.files` is one. A real run's reads through git from the
+/// `Context.localRepository` is one. Local means the clone the run happens
+/// in, on a CI runner or anywhere else, not the hosted repository: a
+/// commit a shallow clone hasn't fetched, or a file a partial clone
+/// hasn't, isn't there to read. A real run's reads through git from the
 /// repository at `run.workspace`, so what it returns is the commit's, not
 /// the checkout's, whose tree may be another commit's and whose symbolic
-/// links lead anywhere. A test passes a reader of its own.
+/// links lead anywhere. A test passes a reader of its own. Through it, no
+/// rule runs git itself.
 ///
 /// A rule reads through `Context.contents(ofFileAt:at:limit:)`, which
 /// names the commit for it.
-public protocol RepositoryFiles: Sendable {
+public protocol LocalRepository: Sendable {
     /// The file at `path` in `commit`, read only when it's a regular file
     /// of at most `limit` bytes.
     ///
@@ -37,4 +42,28 @@ public protocol RepositoryFiles: Sendable {
     ///
     /// - Throws: As a single read throws, for any of the paths.
     func contents(ofFilesAt paths: [String], in commit: String, limit: Int) async throws -> [FileContents]
+
+    /// The SHA of the commit `name` names, or nil when the clone has none
+    /// by that name, as when a shallow clone hasn't fetched it.
+    ///
+    /// The git reader resolves names as `git rev-parse` does: a SHA or a
+    /// prefix of one, a branch, a tag, `HEAD`. The diagnostics rule asks
+    /// for the commit a source names with `builtAt:`. A reader that
+    /// doesn't give its own knows no commit by name.
+    ///
+    /// - Throws: When the lookup itself fails; never because no commit has
+    ///   the name.
+    func commit(named name: String) async throws -> String?
+
+    /// The map from the lines of the commit `built` to those of the commit
+    /// `head`; `.identity` when they're the same commit.
+    ///
+    /// The git reader reads it as a run reads `Run.lineMap`, from
+    /// `git diff -U0 -M <head> <built>` over the whole tree, with the
+    /// `.gitattributes` of the commit `mergeBase`. A reader that doesn't
+    /// give its own maps a commit only to itself.
+    ///
+    /// - Throws: When the map can't be read, such as when the repository
+    ///   lacks either commit.
+    func lineMap(from built: String, to head: String, attributesFrom mergeBase: String) async throws -> LineMap
 }

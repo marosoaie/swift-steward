@@ -1,4 +1,4 @@
-extension GitRepositoryFiles {
+extension GitRepository {
     /// An object as `git cat-file --batch` prints it.
     struct BatchObject: Sendable, Hashable {
         /// `blob` for a file's contents.

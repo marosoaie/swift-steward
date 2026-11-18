@@ -3,7 +3,7 @@ import Foundation
 import Testing
 
 /// Reads that fail, as they must, rather than answer wrongly or crash.
-extension GitRepositoryFilesTests {
+extension GitRepositoryTests {
     @Test("a commit the repository lacks, or one spelled as an option, fails the read", arguments: [
         String(repeating: "0", count: 40), "--output=/dev/null", "-p", "", "HEAD:Changed.swift",
     ])
@@ -48,7 +48,7 @@ extension GitRepositoryFilesTests {
             "GIT_GLOB_PATHSPECS": "1", "GIT_ICASE_PATHSPECS": "1", "GIT_NOGLOB_PATHSPECS": "1",
             "GIT_LITERAL_PATHSPECS": "0",
         ]
-        let reader = GitRepositoryFiles(git: Git(
+        let reader = GitRepository(git: Git(
             directory: fixture.repository.path,
             environment: TestRepository.runEnvironment(adding: variables)
         ))
@@ -148,7 +148,7 @@ extension GitRepositoryFilesTests {
                     .trimmingCharacters(in: .whitespacesAndNewlines)
             )
         }
-        let reader = GitRepositoryFiles(git: Git(
+        let reader = GitRepository(git: Git(
             directory: fixture.repository.path,
             environment: TestRepository.runEnvironment(adding: ["PATH": tools.path])
         ))

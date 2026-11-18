@@ -15,22 +15,24 @@ public struct Context: Sendable, Equatable {
     public var git: GitChanges
     /// Where Steward runs, and which commit the build logs come from.
     public var run: Run
-    /// Reads files from the merge base and the head commit, through git
-    /// in a real run. Rules read through `contents(ofFileAt:at:limit:)`.
-    public var files: any RepositoryFiles
+    /// The clone the run works in: the files of the merge base and the
+    /// head commit, and line maps between commits, through git in a real
+    /// run. Rules read files through `contents(ofFileAt:at:limit:)`.
+    public var localRepository: any LocalRepository
 
     /// Creates a context from its parts.
-    public init(pullRequest: PullRequest, git: GitChanges, run: Run, files: any RepositoryFiles) {
+    public init(pullRequest: PullRequest, git: GitChanges, run: Run, localRepository: any LocalRepository) {
         self.pullRequest = pullRequest
         self.git = git
         self.run = run
-        self.files = files
+        self.localRepository = localRepository
     }
 
     /// Whether two contexts hold the same pull request, changes, and run.
     ///
-    /// The readers in `files` aren't compared: a reader has no equality,
-    /// and a test's context equals a real run's when their data agree.
+    /// The readers in `localRepository` aren't compared: a reader has no
+    /// equality, and a test's context equals a real run's when their data
+    /// agree.
     public static func == (lhs: Context, rhs: Context) -> Bool {
         lhs.pullRequest == rhs.pullRequest && lhs.git == rhs.git && lhs.run == rhs.run
     }

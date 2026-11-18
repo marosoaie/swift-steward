@@ -3,12 +3,12 @@ import Testing
 
 /// The in-memory repository a fixture reads: the git reader's answers for
 /// the paths it holds.
-@Suite("FakeRepositoryFiles")
-struct FakeRepositoryFilesTests {
+@Suite("FakeLocalRepository")
+struct FakeLocalRepositoryTests {
     static let head = String(repeating: "4e", count: 20)
     static let base = String(repeating: "ba", count: 20)
 
-    static let files = FakeRepositoryFiles([
+    static let files = FakeLocalRepository([
         head: [
             "Sources/App/Loader.swift": Array("struct Loader {}\n".utf8),
             "README.md": Array("# App\n".utf8),
@@ -48,7 +48,7 @@ struct FakeRepositoryFilesTests {
     @Test("a file given at a path no file in git has isn't there, as in a run",
           arguments: ["./a.swift", "/a.swift", "a//b.swift", "a/../b.swift", "a.swift/", ""])
     func invalidPaths(path: String) async throws {
-        let files = FakeRepositoryFiles([Self.head: [path: Array("given\n".utf8)]])
+        let files = FakeLocalRepository([Self.head: [path: Array("given\n".utf8)]])
         #expect(try await files.contents(ofFileAt: path, in: Self.head, limit: .max) == .noSuchFile)
     }
 

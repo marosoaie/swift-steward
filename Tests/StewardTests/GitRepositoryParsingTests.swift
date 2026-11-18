@@ -5,8 +5,8 @@ import Testing
 /// the paths and numbers it's given: damaged output is refused or
 /// skipped, never trusted, and nothing traps.
 @Suite("Parsing what git prints for the file reader")
-struct GitRepositoryFilesParsingTests {
-    typealias TreeEntry = GitRepositoryFiles.TreeEntry
+struct GitRepositoryParsingTests {
+    typealias TreeEntry = GitRepository.TreeEntry
 
     static let first = String(repeating: "a1", count: 20)
     static let second = String(repeating: "b2", count: 20)
@@ -98,12 +98,12 @@ struct GitRepositoryFilesParsingTests {
 
     @Test("cat-file's output gives each object asked for, even contents that look like headers")
     func batchOutput() throws {
-        let parsed = try #require(GitRepositoryFiles.batch(Self.printed, of: Self.objects.map(\.id)))
+        let parsed = try #require(GitRepository.batch(Self.printed, of: Self.objects.map(\.id)))
         #expect(parsed.count == 3)
         Self.objects.forEach { object in
-            #expect(parsed[object.id] == GitRepositoryFiles.BatchObject(type: object.type, bytes: object.bytes))
+            #expect(parsed[object.id] == GitRepository.BatchObject(type: object.type, bytes: object.bytes))
         }
-        #expect(GitRepositoryFiles.batch([], of: []) == [:])
+        #expect(GitRepository.batch([], of: []) == [:])
     }
 
     /// Output `cat-file --batch` wouldn't print for the objects asked for.
@@ -126,14 +126,14 @@ struct GitRepositoryFilesParsingTests {
           arguments: damagedBatches.keys.sorted())
     func refusedBatch(damage: String) throws {
         let damaged = try #require(Self.damagedBatches[damage])
-        #expect(GitRepositoryFiles.batch(damaged.output, of: damaged.objects) == nil)
+        #expect(GitRepository.batch(damaged.output, of: damaged.objects) == nil)
     }
 
     @Test("every cut of cat-file's output short of its end is refused")
     func truncatedBatch() {
         let ids = Self.objects.map(\.id)
         let valid = Self.printed
-        #expect((0..<valid.count).allSatisfy { GitRepositoryFiles.batch(Array(valid.prefix($0)), of: ids) == nil })
+        #expect((0..<valid.count).allSatisfy { GitRepository.batch(Array(valid.prefix($0)), of: ids) == nil })
     }
 
     @Test("seeded noise in git's output never traps, and a batch that parses has every object asked for",
@@ -146,7 +146,7 @@ struct GitRepositoryFilesParsingTests {
         let alphabet = Array("0123456789 \t\n-abcdef".utf8) + [0, 0xFF]
         (0..<500).forEach { _ in
             let damagedBatch = Self.mutate(valid, alphabet: alphabet, using: &generator)
-            if let parsed = GitRepositoryFiles.batch(damagedBatch, of: ids) {
+            if let parsed = GitRepository.batch(damagedBatch, of: ids) {
                 #expect(Set(parsed.keys) == Set(ids))
             }
             let damagedTree = Self.mutate(tree, alphabet: alphabet, using: &generator)
@@ -178,16 +178,16 @@ struct GitRepositoryFilesParsingTests {
     func calls() {
         let paths = ["a", "bb", "ccc", String(repeating: "d", count: 20), "e", "ff"].map { Array($0.utf8) }
         // Each path counts its length and a separator: 2 + 3 + 4 fill 9.
-        let calls = GitRepositoryFiles.calls(for: paths, upTo: 9)
+        let calls = GitRepository.calls(for: paths, upTo: 9)
         #expect(calls.map { $0.map { String(decoding: $0, as: UTF8.self) } } == [
             ["a", "bb", "ccc"], [String(repeating: "d", count: 20)], ["e", "ff"],
         ])
         #expect(calls.flatMap(\.self) == paths)
-        #expect(GitRepositoryFiles.calls(for: [], upTo: 9).isEmpty)
-        #expect(GitRepositoryFiles.calls(for: paths, upTo: .max) == [paths])
+        #expect(GitRepository.calls(for: [], upTo: 9).isEmpty)
+        #expect(GitRepository.calls(for: paths, upTo: .max) == [paths])
         // No budget, or a nonsensical one, still gives every path a call.
         [0, -1, .min].forEach { budget in
-            #expect(GitRepositoryFiles.calls(for: paths, upTo: budget) == paths.map { [$0] })
+            #expect(GitRepository.calls(for: paths, upTo: budget) == paths.map { [$0] })
         }
     }
 
@@ -198,7 +198,7 @@ struct GitRepositoryFilesParsingTests {
         ("a/..", false), ("../a", false), ("a\u{0}b", false), ("\u{0}", false),
     ])
     func treePath(path: String, isValid: Bool) {
-        #expect(GitRepositoryFiles.treePath(path) == (isValid ? Array(path.utf8) : nil))
+        #expect(GitRepository.treePath(path) == (isValid ? Array(path.utf8) : nil))
     }
 
     @Test("a decimal is all ASCII digits and fits in an Int", arguments: [
@@ -207,6 +207,6 @@ struct GitRepositoryFilesParsingTests {
         (" 1", nil), ("1 ", nil), ("1a", nil), ("\u{661}", nil), ("\u{FF11}", nil),
     ] as [(String, Int?)])
     func decimal(text: String, value: Int?) {
-        #expect(GitRepositoryFiles.decimal(Array(text.utf8)) == value)
+        #expect(GitRepository.decimal(Array(text.utf8)) == value)
     }
 }
