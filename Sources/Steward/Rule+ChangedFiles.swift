@@ -24,10 +24,12 @@ extension Rule {
     ///
     /// The run's log names each file that's skipped: a symbolic link or a
     /// submodule, which has no contents to check, and a file over `limit`
-    /// bytes. One that can't be read is a failure, and isn't checked:
+    /// bytes. Git gives no mode for a link or a submodule it only renames,
+    /// so a rename without one is skipped too when the head has no regular
+    /// file there. One that can't be read is a failure, and isn't checked:
     ///
-    /// - one the head doesn't have, or has as something other than a
-    ///   regular file, though the diff lists it;
+    /// - one the head doesn't have, or has as something other than the
+    ///   regular file the diff says it is;
     /// - one whose name isn't UTF-8: a `String` can't name it, and its
     ///   name decoded could be another file's.
     ///
@@ -67,7 +69,7 @@ extension Rule {
                 for (entry, contents) in zip(batch, read) {
                     try Task.checkCancellation()
                     guard case .bytes(let bytes) = contents else {
-                        findings += [unreadFinding(for: contents, at: entry.path, name: name, limit: limit, log: log)]
+                        findings += [unreadFinding(for: contents, of: entry, name: name, limit: limit, log: log)]
                             .compactMap(\.self)
                         continue
                     }
@@ -80,20 +82,25 @@ extension Rule {
     }
 
     /// For a file read without its bytes: nil once the log says it was
-    /// over the limit, or the failure for a file the head doesn't have as
-    /// a regular file.
+    /// skipped, or the failure for a file the head doesn't have as the
+    /// regular file the diff says it is.
     private static func unreadFinding(
         for contents: FileContents,
-        at path: String,
+        of entry: (file: DiffFile, path: String),
         name: String,
         limit: Int,
         log: Log
     ) -> Finding? {
+        let path = entry.path
         let reason: String
         switch contents {
         case .bytes: return nil
         case .tooLarge(let size):
             log.write("\(name): skipped \(path), \(size) bytes, over the limit of \(limit)")
+            return nil
+        case .notRegularFile where entry.file.header.newMode == nil:
+            // A link or a submodule git only renames: it writes no mode.
+            log.write("\(name): skipped \(path), not a regular file at the head")
             return nil
         case .noSuchFile: reason = "the diff lists it at the head, and the head has no such file"
         case .notRegularFile:

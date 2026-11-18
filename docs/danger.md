@@ -312,8 +312,12 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
 - **Skipped, in the log.** A symbolic link or a submodule, which has no
   contents to check, and a file over `limit:` (1 MiB by default), as
   `JSON: skipped big.json, 2097152 bytes, over the limit of 1048576`.
+  Git gives no mode for a link or a submodule it only renames, so a
+  rename without one is skipped too when the head has no regular file
+  there.
 - **Failed, never skipped.** A file the diff lists at the head that the
-  head doesn't have, or has as something other than a regular file. Also
+  head doesn't have, or has as something other than the regular file
+  the diff says it is. Also
   a name that isn't UTF-8: `GitChanges`' lists decode it lossily, so
   `caf<E9>.swift` reads as `caf\u{FFFD}.swift`, which may be another
   file. Its failure names it in git's quoting, `caf\351.swift`.
