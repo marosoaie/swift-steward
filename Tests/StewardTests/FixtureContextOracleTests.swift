@@ -86,6 +86,7 @@ struct FixtureContextOracleTests {
         given.run.lineMap = real.run.lineMap
         let isReal = given == real
         #expect(isReal, "the fixture differs from the real context beyond the merge base and the built commit")
+        _ = try Context.fixture(diff: try await Self.diffText(of: real, in: mirror, contextLines: 0), files: files)
         try await files.asyncForEach { path, text in
             let read = try await given.contents(ofFileAt: path)
             #expect(read == .bytes(Array(text.utf8)), "\(path)")
@@ -120,6 +121,17 @@ struct FixtureContextOracleTests {
         let compare = try await RepositoryMirror.compareDiff(of: range.repository, from: baseTag, to: headTag)
         let fromGitHub = try Context.fixture(diff: compare, files: files)
         Self.expectSameFilesAndLines(fromGitHub.git, real.git)
+
+        // Without context, a hunk that only deletes keeps the line before
+        // what it deletes; the check accepts the real files with git's
+        // own such hunks.
+        let withoutContext = try Context.fixture(
+            diff: try await Self.diffText(of: real, in: mirror, contextLines: 0),
+            files: files
+        )
+        #expect(withoutContext.git.diff.files.contains { file in
+            file.header.change == .modified && file.hunks.contains { $0.header.newCount == 0 }
+        })
 
         // The check bites on real files too: a line put before the first
         // of the file the diff says most about moves every line it checks.
@@ -163,11 +175,11 @@ struct FixtureContextOracleTests {
     }
 
     /// The text of the diff a run reads for `context`: git's, with the
-    /// options Steward pins.
-    private static func diffText(of context: Context, in mirror: URL) async throws -> String {
+    /// options Steward pins, and `contextLines` lines of context.
+    private static func diffText(of context: Context, in mirror: URL, contextLines: Int = 3) async throws -> String {
         let output = try await Git(directory: mirror.path).output(
             Git.diffConfiguration + ["diff"] + Git.diffOptions
-                + ["--unified=3", context.git.mergeBase, context.git.head, "--"]
+                + ["--unified=\(contextLines)", context.git.mergeBase, context.git.head, "--"]
         )
         return String(decoding: output, as: UTF8.self)
     }
