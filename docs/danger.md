@@ -328,7 +328,8 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
 - **Read in batches.** `RepositoryFiles` has a batch read beside the
   single one. A reader that doesn't give its own reads each path in
   turn; the git reader runs the same two git processes for a batch as
-  for one file, and one more `ls-tree` for each further 64 KiB of paths.
+  for one file, and one more `ls-tree` for each further 64 KiB of paths,
+  and on macOS for each further 5,000 paths.
   A batch holds up to 64 MiB of files at `limit:` per file, 64 files at
   the default, which the git reader holds twice while it parses them, so
   memory stays bounded, at about twice that, however many files match.
