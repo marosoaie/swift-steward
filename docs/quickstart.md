@@ -140,13 +140,17 @@ elsewhere, on a line the pull request broke without changing it or with
 no line at all, such as a linker's, are one more failure that lists
 them; a lint report's are left out.
 
-**Rules about Swift source.** For rules about the code itself, such as
-"a class is `final`" or "a public function has a doc comment", add
+### Rules about Swift source
+
+For rules about the code itself, such as "a class is `final`" or "a
+public function has a doc comment", add
 [steward-lang-swift](https://github.com/marosoaie/steward-lang-swift). It
 parses each Swift file the pull request changes with swift-syntax into
 its types, functions, members and imports, and keeps what a rule finds
 about the code the pull request changed. In `Dangerfile/Package.swift`,
-add it beside swift-steward:
+add it beside swift-steward, at the requirement its README's
+[Setting up](https://github.com/marosoaie/steward-lang-swift#setting-up)
+gives for your Steward minor release; for Steward 0.3, that's:
 
 ```swift
 .package(url: "https://github.com/marosoaie/steward-lang-swift.git", .upToNextMinor(from: "0.2.0")),
@@ -174,7 +178,7 @@ static let finalClasses = Rule.swiftSource("Final classes") { file in
 A rule like this reads the files, so its test gives each Swift file the
 diff changes in the fixture's `files:`. So do the template's tests of
 the whole Dangerfile once `rules` lists it, since a file the diff lists
-but `files:` leaves out is a failure
+but `files:` leaves out is a failure: "the head has no such file"
 ([A rule that reads files](rule-tests.md#a-rule-that-reads-files)).
 
 The template leaves it out because swift-syntax is a large build: on an
