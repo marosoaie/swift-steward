@@ -240,8 +240,9 @@ iteration), never narration of the next line.
   only after steward-lang-swift releases a version that requires the new
   Steward minor.
   The quickstart's two pins of steward-action and `pr.yml`'s name the
-  Action's latest release, `@v0.1.1`, as git-diff-parser's `ci.yml` does;
-  a new release of the Action moves them all to its tag.
+  Action's latest release, `@v0.2.0`, as git-diff-parser's and
+  steward-lang-swift's do; a new release of the Action moves them all to
+  its tag.
   Versions restarted at 0.1.0 on 2026-11-02 (v1.0.0–v2.0.0 were
   withdrawn). Under 0.x a minor release may break, so workflows pin an
   exact tag such as `@v0.1.1`, or a SHA; a moving `v1` tag waits for 1.0,
