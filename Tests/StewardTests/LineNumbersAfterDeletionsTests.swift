@@ -177,8 +177,10 @@ struct LineNumbersAfterDeletionsTests {
             Self.functionSpans(in: file.contents).compactMap { name, lineRange in
                 file.changedLineNumbers.overlaps(lineRange) || file.lineNumbersAfterDeletions.overlaps(lineRange)
                     ? .message("Changes `\(name)`", at: Location(path: file.path, line: lineRange.lowerBound)) : nil
-            } + [.markdown("changed: \(file.changedLineNumbers.allLineNumbers), "
-                + "after: \(file.lineNumbersAfterDeletions.allLineNumbers)")]
+            } + [.markdown("""
+                changed: \(file.changedLineNumbers.allLineNumbers), \
+                after: \(file.lineNumbersAfterDeletions.allLineNumbers)
+                """)]
         }
         let findings = try await rule.evaluate(context)
         #expect(findings == [
