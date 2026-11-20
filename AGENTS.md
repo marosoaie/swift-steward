@@ -229,14 +229,14 @@ iteration), never narration of the next line.
   The maintainer drives version numbers — never change the version outside
   this procedure.
   Users start from the latest minor release,
-  `.upToNextMinor(from: "0.3.0")`, in `Templates/Dangerfile/Package.swift`,
+  `.upToNextMinor(from: "0.4.0")`, in `Templates/Dangerfile/Package.swift`,
   `docs/quickstart.md`, `docs/rule-tests.md`, and the README, and in the
   `Dangerfile/Package.swift` of git-diff-parser and of steward-action; a
   new minor release moves them all to it. The quickstart's tarball URL
   names the latest release's tag; every release's version-bump PR moves
   it to the new tag, so each tag's quickstart copies that tag's template.
   The quickstart's pin of steward-lang-swift names steward-lang-swift's
-  latest release. Steward's version-bump PR leaves it alone: it moves
+  latest minor release. Steward's version-bump PR leaves it alone: it moves
   only after steward-lang-swift releases a version that requires the new
   Steward minor.
   The quickstart's two pins of steward-action and `pr.yml`'s name the

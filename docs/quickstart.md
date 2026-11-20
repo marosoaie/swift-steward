@@ -17,8 +17,8 @@ From your repository's root, copy the template and check that it builds
 and its tests pass:
 
 ```sh
-curl -fsSL https://github.com/marosoaie/swift-steward/archive/refs/tags/v0.3.0.tar.gz \
-  | tar -xz --strip-components=2 swift-steward-0.3.0/Templates/Dangerfile
+curl -fsSL https://github.com/marosoaie/swift-steward/archive/refs/tags/v0.4.0.tar.gz \
+  | tar -xz --strip-components=2 swift-steward-0.4.0/Templates/Dangerfile
 swift build --package-path Dangerfile
 swift test --package-path Dangerfile
 ```
@@ -48,9 +48,9 @@ sources in your repository, though, so scripts, linters and rules that
 pick files by path see it now; exclude `Dangerfile/` where they should
 skip it.
 
-**Steward's version.** The template depends on swift-steward 0.3.x, at
+**Steward's version.** The template depends on swift-steward 0.4.x, at
 the release `Package.resolved` pins, and
-`swift package update --package-path Dangerfile` takes 0.3.x's fixes.
+`swift package update --package-path Dangerfile` takes 0.4.x's fixes.
 Under 0.x a minor release may break, so moving to the next one is an
 edit of the requirement in `Dangerfile/Package.swift`.
 
@@ -150,8 +150,11 @@ its types, functions, members and imports, and keeps what a rule finds
 about the code the pull request changed. In `Dangerfile/Package.swift`,
 add it beside swift-steward. Its README's
 [Setting up](https://github.com/marosoaie/steward-lang-swift#setting-up)
-shows the requirement and the Steward minor release it goes with; for
-Steward 0.3, that's:
+shows the requirement and the Steward minor release it goes with. Its
+release for Steward 0.4 follows Steward 0.4.0; until then, a Dangerfile
+that uses it stays on Steward 0.3, with swift-steward at
+`.upToNextMinor(from: "0.3.0")` in place of the template's requirement.
+For Steward 0.3, its requirement is:
 
 ```swift
 .package(url: "https://github.com/marosoaie/steward-lang-swift.git", .upToNextMinor(from: "0.2.0")),

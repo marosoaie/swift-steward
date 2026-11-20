@@ -44,8 +44,8 @@ A group runs its rules only when the pull request changes a file its
 pattern matches, in git's `:(glob)` syntax, or when a condition of your
 own holds, and the run's log names the rules it skipped.
 
-Steward is at 0.3. Until 1.0, a minor release may change its API, so a
-Dangerfile depends on 0.3.x.
+Steward is at 0.4. Until 1.0, a minor release may change its API, so a
+Dangerfile depends on 0.4.x.
 
 ## Where to start
 
@@ -259,8 +259,8 @@ needs:
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/marosoaie/git-diff-parser.git", .upToNextMinor(from: "0.3.0")),
-.package(url: "https://github.com/marosoaie/swift-steward.git", .upToNextMinor(from: "0.3.0")),
+.package(url: "https://github.com/marosoaie/git-diff-parser.git", .upToNextMinor(from: "0.4.0")),
+.package(url: "https://github.com/marosoaie/swift-steward.git", .upToNextMinor(from: "0.4.0")),
 // target dependencies (pick what you need):
 .product(name: "GitDiffKit", package: "git-diff-parser"),
 .product(name: "BuildLogKit", package: "swift-steward"),
