@@ -231,6 +231,10 @@ iteration), never narration of the next line.
   new minor release moves them all to it. The quickstart's tarball URL
   names the latest release's tag; every release's version-bump PR moves
   it to the new tag, so each tag's quickstart copies that tag's template.
+  The quickstart's pin of steward-lang-swift names steward-lang-swift's
+  latest release. Steward's version-bump PR leaves it alone: it moves
+  only after steward-lang-swift releases a version that requires the new
+  Steward minor.
   The quickstart's two pins of steward-action and `pr.yml`'s name the
   Action's latest release, `@v0.1.1`, as git-diff-parser's `ci.yml` does;
   a new release of the Action moves them all to its tag.
