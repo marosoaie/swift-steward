@@ -23,7 +23,7 @@ enum ChangedLineDiagnostics {
         in context: Context,
         log: Log
     ) async throws -> [Finding] {
-        let changes = context.git.changedLines
+        let changes = context.git.changedLineNumbers
         let lineMaps = await lineMaps(for: sources, in: context)
         var findings: [Finding] = []
         var reported: Set<MatchedDiagnostic> = []
@@ -76,7 +76,7 @@ enum ChangedLineDiagnostics {
     private static func diagnosticsOnChangedLines(
         of source: DiagnosticSource,
         in context: Context,
-        changes: ChangedLines,
+        changes: ChangedLineNumbers,
         lineMaps: [String: Result<BuiltLineMap, LineMapError>],
         log: Log
     ) async -> Result<Matches, UnreadableSource> {
@@ -192,7 +192,7 @@ enum ChangedLineDiagnostics {
     static func matched(
         _ diagnostics: [Diagnostic],
         lineMap: LineMap,
-        changes: ChangedLines,
+        changes: ChangedLineNumbers,
         workspace: String
     ) -> Matches {
         var resolver = DiagnosticPathResolver(

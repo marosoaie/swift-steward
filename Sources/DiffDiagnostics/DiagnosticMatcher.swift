@@ -69,7 +69,7 @@ public enum DiagnosticMatcher {
     /// - Returns: The matching diagnostics, repo-relative and sorted.
     public static func match(
         _ diagnostics: [Diagnostic],
-        against changes: ChangedLines,
+        against changes: ChangedLineNumbers,
         repoRoot: String? = nil,
         tolerance: Int = 0
     ) -> [MatchedDiagnostic] {

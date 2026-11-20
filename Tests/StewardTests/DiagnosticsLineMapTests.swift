@@ -33,7 +33,7 @@ struct DiagnosticsLineMapTests {
         return parser.finalize().map
     }()
 
-    private static let changes = ChangedLines(files: [
+    private static let changes = ChangedLineNumbers(files: [
         "a.swift": LineRangeSet([3...3]),
         "old.swift": LineRangeSet([5...5]),
     ])

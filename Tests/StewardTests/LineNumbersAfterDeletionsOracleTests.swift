@@ -4,7 +4,7 @@ import GitDiffKit
 import StewardTesting
 import Testing
 
-/// `GitChanges.linesAfterDeletions` against `git diff --unified=0` on real
+/// `GitChanges.lineNumbersAfterDeletions` against `git diff --unified=0` on real
 /// pull requests: each hunk that deletes lines gives `newStart + 1` when
 /// it adds none, and `newStart` when it adds some.
 ///
@@ -27,7 +27,7 @@ import Testing
     .serialized,
     .enabled(if: ProcessInfo.processInfo.environment["GIT_DIFF_PARSER_SKIP_NETWORK_TESTS"] == nil)
 )
-struct LinesAfterDeletionsOracleTests {
+struct LineNumbersAfterDeletionsOracleTests {
     @Test("on this project's merged pull requests, the lines after deletions are git's", arguments: [
         "swift-steward-17", "swift-steward-20", "swift-steward-22", "swift-steward-24", "swift-steward-26",
         "git-diff-parser-1", "git-diff-parser-2", "git-diff-parser-5", "git-diff-parser-8",
@@ -111,19 +111,19 @@ struct LinesAfterDeletionsOracleTests {
         let withoutContext = try Self.headFiles(of: Context.fixture(diff: text).git.diff)
         let withContext = Self.headFiles(of: context.git.diff)
         #expect(Set(withContext.keys) == Set(withoutContext.keys))
-        let steward = context.git.linesAfterDeletions
+        let steward = context.git.lineNumbersAfterDeletions
         return withoutContext.sorted { $0.key < $1.key }.reduce(into: Tally()) { tally, entry in
             let (path, file) = entry
             let hunks = Set(file.hunks.filter { $0.header.oldCount > 0 }.map { hunk in
                 hunk.header.newCount == 0 ? hunk.header.newStart + 1 : hunk.header.newStart
             })
             let gits = DiffAlignment(of: file)
-            #expect(gits.linesAfterDeletions == hunks, "the alignment's rule isn't git's in \(path)")
+            #expect(gits.lineNumbersAfterDeletions == hunks, "the alignment's rule isn't git's in \(path)")
             tally.deletions += file.hunks.count { $0.header.oldCount > 0 }
             guard let read = withContext[path] else { return }
             let stewards = DiffAlignment(of: read)
-            let lines = Set(steward.files[path]?.allLines ?? [])
-            #expect(lines == stewards.linesAfterDeletions, "\(path)")
+            let lines = Set(steward.files[path]?.allLineNumbers ?? [])
+            #expect(lines == stewards.lineNumbersAfterDeletions, "\(path)")
             guard lines != hunks else { return }
             #expect(stewards.change == gits.change, "\(path): another change")
             tally.realigned.append(Realignment(
@@ -175,7 +175,7 @@ struct DiffAlignment {
     /// before it)` lines above it, and git writes a gap's deletions
     /// before its additions, so the line after it is one past the
     /// head's `k`th kept line: `k` plus the added lines up to there.
-    var linesAfterDeletions: Set<Int> {
+    var lineNumbersAfterDeletions: Set<Int> {
         let runs = deleted.indices.filter { $0 == 0 || deleted[$0 - 1] != deleted[$0] - 1 }
         // Runs and kept lines both ascend, so one pass over `added`.
         let state = runs.reduce(into: (consumed: 0, lines: Set<Int>())) { state, index in

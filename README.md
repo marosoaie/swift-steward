@@ -251,7 +251,7 @@ needs:
 
 | Product | What it does |
 |---|---|
-| `GitDiffKit` | Unified git diffs → changed files and line ranges (`ChangedLines`, `DiffEventParser`). From the [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library |
+| `GitDiffKit` | Unified git diffs → changed files and line ranges (`ChangedLineNumbers`, `DiffEventParser`). From the [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library |
 | `BuildLogKit` | Build/lint logs → diagnostics. `ClangStyleLogParser` handles any clang-style log; `XcodeLogParser`, `SwiftLintLogParser`, and `SwiftFormatLogParser` additionally extract the violated rule. All conform to `LogParsing` |
 | `DiffDiagnostics` | The join: `DiagnosticMatcher` filters diagnostics to the lines a diff touches (depends on both of the above) |
 | `Steward` | A pure-Swift Danger: a `Dangerfile` package's rules, and a built-in one for build and lint diagnostics on changed lines, check a pull request in GitHub Actions and post one summary comment ([quickstart](docs/quickstart.md), [design](docs/danger.md)). Re-exports `GitDiffKit` |
@@ -277,9 +277,9 @@ import GitDiffKit
 
 // Whole-string convenience — or stream chunks through a DiffEventParser
 // for inputs that shouldn't be held in memory:
-var parser = DiffEventParser(consumer: ChangedLines.Collector())
+var parser = DiffEventParser(consumer: ChangedLineNumbers.Collector())
 while let chunk = nextChunk() { parser.consume(chunk) }   // [UInt8], ArraySlice<UInt8>, or String
-let changes = parser.finalize().changedLines              // == ChangedLines(diff: wholeText)
+let changes = parser.finalize().changedLineNumbers        // == ChangedLineNumbers(diff: wholeText)
 
 changes.contains(line: 42, in: "Sources/App/Foo.swift")   // binary search
 let kept = DiagnosticMatcher.match(

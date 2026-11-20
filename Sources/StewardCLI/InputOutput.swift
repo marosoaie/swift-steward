@@ -50,14 +50,14 @@ func withAutoreleasePool<Result>(_ body: () throws -> Result) rethrows -> Result
     #endif
 }
 
-extension ChangedLines {
+extension ChangedLineNumbers {
     /// Parses the diff at `pathArgument` ("-" for stdin) without loading it
     /// into memory at once.
     init(streamingFrom pathArgument: String) throws {
-        var parser = DiffEventParser(consumer: ChangedLines.Collector())
+        var parser = DiffEventParser(consumer: ChangedLineNumbers.Collector())
         // GitDiffKit doesn't import Foundation, so it takes bytes, not Data.
         try forEachChunk(ofInput: pathArgument) { parser.consume([UInt8]($0)) }
-        self = parser.finalize().changedLines
+        self = parser.finalize().changedLineNumbers
     }
 }
 

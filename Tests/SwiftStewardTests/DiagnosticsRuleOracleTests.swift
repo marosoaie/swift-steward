@@ -80,16 +80,16 @@ struct DiagnosticsRuleOracleTests {
         "the lines the rule matches against are the ones filter reads from the same real diff",
         arguments: [RealWorldFixture.swiftArgumentParser, .redis]
     )
-    func changedLines(fixture: RealWorldFixture) async throws {
+    func changedLineNumbers(fixture: RealWorldFixture) async throws {
         let bytes = [UInt8](try Data(contentsOf: try await RealWorldFixtureStore.localDiffURL(for: fixture)))
         let changes = GitChanges(diff: Diff(diff: bytes), commits: [], mergeBase: "a", head: "b")
-        let expected = ChangedLines(diff: String(decoding: bytes, as: UTF8.self))
-        #expect(changes.changedLines == expected)
+        let expected = ChangedLineNumbers(diff: String(decoding: bytes, as: UTF8.self))
+        #expect(changes.changedLineNumbers == expected)
         // One file's lines, read alone, are that file's in the whole set,
         // for every path the diff has at the head, deleted ones included.
         let paths = Set(changes.diff.files.compactMap { $0.header.newPath?.string ?? $0.header.oldPath?.string })
         #expect(paths.count > 50)
-        let differing = paths.filter { changes.changedLines(in: $0) != expected.files[$0] ?? LineRangeSet() }
+        let differing = paths.filter { changes.changedLineNumbers(in: $0) != expected.files[$0] ?? LineRangeSet() }
         #expect(differing.isEmpty)
     }
 

@@ -71,14 +71,14 @@ struct RealWorldDiffTests {
 
     /// Parses a diff file through the streaming interface in 4 MiB chunks,
     /// the same way the CLI does.
-    static func parseStreaming(contentsOf url: URL) throws -> ChangedLines {
-        var parser = DiffEventParser(consumer: ChangedLines.Collector())
+    static func parseStreaming(contentsOf url: URL) throws -> ChangedLineNumbers {
+        var parser = DiffEventParser(consumer: ChangedLineNumbers.Collector())
         let handle = try FileHandle(forReadingFrom: url)
         defer { try? handle.close() }
         while let chunk = try readChunk(from: handle), !chunk.isEmpty {
             parser.consume([UInt8](chunk))
         }
-        return parser.finalize().changedLines
+        return parser.finalize().changedLineNumbers
     }
 
     private static func readChunk(from handle: FileHandle) throws -> Data? {

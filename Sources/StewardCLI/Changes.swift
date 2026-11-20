@@ -31,7 +31,7 @@ struct Changes: ParsableCommand {
     var format: OutputFormat = .json
 
     func run() throws {
-        let changes = try ChangedLines(streamingFrom: diffPath)
+        let changes = try ChangedLineNumbers(streamingFrom: diffPath)
 
         switch format {
         case .json:
