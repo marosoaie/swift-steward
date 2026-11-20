@@ -140,6 +140,53 @@ elsewhere, on a line the pull request broke without changing it or with
 no line at all, such as a linker's, are one more failure that lists
 them; a lint report's are left out.
 
+**Rules about Swift source.** For rules about the code itself, such as
+"a class is `final`" or "a public function has a doc comment", add
+[steward-lang-swift](https://github.com/marosoaie/steward-lang-swift). It
+parses each Swift file the pull request changes with swift-syntax into
+its types, functions, members and imports, and keeps what a rule finds
+about the code the pull request changed. In `Dangerfile/Package.swift`,
+add it beside swift-steward:
+
+```swift
+.package(url: "https://github.com/marosoaie/steward-lang-swift.git", .upToNextMinor(from: "0.2.0")),
+```
+
+and its library to the `Dangerfile` target's dependencies:
+
+```swift
+.product(name: "StewardSwift", package: "steward-lang-swift"),
+```
+
+Then, in `Checks.swift`, `import StewardSwift` in place of
+`import Steward`, which it brings with it, and list rules such as this
+one, from its README's worked rules, in `rules`:
+
+```swift
+/// A class is `final`, unless it's `open`.
+static let finalClasses = Rule.swiftSource("Final classes") { file in
+    file.types
+        .filter { $0.kind == .class && !$0.isFinal && $0.access.level < .open }
+        .map { .warning("Class \(Markdown.codeSpan($0.name)) isn't `final`.", at: $0.location) }
+}
+```
+
+A rule like this reads the files, so its test gives each Swift file the
+diff changes in the fixture's `files:`. So do the template's tests of
+the whole Dangerfile once `rules` lists it, since a file the diff lists
+but `files:` leaves out is a failure
+([A rule that reads files](rule-tests.md#a-rule-that-reads-files)).
+
+The template leaves it out because swift-syntax is a large build: on an
+M4, it takes the template's cold build from about 16 s to about 26 s,
+which a repository with no rules about Swift source shouldn't pay.
+steward-action's cache saves that on later runs, until
+`Package.resolved` changes. Each steward-lang-swift release builds
+against one Steward minor release, so moving to Steward's next minor
+release waits for a steward-lang-swift release that takes it. Its
+[README](https://github.com/marosoaie/steward-lang-swift#readme) lists
+what a rule can read, has more worked rules, and shows how to test them.
+
 ## 3. Run it on pull requests
 
 ### With the Action
