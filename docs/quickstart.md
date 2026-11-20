@@ -148,9 +148,10 @@ public function has a doc comment", add
 parses each Swift file the pull request changes with swift-syntax into
 its types, functions, members and imports, and keeps what a rule finds
 about the code the pull request changed. In `Dangerfile/Package.swift`,
-add it beside swift-steward, at the requirement its README's
+add it beside swift-steward. Its README's
 [Setting up](https://github.com/marosoaie/steward-lang-swift#setting-up)
-gives for your Steward minor release; for Steward 0.3, that's:
+shows the requirement and the Steward minor release it goes with; for
+Steward 0.3, that's:
 
 ```swift
 .package(url: "https://github.com/marosoaie/steward-lang-swift.git", .upToNextMinor(from: "0.2.0")),
@@ -184,8 +185,9 @@ but `files:` leaves out is a failure: "the head has no such file"
 The template leaves it out because swift-syntax is a large build: on an
 M4, it takes the template's cold build from about 16 s to about 26 s,
 which a repository with no rules about Swift source shouldn't pay.
-steward-action's cache saves that on later runs, until
-`Package.resolved` changes. Each steward-lang-swift release builds
+steward-action's cache saves that on a pull request's later runs, until
+`Package.resolved` changes; the workflow runs on pull requests only, so
+each one's first run builds cold. Each steward-lang-swift release builds
 against one Steward minor release, so moving to Steward's next minor
 release waits for a steward-lang-swift release that takes it. Its
 [README](https://github.com/marosoaie/steward-lang-swift#readme) lists
