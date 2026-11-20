@@ -4,10 +4,10 @@ import GitDiffKit
 import StewardTesting
 import Testing
 
-/// `GitChanges.linesAfterDeletions` and `ChangedFile.linesAfterDeletions`:
+/// `GitChanges.lineNumbersAfterDeletions` and `ChangedFile.lineNumbersAfterDeletions`:
 /// the head line that stands where each run of deleted lines was.
 @Suite("Lines after deletions")
-struct LinesAfterDeletionsTests {
+struct LineNumbersAfterDeletionsTests {
     /// A change to `A.swift`, as one hunk or more.
     enum Change: String, CaseIterable {
         case inside, rewrite, atTheEnd, emptied, twoRuns, beforeNoNewline
@@ -51,12 +51,12 @@ struct LinesAfterDeletionsTests {
             +++ b/A.swift
             \(change.hunks)
             """).git
-        #expect(git.linesAfterDeletions.files["A.swift"]?.allLines == change.expected)
-        #expect(git.linesAfterDeletions(in: "A.swift").allLines == change.expected)
-        #expect(git.linesAfterDeletions(in: "B.swift").isEmpty)
+        #expect(git.lineNumbersAfterDeletions.files["A.swift"]?.allLineNumbers == change.expected)
+        #expect(git.lineNumbersAfterDeletions(in: "A.swift").allLineNumbers == change.expected)
+        #expect(git.lineNumbersAfterDeletions(in: "B.swift").isEmpty)
     }
 
-    @Test("a created, deleted or only renamed file gives no line, and changedLines doesn't count a deletion")
+    @Test("a created, deleted or only renamed file gives no line, and changedLineNumbers doesn't count a deletion")
     func noLines() throws {
         let git = try Context.fixture(diff: """
             diff --git a/New.swift b/New.swift
@@ -88,9 +88,9 @@ struct LinesAfterDeletionsTests {
              c
 
             """).git
-        #expect(git.linesAfterDeletions == ChangedLines(files: ["A.swift": LineRangeSet([2...2])]))
-        #expect(git.linesAfterDeletions(in: "Gone.swift").isEmpty)
-        #expect(git.changedLines == ChangedLines(files: ["New.swift": LineRangeSet([1...1])]))
+        #expect(git.lineNumbersAfterDeletions == ChangedLineNumbers(files: ["A.swift": LineRangeSet([2...2])]))
+        #expect(git.lineNumbersAfterDeletions(in: "Gone.swift").isEmpty)
+        #expect(git.changedLineNumbers == ChangedLineNumbers(files: ["New.swift": LineRangeSet([1...1])]))
     }
 
     @Test("a renamed file's lines are under its new path, and two entries for one path give both entries' lines")
@@ -126,13 +126,13 @@ struct LinesAfterDeletionsTests {
              f
 
             """).git
-        #expect(git.linesAfterDeletions == ChangedLines(files: [
+        #expect(git.lineNumbersAfterDeletions == ChangedLineNumbers(files: [
             "New.swift": LineRangeSet([2...2]),
             "A.swift": LineRangeSet([2...2, 5...5]),
         ]))
-        #expect(git.linesAfterDeletions(in: "New.swift").allLines == [2])
-        #expect(git.linesAfterDeletions(in: "Old.swift").isEmpty)
-        #expect(git.linesAfterDeletions(in: "A.swift").allLines == [2, 5])
+        #expect(git.lineNumbersAfterDeletions(in: "New.swift").allLineNumbers == [2])
+        #expect(git.lineNumbersAfterDeletions(in: "Old.swift").isEmpty)
+        #expect(git.lineNumbersAfterDeletions(in: "A.swift").allLineNumbers == [2, 5])
     }
 
     /// `A.swift` at the base: three functions, the second with an
@@ -174,10 +174,11 @@ struct LinesAfterDeletionsTests {
         context.git = try await GitChanges(base: base, head: headCommit, git: git)
         context.localRepository = GitRepository(git: git)
         let rule = Rule.changedFiles("Functions", in: "**/*.swift") { file in
-            Self.functionSpans(in: file.contents).compactMap { name, lines in
-                file.changedLines.overlaps(lines) || file.linesAfterDeletions.overlaps(lines)
-                    ? .message("Changes `\(name)`", at: Location(path: file.path, line: lines.lowerBound)) : nil
-            } + [.markdown("changed: \(file.changedLines.allLines), after: \(file.linesAfterDeletions.allLines)")]
+            Self.functionSpans(in: file.contents).compactMap { name, lineRange in
+                file.changedLineNumbers.overlaps(lineRange) || file.lineNumbersAfterDeletions.overlaps(lineRange)
+                    ? .message("Changes `\(name)`", at: Location(path: file.path, line: lineRange.lowerBound)) : nil
+            } + [.markdown("changed: \(file.changedLineNumbers.allLineNumbers), "
+                + "after: \(file.lineNumbersAfterDeletions.allLineNumbers)")]
         }
         let findings = try await rule.evaluate(context)
         #expect(findings == [
@@ -185,14 +186,14 @@ struct LinesAfterDeletionsTests {
             .message("Changes `half`", at: Location(path: "A.swift", line: 5)),
             .markdown("changed: [], after: [2, 5, 8]"),
         ])
-        let after = ChangedLines(files: ["A.swift": LineRangeSet([2...2, 5...5, 8...8])])
-        #expect(context.git.linesAfterDeletions == after)
-        #expect(context.git.changedLines.files.isEmpty)
+        let after = ChangedLineNumbers(files: ["A.swift": LineRangeSet([2...2, 5...5, 8...8])])
+        #expect(context.git.lineNumbersAfterDeletions == after)
+        #expect(context.git.changedLineNumbers.files.isEmpty)
     }
 
     /// Each function in `contents` by name, from its `func` line to the
     /// next line that is a lone `}`.
-    static func functionSpans(in contents: [UInt8]) -> [(name: String, lines: ClosedRange<Int>)] {
+    static func functionSpans(in contents: [UInt8]) -> [(name: String, lineRange: ClosedRange<Int>)] {
         let lines = String(decoding: contents, as: UTF8.self).split(separator: "\n", omittingEmptySubsequences: false)
         return lines.indices.compactMap { index in
             guard lines[index].hasPrefix("func "),

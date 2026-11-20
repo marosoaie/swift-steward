@@ -106,7 +106,7 @@ struct LogParserTests {
 
 @Suite("DiagnosticMatcher")
 struct DiagnosticMatcherTests {
-    let changes = ChangedLines(files: [
+    let changes = ChangedLineNumbers(files: [
         "Sources/App/Foo.swift": [10, 11, 12],
         "Foo.swift": [1],
         "Sources/App/Bar.swift": [5],
@@ -147,7 +147,7 @@ struct DiagnosticMatcherTests {
 
     @Test("suffix matching is component-aligned, not substring based")
     func componentAligned() {
-        let changes = ChangedLines(files: ["Bar.swift": [5]])
+        let changes = ChangedLineNumbers(files: ["Bar.swift": [5]])
         let diagnostics = [
             Diagnostic(path: "/ci/FooBar.swift", line: 5, severity: .warning, message: "m")
         ]

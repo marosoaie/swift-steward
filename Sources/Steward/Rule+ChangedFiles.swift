@@ -19,7 +19,7 @@ extension Rule {
     /// A file counts by its path at the head, which `excluded` matches
     /// too: a created, copied, modified or renamed file, never a deleted
     /// one. That includes a file the pull request only renames or changes
-    /// the mode of, whose `changedLines` are empty. Each is checked once,
+    /// the mode of, whose `changedLineNumbers` are empty. Each is checked once,
     /// in diff order, and the findings come in that order.
     ///
     /// Each file the rule skips is a finding of `skipKind` at the file, a
@@ -136,8 +136,10 @@ extension Rule {
                     let changed = ChangedFile(
                         path: entry.path,
                         contents: bytes,
-                        changedLines: GitChanges.addedLines(of: entry.file, into: LineRangeSet()),
-                        linesAfterDeletions: GitChanges.linesAfterDeletions(of: entry.file, into: LineRangeSet())
+                        changedLineNumbers: GitChanges.addedLineNumbers(of: entry.file, into: LineRangeSet()),
+                        lineNumbersAfterDeletions: GitChanges.lineNumbersAfterDeletions(
+                            of: entry.file, into: LineRangeSet()
+                        )
                     )
                     findings += try await check(changed, log)
                 }

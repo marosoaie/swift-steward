@@ -2,7 +2,7 @@
 
 How steward works under the hood and how it is validated. For usage,
 see the [README](README.md); for contribution conventions, [AGENTS.md](AGENTS.md).
-The diff parser (`DiffParser`, `ChangedLines`, `LineRangeSet`) lives in the
+The diff parser (`DiffParser`, `ChangedLineNumbers`, `LineRangeSet`) lives in the
 [git-diff-parser](https://github.com/marosoaie/git-diff-parser) library,
 whose own INTERNALS.md covers it in depth; this file describes the tool.
 

@@ -11,7 +11,7 @@ import Testing
 @Suite("Resolving a diagnostic's path in the checkout")
 struct DiagnosticsPathResolutionTests {
     /// The pull request adds lines 1–3 of the root-level `Foo.swift`.
-    private static let changes = ChangedLines(files: ["Foo.swift": LineRangeSet([1...3])])
+    private static let changes = ChangedLineNumbers(files: ["Foo.swift": LineRangeSet([1...3])])
 
     /// A checkout with a root-level `Foo.swift` and an untouched namesake,
     /// `Other/Foo.swift`.

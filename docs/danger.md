@@ -1,5 +1,12 @@
 # Steward: a pure-Swift Danger
 
+GitDiffKit's `ChangedLines` is `ChangedLineNumbers` from GitDiffKit
+0.4.0, and Steward's `changedLines` and `linesAfterDeletions` are
+`changedLineNumbers` and `lineNumbersAfterDeletions`
+([steward-lang-swift#26](https://github.com/marosoaie/steward-lang-swift/issues/26)).
+This document uses the current names, so a search finds them; the
+answered questions keep the names they were answered under.
+
 **Status: reviewed (plan step 4.1).** Step 4.2 built the context,
 step 4.3 the DSL, the runner, and the dry run, step 4.4 the sticky
 comment, step 4.5 the built-in diagnostics rule, step 4.6 the
@@ -314,8 +321,8 @@ Rule.changedFiles("JSON", in: "**/*.json") { file in
   lines. Each file is checked once, in diff order.
 - **What the check gets.** A `ChangedFile`: the path, the bytes at the
   head, the lines the pull request adds or rewrites, as
-  `changedLines(in:)` gives them, and the lines that follow what it
-  deletes, as `linesAfterDeletions(in:)` gives them (step C9, below).
+  `changedLineNumbers(in:)` gives them, and the lines that follow what it
+  deletes, as `lineNumbersAfterDeletions(in:)` gives them (step C9, below).
 - **Skipped, in the report and the log.** A symbolic link or a
   submodule, which has no contents to check, and a file over `limit:`
   (1 MiB by default). Git gives no mode for a link or a submodule it
@@ -490,14 +497,14 @@ public struct GitChanges: Sendable {
     public var deletedFiles: [String] { get }
     public var renamedFiles: [Rename] { get }   // from, to
     public func file(at path: String) -> DiffFile?
-    public var changedLines: ChangedLines { get }   // the head's added lines, by path
-    public func changedLines(in path: String) -> LineRangeSet
-    public var linesAfterDeletions: ChangedLines { get }   // the head line after each deleted run
-    public func linesAfterDeletions(in path: String) -> LineRangeSet
+    public var changedLineNumbers: ChangedLineNumbers { get }   // the head's added lines, by path
+    public func changedLineNumbers(in path: String) -> LineRangeSet
+    public var lineNumbersAfterDeletions: ChangedLineNumbers { get }   // the head line after each deleted run
+    public func lineNumbersAfterDeletions(in path: String) -> LineRangeSet
 }
 
 extension LineRangeSet {                  // GitDiffKit's merged ranges
-    public func overlaps(_ lines: ClosedRange<Int>) -> Bool
+    public func overlaps(_ lineRange: ClosedRange<Int>) -> Bool
 }
 
 public struct Commit: Sendable, Hashable {
@@ -595,25 +602,25 @@ like any other.
 
 **Changed lines** are the head's lines the pull request adds: git writes
 a rewritten line as a deletion and an addition, so the additions cover
-both, and a deletion alone leaves no line at the head. `changedLines` is
-what GitDiffKit's `ChangedLines(diff:)` reads from the same diff, and the
-diagnostics rule matches against it; `changedLines(in:)` reads one
+both, and a deletion alone leaves no line at the head. `changedLineNumbers` is
+what GitDiffKit's `ChangedLineNumbers(diff:)` reads from the same diff, and the
+diagnostics rule matches against it; `changedLineNumbers(in:)` reads one
 file's alone, as merged ranges, and `overlaps(_:)` asks whether a range
 of lines, such as a declaration's, shares a line with them:
 
 ```swift
 let header = 1...3
-let touchesHeader = context.git.changedLines(in: "Package.swift").overlaps(header)
+let touchesHeader = context.git.changedLineNumbers(in: "Package.swift").overlaps(header)
 
-let changed = context.git.changedLines
+let changed = context.git.changedLineNumbers
 let touched = context.git.modifiedFiles.filter { changed.files[$0]?.overlaps(header) ?? false }
 ```
 
-Both are computed on each call: `changedLines` from every line of the
-diff, and `changedLines(in:)` by decoding every file's path to find
-one. For a few paths, ask `changedLines(in:)`; for each file in turn,
-read `changedLines` once, as the second example does, since asking
-`changedLines(in:)` for each is quadratic in the diff's files.
+Both are computed on each call: `changedLineNumbers` from every line of the
+diff, and `changedLineNumbers(in:)` by decoding every file's path to find
+one. For a few paths, ask `changedLineNumbers(in:)`; for each file in turn,
+read `changedLineNumbers` once, as the second example does, since asking
+`changedLineNumbers(in:)` for each is quadratic in the diff's files.
 
 `overlaps(_:)` extends GitDiffKit's type from `Steward`; were GitDiffKit
 to gain the method, `Steward`'s would go in the same release. **Added
@@ -622,15 +629,15 @@ in step C3 (2026-11-18)** of the steward-lang-swift plan.
 **Lines after deletions (step C9 of the steward-lang-swift plan,
 2026-11-18).** A deletion leaves no line at the head, so a function
 that only lost a line has no changed line, and a rule that asks whether
-a declaration changed would pass it by. `linesAfterDeletions` gives,
+a declaration changed would pass it by. `lineNumbersAfterDeletions` gives,
 for each run of deleted lines, the head line that now stands where the
 run was, or one past the file's last line when the run was its end;
-`linesAfterDeletions(in:)` gives one file's, and `ChangedFile` carries
+`lineNumbersAfterDeletions(in:)` gives one file's, and `ChangedFile` carries
 its own:
 
 ```swift
 let declaration = 12...30
-let changed = file.changedLines.overlaps(declaration) || file.linesAfterDeletions.overlaps(declaration)
+let changed = file.changedLineNumbers.overlaps(declaration) || file.lineNumbersAfterDeletions.overlaps(declaration)
 ```
 
 - **The line after, not both neighbours.** The test above is then true
@@ -648,7 +655,7 @@ let changed = file.changedLines.overlaps(declaration) || file.linesAfterDeletion
   scope that runs to the end (top-level code, say) counts that line as
   its own, or a file that only lost its last lines reads as unchanged.
   An emptied file gives line 1, which it doesn't have.
-- **`changedLines` keeps its meaning,** and so does the diagnostics
+- **`changedLineNumbers` keeps its meaning,** and so does the diagnostics
   rule: a diagnostic on a line that follows a deletion isn't on a
   changed line.
 - **A deleted file gives nothing,** having no head path; nor does a

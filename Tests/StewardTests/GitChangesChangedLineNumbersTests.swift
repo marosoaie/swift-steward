@@ -3,7 +3,7 @@ import GitDiffKit
 import Testing
 
 @Suite("The lines a pull request adds or rewrites, read from its diff")
-struct GitChangesChangedLinesTests {
+struct GitChangesChangedLineNumbersTests {
     private static let diff = """
         diff --git a/Added.swift b/Added.swift
         new file mode 100644
@@ -57,11 +57,11 @@ struct GitChangesChangedLinesTests {
 
         """
 
-    @Test("they're what ChangedLines(diff:) reads from the same diff, files without added lines left out")
+    @Test("they're what ChangedLineNumbers(diff:) reads from the same diff, files without added lines left out")
     func parity() {
         let changes = GitChanges(diff: Diff(diff: Self.diff), commits: [], mergeBase: "a", head: "b")
-        #expect(changes.changedLines == ChangedLines(diff: Self.diff))
-        #expect(changes.changedLines.files == [
+        #expect(changes.changedLineNumbers == ChangedLineNumbers(diff: Self.diff))
+        #expect(changes.changedLineNumbers.files == [
             "Added.swift": LineRangeSet([1...2]),
             "Modified.swift": LineRangeSet([1...1, 11...12]),
             "Renamed.swift": LineRangeSet([2...2]),
@@ -74,7 +74,7 @@ struct GitChangesChangedLinesTests {
     ])
     func oneFile(path: String) {
         let changes = GitChanges(diff: Diff(diff: Self.diff), commits: [], mergeBase: "a", head: "b")
-        #expect(changes.changedLines(in: path) == changes.changedLines.files[path] ?? LineRangeSet())
+        #expect(changes.changedLineNumbers(in: path) == changes.changedLineNumbers.files[path] ?? LineRangeSet())
     }
 
     @Test("a path given twice, as git writes a file that becomes a link, gets both entries' lines")
@@ -99,8 +99,8 @@ struct GitChangesChangedLinesTests {
 
             """
         let changes = GitChanges(diff: Diff(diff: diff), commits: [], mergeBase: "a", head: "b")
-        #expect(changes.changedLines(in: "link") == LineRangeSet([1...2]))
-        #expect(changes.changedLines.files == ["link": LineRangeSet([1...2])])
+        #expect(changes.changedLineNumbers(in: "link") == LineRangeSet([1...2]))
+        #expect(changes.changedLineNumbers.files == ["link": LineRangeSet([1...2])])
     }
 
     @Test("a long run of added lines is one range")
@@ -116,6 +116,6 @@ struct GitChangesChangedLinesTests {
             \(String(repeating: "+line\n", count: count))
             """
         let changes = GitChanges(diff: Diff(diff: diff), commits: [], mergeBase: "a", head: "b")
-        #expect(changes.changedLines.files["Big.swift"]?.ranges == [1...count])
+        #expect(changes.changedLineNumbers.files["Big.swift"]?.ranges == [1...count])
     }
 }

@@ -12,8 +12,8 @@ struct LineRangeSetOverlapsTests {
         (11...19, false), (9...11, true), (30...31, true), (31...40, false), (Int.min...Int.max, true),
         (Int.min...2, false), (Int.max...Int.max, false), (Int.min...Int.min, false), (0...100, true),
     ])
-    func cases(lines: ClosedRange<Int>, overlaps: Bool) {
-        #expect(Self.set.overlaps(lines) == overlaps)
+    func cases(lineRange: ClosedRange<Int>, overlaps: Bool) {
+        #expect(Self.set.overlaps(lineRange) == overlaps)
     }
 
     @Test("an empty set overlaps nothing, and a set at Int's ends is found there")
@@ -34,8 +34,8 @@ struct LineRangeSetOverlapsTests {
         })
         let disagreements = (0..<300).compactMap { _ -> ClosedRange<Int>? in
             let start = Int.random(in: -5...210, using: &generator)
-            let lines = start...start + Int.random(in: 0...15, using: &generator)
-            return set.overlaps(lines) == set.ranges.contains { $0.overlaps(lines) } ? nil : lines
+            let lineRange = start...start + Int.random(in: 0...15, using: &generator)
+            return set.overlaps(lineRange) == set.ranges.contains { $0.overlaps(lineRange) } ? nil : lineRange
         }
         #expect(disagreements.isEmpty, "\(set.ranges)")
     }

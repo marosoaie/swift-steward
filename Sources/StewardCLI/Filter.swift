@@ -87,7 +87,7 @@ struct Filter: ParsableCommand {
     }
 
     func run() throws {
-        let changes = try ChangedLines(streamingFrom: diff)
+        let changes = try ChangedLineNumbers(streamingFrom: diff)
         var logParser = tool.makeParser()
         try forEachChunk(ofInput: logPath) { logParser.consume($0) }
         let matched = DiagnosticMatcher.match(

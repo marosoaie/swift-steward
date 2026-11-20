@@ -4,17 +4,20 @@ import Testing
 /// A rule that asks whether the changes overlap a range of a file's lines,
 /// through the public API alone, as a Dangerfile's rule would.
 @Suite("A rule that asks which lines changed")
-struct ChangedLinesRuleTests {
-    /// Warns on each changed file whose `lines` the pull request adds or
-    /// rewrites, as a rule guarding a licence header would. It reads
-    /// `changedLines` once: asking `changedLines(in:)` for each file would
-    /// be quadratic in the diff's files.
-    static func header(_ lines: ClosedRange<Int>) -> Rule {
+struct ChangedLineNumbersRuleTests {
+    /// Warns on each changed file in which the pull request adds or
+    /// rewrites a line of `lineRange`, as a rule guarding a licence header
+    /// would. It reads `changedLineNumbers` once: asking
+    /// `changedLineNumbers(in:)` for each file would be quadratic in the
+    /// diff's files.
+    static func header(_ lineRange: ClosedRange<Int>) -> Rule {
         Rule("Header") { context in
-            let changed = context.git.changedLines
+            let changed = context.git.changedLineNumbers
             return (context.git.createdFiles + context.git.modifiedFiles)
-                .filter { changed.files[$0]?.overlaps(lines) ?? false }
-                .map { .warning("Changes lines \(lines.lowerBound)–\(lines.upperBound)", at: Location(path: $0)) }
+                .filter { changed.files[$0]?.overlaps(lineRange) ?? false }
+                .map {
+                    .warning("Changes lines \(lineRange.lowerBound)–\(lineRange.upperBound)", at: Location(path: $0))
+                }
         }
     }
 
@@ -30,12 +33,14 @@ struct ChangedLinesRuleTests {
     @Test("a file's changed lines are the lines its hunks add, as merged ranges")
     func ranges() throws {
         let context = try Context.fixture(diff: SampleDiff.mixed)
-        #expect(context.git.changedLines(in: "Sources/App.swift").ranges == [2...2])
-        #expect(context.git.changedLines(in: "Sources/After.swift").ranges == [1...1])
-        #expect(context.git.changedLines(in: "Docs/Old.md").isEmpty)
+        #expect(context.git.changedLineNumbers(in: "Sources/App.swift").ranges == [2...2])
+        #expect(context.git.changedLineNumbers(in: "Sources/After.swift").ranges == [1...1])
+        #expect(context.git.changedLineNumbers(in: "Docs/Old.md").isEmpty)
         // One path's lines are those of the whole map's entry for it.
-        #expect(context.git.changedLines.files.allSatisfy { context.git.changedLines(in: $0.key) == $0.value })
-        #expect(context.git.changedLines.files.keys.sorted()
+        #expect(context.git.changedLineNumbers.files.allSatisfy {
+            context.git.changedLineNumbers(in: $0.key) == $0.value
+        })
+        #expect(context.git.changedLineNumbers.files.keys.sorted()
             == ["Sources/After.swift", "Sources/App.swift", "Sources/New.swift"])
     }
 }

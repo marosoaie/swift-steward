@@ -18,7 +18,7 @@ struct RuleChangedFilesTests {
     ) { [.message(describe($0), at: Location(path: $0.path))] }
 
     static func describe(_ file: ChangedFile) -> String {
-        "\(String(decoding: file.contents, as: UTF8.self).debugDescription) \(file.changedLines.ranges)"
+        "\(String(decoding: file.contents, as: UTF8.self).debugDescription) \(file.changedLineNumbers.ranges)"
     }
 
     /// The finding `rule` gives for a file it skips at `path` for `reason`,
