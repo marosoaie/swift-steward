@@ -116,7 +116,7 @@ even when they fail, so it reports a broken build's errors:
   run: >-
     docker run --rm -v "$PWD:$PWD" -w "$PWD" ghcr.io/realm/swiftlint:0.65.1
     lint --quiet > swiftlint.log || [ $? -eq 2 ]
-- uses: marosoaie/steward-action@v0.1.1
+- uses: marosoaie/steward-action@v0.2.0
   if: ${{ !cancelled() }}
 ```
 
@@ -150,14 +150,11 @@ its types, functions, members and imports, and keeps what a rule finds
 about the code the pull request changed. In `Dangerfile/Package.swift`,
 add it beside swift-steward. Its README's
 [Setting up](https://github.com/marosoaie/steward-lang-swift#setting-up)
-shows the requirement and the Steward minor release it goes with.
-steward-lang-swift 0.2 builds against Steward 0.3, and its release for
-Steward 0.4 comes after Steward 0.4.0: until it's out, a Dangerfile that
-uses it stays on Steward 0.3. For Steward 0.3, set the template's
-swift-steward requirement to `.upToNextMinor(from: "0.3.0")`, and add:
+shows the requirement and the Steward minor release it goes with; for
+Steward 0.4, that's:
 
 ```swift
-.package(url: "https://github.com/marosoaie/steward-lang-swift.git", .upToNextMinor(from: "0.2.0")),
+.package(url: "https://github.com/marosoaie/steward-lang-swift.git", .upToNextMinor(from: "0.3.0")),
 ```
 
 and its library to the `Dangerfile` target's dependencies:
@@ -226,7 +223,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: marosoaie/steward-action@v0.1.1
+      - uses: marosoaie/steward-action@v0.2.0
 ```
 
 **Pinning the Action.** Pin an exact tag, as above, or a full commit
