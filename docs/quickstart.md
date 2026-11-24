@@ -154,7 +154,7 @@ shows the requirement and the Steward minor release it goes with; for
 Steward 0.4, that's:
 
 ```swift
-.package(url: "https://github.com/marosoaie/steward-lang-swift.git", .upToNextMinor(from: "0.3.0")),
+.package(url: "https://github.com/marosoaie/steward-lang-swift.git", .upToNextMinor(from: "0.4.0")),
 ```
 
 and its library to the `Dangerfile` target's dependencies:
